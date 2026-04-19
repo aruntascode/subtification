@@ -20,6 +20,7 @@ export interface Subscription {
 interface SubscriptionState {
   subscriptions: Subscription[];
   loading: boolean;
+  initialized: boolean;
   fetchSubscriptions: () => Promise<void>;
   addSubscription: (
     sub: Omit<Subscription, "id" | "user_id" | "created_at" | "updated_at">,
@@ -55,6 +56,7 @@ const normalizeToMonthly = (amount: number, cycle: BillingCycle): number => {
 export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   subscriptions: [],
   loading: false,
+  initialized: false,
   fetchSubscriptions: async () => {
     set({ loading: true });
     try {
@@ -67,7 +69,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
       set({ subscriptions });
       await syncSubscriptionNotifications(subscriptions);
     } finally {
-      set({ loading: false });
+      set({ loading: false, initialized: true });
     }
   },
 

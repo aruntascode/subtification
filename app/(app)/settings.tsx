@@ -724,6 +724,40 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* Automation Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.onSurfaceVariant }]}>
+            {t("settings.automation_section")}
+          </Text>
+          <View style={[styles.settingsCard, { backgroundColor: colors.surfaceContainerLow }]}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => router.push("/(app)/bill-import")}
+            >
+              <SettingsRow
+                styles={styles}
+                colors={colors}
+                icon="mail-unread-outline"
+                iconBg={colors.tertiaryContainer + "1A"}
+                iconColor={colors.tertiary}
+                label={t("settings.bill_import")}
+                trailing={
+                  <View style={styles.currencyTrailing}>
+                    <Text style={[styles.trailingText, { color: colors.onSurfaceVariant }]}>
+                      {t("settings.bill_import_status")}
+                    </Text>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color={colors.outline}
+                    />
+                  </View>
+                }
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Notifications Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: colors.onSurfaceVariant }]}>

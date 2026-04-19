@@ -4,6 +4,7 @@ export type Category =
   | 'gaming'
   | 'news'
   | 'finance'
+  | 'utilities'
   | 'shopping'
   | 'productivity'
   | 'cloud'
@@ -26,6 +27,7 @@ export const CATEGORIES: { id: Category; label: string; color: string }[] = [
   { id: 'gaming',        label: 'Gaming',        color: '#FF6B00' },
   { id: 'news',          label: 'News',          color: '#1565C0' },
   { id: 'finance',       label: 'Finance',       color: '#00551f' },
+  { id: 'utilities',     label: 'Utilities',     color: '#00796B' },
   { id: 'shopping',      label: 'Shopping',      color: '#E91E63' },
   { id: 'productivity',  label: 'Productivity',  color: '#1a4593' },
   { id: 'cloud',         label: 'Cloud',         color: '#0288D1' },
