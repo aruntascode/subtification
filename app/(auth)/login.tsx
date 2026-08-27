@@ -69,6 +69,7 @@ export default function LoginScreen() {
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t("auth.login_title")}</Text>
+          <Text style={styles.cardSubtitle}>{t("auth.login_guest_hint")}</Text>
 
           <TouchableOpacity
             style={styles.socialButton}
@@ -126,7 +127,7 @@ export default function LoginScreen() {
             activeOpacity={0.9}
           >
             <LinearGradient
-              colors={[colors.primary, colors.primaryContainer]}
+              colors={[colors.primarySolid, colors.primarySolidContainer]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.loginButton}
@@ -147,6 +148,16 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </Link>
           </View>
+
+          <TouchableOpacity
+            style={styles.guestButton}
+            onPress={() => router.replace("/(app)/(home)")}
+            activeOpacity={0.75}
+          >
+            <Text style={styles.guestButtonText}>
+              {t("auth.continue_as_guest")}
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -191,6 +202,13 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     ...Typography.headlineLg,
     color: colors.onSurface,
     textAlign: "center",
+    marginBottom: Spacing.sm,
+  },
+  cardSubtitle: {
+    ...Typography.bodySm,
+    color: colors.onSurfaceVariant,
+    textAlign: "center",
+    lineHeight: 20,
     marginBottom: Spacing.xxl,
   },
   socialButton: {
@@ -274,6 +292,16 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   registerLink: {
     ...Typography.labelLg,
     color: colors.primary,
+  },
+  guestButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    marginTop: Spacing.md,
+  },
+  guestButtonText: {
+    ...Typography.labelLg,
+    color: colors.onSurfaceVariant,
   },
   backButton: {
     position: "absolute",

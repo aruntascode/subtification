@@ -142,15 +142,16 @@ const AVAILABLE_ICONS = [
 ];
 
 const AVAILABLE_COLORS = [
-  "#0061FF",
-  "#E50914",
-  "#1DB954",
-  "#FF9900",
-  "#7c4dff",
+  "#0B7285",
+  "#2D6CDF",
+  "#00796B",
   "#10A37F",
-  "#E91E63",
-  "#607D8B",
-  "#000000",
+  "#7C3AED",
+  "#D9467B",
+  "#EA580C",
+  "#B45309",
+  "#64748B",
+  "#111827",
 ];
 
 const sanitizeAmountInput = (value: string) => {
@@ -603,7 +604,7 @@ export default function NewSubscriptionScreen() {
               style={styles.saveBtnWrapper}
             >
               <LinearGradient
-                colors={[colors.primary, colors.primaryContainer]}
+                colors={[colors.primarySolid, colors.primarySolidContainer]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.saveButton}
@@ -825,7 +826,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     borderColor: "transparent",
   },
   currencyBtnActive: {
-    backgroundColor: colors.primaryContainer,
+    backgroundColor: colors.primaryFixed,
     borderColor: colors.primary,
   },
   currencyBtnText: {
@@ -867,7 +868,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     borderColor: "transparent",
   },
   planChipActive: {
-    backgroundColor: colors.primaryContainer,
+    backgroundColor: colors.primaryFixed,
     borderColor: colors.primary,
   },
   planChipText: {
@@ -895,7 +896,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     marginHorizontal: 4,
   },
   categoryChipActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primarySolid,
   },
   categoryChipText: {
     ...Typography.labelMd,

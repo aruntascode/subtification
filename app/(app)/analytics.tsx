@@ -330,14 +330,14 @@ export default function AnalyticsScreen() {
       >
         {/* ═══ Overview Cards ═══ */}
         <View style={styles.overviewRow}>
-          <View style={[styles.overviewCard, { backgroundColor: colors.primary }]}>
+          <View style={[styles.overviewCard, { backgroundColor: colors.primarySolid }]}>
             <Text style={styles.overviewLabel}>{t("analytics.monthly_spending")}</Text>
             <Text style={styles.overviewAmount}>{fmtDisplay(monthly)}</Text>
             <Text style={styles.overviewSub}>
               {t("analytics.active_subs_count", { count: activeSubs.length })}
             </Text>
           </View>
-          <View style={[styles.overviewCard, { backgroundColor: colors.primaryContainer }]}>
+          <View style={[styles.overviewCard, { backgroundColor: colors.primarySolidContainer }]}>
             <Text style={styles.overviewLabel}>{t("analytics.yearly_projection")}</Text>
             <Text style={styles.overviewAmount}>{fmtDisplay(yearly)}</Text>
             <Text style={styles.overviewSub}>
@@ -841,7 +841,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     textAlignVertical: "center",
   },
   budgetSaveBtn: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primarySolid,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.lg,
     paddingVertical: 12,
@@ -889,7 +889,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     top: 3,
     left: 3,
     bottom: 3,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primarySolid,
     borderRadius: BorderRadius.full,
   },
   toggleBtn: {

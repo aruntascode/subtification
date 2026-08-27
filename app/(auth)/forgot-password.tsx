@@ -92,7 +92,7 @@ export default function ForgotPasswordScreen() {
 
               <TouchableOpacity onPress={handleReset} disabled={loading} activeOpacity={0.9}>
                 <LinearGradient
-                  colors={[colors.primary, colors.primaryContainer]}
+                  colors={[colors.primarySolid, colors.primarySolidContainer]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.resetButton}

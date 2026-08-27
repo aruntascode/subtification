@@ -68,7 +68,7 @@ hooks/                                 ❌ EKSİK — Henüz hook yazılmadı
 ### `constants/colors.ts`
 
 Tasarım sistemindeki tüm renk token'ları TypeScript sabiti olarak tanımlı.
-Ana renkler: `primary: '#002e73'`, `primaryContainer: '#1a4593'`, `secondaryContainer: '#7c4dff'`, `tertiaryContainer: '#00551f'`
+Ana renkler: `primary: '#0b7285'`, `primaryContainer: '#0e7490'`, `primarySolid: '#0b7285'`, `secondaryContainer: '#4c7dff'`
 
 ### `constants/typography.ts`
 
@@ -275,7 +275,7 @@ create table subscriptions (
   next_billing_date date not null,
   category text not null check (category in ('entertainment', 'finance', 'productivity', 'health', 'education', 'other')),
   emoji text not null default '📦',
-  color text not null default '#002e73',
+  color text not null default '#0b7285',
   notes text,
   is_active boolean not null default true,
   created_at timestamptz default now() not null,
@@ -351,21 +351,21 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 **Ana Renkler:**
 
-- `primary`: `#002e73` — koyu navy, tüm CTA ve brand elementi
-- `primaryContainer`: `#1a4593` — gradient'ın ikinci rengi
-- `secondaryContainer`: `#7c4dff` — entertainment kategorisi rengi
-- `tertiaryContainer`: `#00551f` — finance kategorisi rengi
-- `surface`: `#faf8ff` — sayfa arkaplanı
+- `primary`: `#0b7285` — modern teal-blue, brand ve okunabilir vurgu rengi
+- `primaryContainer`: `#0e7490` — canlı ama sakin gradient/kart eşlikçisi
+- `primarySolid`: `#0b7285` — beyaz yazılı CTA ve dolu seçim yüzeyi
+- `secondaryContainer`: `#4c7dff` — mavi destek vurgusu
+- `surface`: `#fafcfc` — ferah nötr sayfa arkaplanı
 - `surfaceContainerLowest`: `#ffffff` — kartlar
-- `surfaceContainerLow`: `#f2f3fd` — input arkaplanı
+- `surfaceContainerLow`: `#f2f8f8` — input arkaplanı
 - `onSurface`: `#191b22` — metin (siyah değil!)
-- `onSurfaceVariant`: `#434651` — ikincil metin
+- `onSurfaceVariant`: `#3f4a4d` — ikincil metin
 
 **Temel Kurallar:**
 
 1. **Çizgi yok** — kartlar border yerine arkaplan renk farkıyla ayrılır
-2. **Gradient hero** — `linear-gradient(primary → primaryContainer)` büyük kartlarda
-3. **Glassmorphism** — header'larda `rgba(250,248,255,0.6)` + `backdropFilter: blur(24px)`
+2. **Gradient hero** — `linear-gradient(heroGradientStart → heroGradientEnd)` büyük kartlarda
+3. **Glassmorphism** — header'larda `rgba(250,252,252,0.6)` + `backdropFilter: blur(24px)`
 4. **Ambient shadow** — `shadowColor: onSurface, shadowOpacity: 0.06, shadowRadius: 32`
 5. **Saf siyah yok** — tüm metinler `onSurface (#191b22)` kullanır
 

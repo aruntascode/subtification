@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gizlilik Politikası — Subtification</title>
+<meta name="description" content="Subtification gizlilik politikası: hangi verileri topluyoruz, neden topluyoruz ve haklarını nasıl kullanırsın.">
+<meta name="theme-color" content="#0b7285">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="brand-mark">S</span> Subtification</a>
+    <nav class="nav">
+      <a href="/support">Destek</a>
+      <button class="lang-btn" id="langBtn" type="button">English</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ==================== TÜRKÇE ==================== -->
+<section data-lang="tr" class="active">
+  <h1 class="page-title">Gizlilik Politikası</h1>
+  <p class="meta">Yürürlük tarihi: 27 Ağustos 2026 · Son güncelleme: 27 Ağustos 2026</p>
+
+  <div class="card">
+    <h2>Kısaca</h2>
+    <p>Subtification bir abonelik takip uygulamasıdır. Reklam göstermiyoruz, analiz veya izleme aracı kullanmıyoruz, verilerini hiç kimseye satmıyoruz. Uygulamayı <strong>hesap açmadan</strong> kullanabilirsin; bu durumda verilerin cihazından hiç çıkmaz.</p>
+  </div>
+
+  <div class="card">
+    <h2>1. Veri sorumlusu</h2>
+    <p>Bu uygulama Erkam Aruntaş tarafından geliştirilmekte ve işletilmektedir. Gizlilikle ilgili tüm sorular için: <a href="mailto:destek@aruntas.com">destek@aruntas.com</a></p>
+
+    <h2>2. Hangi verileri işliyoruz</h2>
+
+    <h3>2.1. Hesap açtığında</h3>
+    <table>
+      <thead><tr><th>Veri</th><th>Amaç</th><th>Hukuki dayanak</th></tr></thead>
+      <tbody>
+        <tr><td>E-posta adresi</td><td>Hesabını oluşturmak, girişini doğrulamak, şifre sıfırlama</td><td>Sözleşmenin ifası</td></tr>
+        <tr><td>Şifre</td><td>Hesap güvenliği — şifreler yalnızca özet (hash) halinde saklanır, düz metin olarak hiçbir yerde tutulmaz</td><td>Sözleşmenin ifası</td></tr>
+        <tr><td>Abonelik kayıtların</td><td>Servis adı, tutar, para birimi, ödeme sıklığı, sonraki ödeme tarihi, kategori, simge, renk, notlar ve aktiflik durumu — uygulamanın temel işlevi</td><td>Sözleşmenin ifası</td></tr>
+      </tbody>
+    </table>
+    <p>Apple veya Google ile giriş yapmayı seçersen, ilgili sağlayıcı bize yalnızca kimlik doğrulama bilgisi ve e-posta adresini iletir. Apple'ın "E-postamı Gizle" özelliğini kullanırsan bize gerçek adresin değil, Apple'ın oluşturduğu yönlendirme adresi ulaşır.</p>
+
+    <h3>2.2. Yalnızca cihazında kalan veriler</h3>
+    <p>Aşağıdakiler sunucularımıza <strong>hiçbir zaman gönderilmez</strong>, cihazının yerel depolamasında tutulur:</p>
+    <ul>
+      <li>Karanlık mod tercihi, uygulama dili, gösterim para birimi</li>
+      <li>Bildirim tercihin ve planlanmış hatırlatmaların</li>
+      <li>Belirlediğin aylık bütçe limiti</li>
+      <li>Döviz kuru önbelleği</li>
+      <li><strong>Misafir modundaysan: tüm abonelik kayıtların.</strong> Bunlar yalnızca sen e-posta ile giriş yaptığında hesabına aktarılır.</li>
+    </ul>
+
+    <h3>2.3. Toplamadığımız veriler</h3>
+    <p>Konum, rehber, fotoğraflar, reklam kimliği, cihaz tanımlayıcıları, kullanım analitiği, çökme raporları veya davranışsal izleme verisi <strong>toplamıyoruz</strong>. Uygulamada üçüncü taraf reklam veya analiz SDK'sı bulunmuyor.</p>
+
+    <h2>3. Verilerin nerede saklanıyor</h2>
+    <p>Hesap ve abonelik verilerin, altyapı sağlayıcımız <strong>Supabase Inc.</strong> tarafından işletilen sunucularda saklanır. Supabase bizim adımıza veri işleyen konumundadır. Veritabanında satır düzeyi güvenlik (Row Level Security) etkindir: teknik olarak yalnızca kendi kayıtlarına erişebilirsin, başka bir kullanıcının verisini göremezsin.</p>
+
+    <h2>4. Üçüncü taraflarla paylaşım</h2>
+    <p>Verilerini satmıyor, kiralamıyor veya pazarlama amacıyla paylaşmıyoruz. Veriye erişimi olan tek taraflar şunlardır:</p>
+    <ul>
+      <li><strong>Supabase Inc.</strong> — veritabanı, kimlik doğrulama ve e-posta gönderimi (hesap doğrulama ve şifre sıfırlama e-postaları)</li>
+      <li><strong>Apple / Google</strong> — yalnızca bu sağlayıcılarla giriş yapmayı seçersen, yalnızca kimlik doğrulama anında</li>
+      <li><strong>Frankfurter</strong> (api.frankfurter.app) — güncel döviz kurlarını almak için. Bu isteğe <em>hiçbir kişisel veri</em> eklenmez; yalnızca para birimi kodları gönderilir. Abonelik bilgilerin bu servise ulaşmaz.</li>
+    </ul>
+    <p>Bunların dışında verilerini yalnızca yasal bir zorunluluk halinde (mahkeme kararı vb.) paylaşırız.</p>
+
+    <h2>5. Bildirimler</h2>
+    <p>Ödeme hatırlatmaları <strong>cihazının kendi içinde</strong> planlanır. Uzaktan bildirim (push) sunucusu kullanmıyoruz; hangi aboneliğin ne zaman hatırlatılacağı bilgisi bildirim amacıyla dışarı gönderilmez. Bildirimleri istediğin zaman uygulama ayarlarından veya cihaz ayarlarından kapatabilirsin.</p>
+
+    <h2>6. Saklama süresi</h2>
+    <p>Verilerin, sen silene kadar veya hesabını kapatana kadar saklanır. Hesabını sildiğinde e-posta adresin ve tüm abonelik kayıtların kalıcı olarak silinir; bu işlem geri alınamaz. Misafir modundaki veriler ise uygulamayı cihazından kaldırdığında tamamen kaybolur.</p>
+
+    <h2>7. Haklarının kullanımı</h2>
+    <p>KVKK m.11 ve GDPR kapsamında; verilerine erişme, düzeltilmesini isteme, silinmesini isteme, işlemeye itiraz etme ve verilerini taşınabilir biçimde alma haklarına sahipsin.</p>
+    <ul>
+      <li><strong>Erişim ve düzeltme:</strong> Tüm abonelik verilerini uygulama içinden görüntüleyip düzenleyebilirsin.</li>
+      <li><strong>Silme:</strong> Ayarlar ekranından hesabını ve tüm verilerini kendin silebilirsin.</li>
+      <li><strong>Diğer talepler:</strong> <a href="mailto:destek@aruntas.com">destek@aruntas.com</a> adresine yazman yeterli; en geç 30 gün içinde yanıt veriyoruz.</li>
+    </ul>
+
+    <h2>8. Güvenlik</h2>
+    <p>Tüm veri aktarımı HTTPS/TLS ile şifrelenir. Şifreler özet halinde saklanır. Veritabanı erişimi satır düzeyi güvenlik politikalarıyla kısıtlanmıştır. Buna rağmen internet üzerinden hiçbir aktarımın %100 güvenli olmadığını hatırlatmak isteriz.</p>
+
+    <h2>9. Çocuklar</h2>
+    <p>Uygulama 13 yaşın altındaki çocuklara yönelik değildir ve bilerek bu yaş grubundan veri toplamayız. Böyle bir verinin tarafımıza ulaştığını fark edersek sileriz.</p>
+
+    <h2>10. Değişiklikler</h2>
+    <p>Bu politikada değişiklik yaparsak güncel sürümü bu sayfada yayınlar ve yukarıdaki "son güncelleme" tarihini değiştiririz. Önemli değişikliklerde uygulama içinde ayrıca bilgilendirme yaparız.</p>
+
+    <h2>11. İletişim</h2>
+    <p>Her türlü soru, talep ve şikâyet için: <a href="mailto:destek@aruntas.com">destek@aruntas.com</a></p>
+  </div>
+</section>
+
+<!-- ==================== ENGLISH ==================== -->
+<section data-lang="en">
+  <h1 class="page-title">Privacy Policy</h1>
+  <p class="meta">Effective: 27 August 2026 · Last updated: 27 August 2026</p>
+
+  <div class="card">
+    <h2>In short</h2>
+    <p>Subtification is a subscription tracking app. We show no ads, use no analytics or tracking tools, and never sell your data. You can use the app <strong>without creating an account</strong>, in which case your data never leaves your device.</p>
+  </div>
+
+  <div class="card">
+    <h2>1. Data controller</h2>
+    <p>This app is developed and operated by Erkam Aruntaş. For any privacy-related question: <a href="mailto:destek@aruntas.com">destek@aruntas.com</a></p>
+
+    <h2>2. What we process</h2>
+
+    <h3>2.1. When you create an account</h3>
+    <table>
+      <thead><tr><th>Data</th><th>Purpose</th><th>Legal basis</th></tr></thead>
+      <tbody>
+        <tr><td>Email address</td><td>Creating your account, authentication, password reset</td><td>Performance of a contract</td></tr>
+        <tr><td>Password</td><td>Account security — stored only as a hash, never in plain text</td><td>Performance of a contract</td></tr>
+        <tr><td>Your subscription records</td><td>Service name, amount, currency, billing cycle, next payment date, category, icon, colour, notes and active status — the core function of the app</td><td>Performance of a contract</td></tr>
+      </tbody>
+    </table>
+    <p>If you choose to sign in with Apple or Google, that provider sends us only an authentication token and your email address. If you use Apple's "Hide My Email", we receive Apple's relay address rather than your real one.</p>
+
+    <h3>2.2. Data that stays on your device only</h3>
+    <p>The following is <strong>never sent to our servers</strong> and is kept in your device's local storage:</p>
+    <ul>
+      <li>Dark mode preference, app language, display currency</li>
+      <li>Your notification preference and scheduled reminders</li>
+      <li>The monthly budget limit you set</li>
+      <li>Exchange rate cache</li>
+      <li><strong>In guest mode: all of your subscription records.</strong> These are uploaded to your account only if and when you sign in with email.</li>
+    </ul>
+
+    <h3>2.3. What we do not collect</h3>
+    <p>We do <strong>not</strong> collect location, contacts, photos, advertising identifiers, device identifiers, usage analytics, crash reports or behavioural tracking data. The app contains no third-party advertising or analytics SDKs.</p>
+
+    <h2>3. Where your data is stored</h2>
+    <p>Account and subscription data is stored on servers operated by our infrastructure provider <strong>Supabase Inc.</strong>, acting as a data processor on our behalf. Row Level Security is enabled on the database: you can technically only access your own records and never another user's data.</p>
+
+    <h2>4. Sharing with third parties</h2>
+    <p>We do not sell, rent or share your data for marketing purposes. The only parties with any access are:</p>
+    <ul>
+      <li><strong>Supabase Inc.</strong> — database, authentication and transactional email (account confirmation and password reset)</li>
+      <li><strong>Apple / Google</strong> — only if you choose to sign in with them, and only at the moment of authentication</li>
+      <li><strong>Frankfurter</strong> (api.frankfurter.app) — to fetch current exchange rates. This request contains <em>no personal data whatsoever</em>; only currency codes are sent. Your subscription details never reach this service.</li>
+    </ul>
+    <p>Beyond this, we would share data only where legally required (e.g. a court order).</p>
+
+    <h2>5. Notifications</h2>
+    <p>Payment reminders are scheduled <strong>locally on your device</strong>. We operate no remote push server, and information about which subscription is reminded when is not transmitted for notification purposes. You can turn notifications off at any time in the app or in your device settings.</p>
+
+    <h2>6. Retention</h2>
+    <p>Your data is retained until you delete it or close your account. Deleting your account permanently removes your email address and all subscription records; this cannot be undone. Data held in guest mode is lost entirely when you uninstall the app.</p>
+
+    <h2>7. Your rights</h2>
+    <p>Under the GDPR and Turkish KVKK Art. 11 you have the right to access your data, request its correction or erasure, object to processing, and receive your data in a portable format.</p>
+    <ul>
+      <li><strong>Access and correction:</strong> you can view and edit all of your subscription data inside the app.</li>
+      <li><strong>Erasure:</strong> you can delete your account and all associated data yourself from the Settings screen.</li>
+      <li><strong>Other requests:</strong> write to <a href="mailto:destek@aruntas.com">destek@aruntas.com</a>; we respond within 30 days at the latest.</li>
+    </ul>
+
+    <h2>8. Security</h2>
+    <p>All data in transit is encrypted with HTTPS/TLS. Passwords are stored hashed. Database access is restricted by row-level security policies. That said, no transmission over the internet can be guaranteed 100% secure.</p>
+
+    <h2>9. Children</h2>
+    <p>The app is not directed at children under 13 and we do not knowingly collect data from them. If we become aware of such data, we delete it.</p>
+
+    <h2>10. Changes</h2>
+    <p>If we change this policy we will publish the updated version on this page and revise the "last updated" date above. For significant changes we will also notify you inside the app.</p>
+
+    <h2>11. Contact</h2>
+    <p>For any question, request or complaint: <a href="mailto:destek@aruntas.com">destek@aruntas.com</a></p>
+  </div>
+</section>
+
+  <footer>
+    <span>© 2026 Subtification</span>
+    <span><a href="/">Ana sayfa</a> · <a href="/support">Destek</a></span>
+  </footer>
+</main>
+
+<script>
+  (function () {
+    var btn = document.getElementById('langBtn');
+    var sections = document.querySelectorAll('[data-lang]');
+    var current = 'tr';
+    btn.addEventListener('click', function () {
+      current = current === 'tr' ? 'en' : 'tr';
+      sections.forEach(function (s) {
+        s.classList.toggle('active', s.dataset.lang === current);
+      });
+      document.documentElement.lang = current;
+      btn.textContent = current === 'tr' ? 'English' : 'Türkçe';
+      window.scrollTo(0, 0);
+    });
+  })();
+</script>
+
+</body>
+</html>

@@ -3,6 +3,7 @@ import type { AppColors } from "@/constants/colors";
 import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useCurrency, useTotalMonthly } from "@/hooks/useCurrency";
+import { useAuthStore } from "@/stores/authStore";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -30,6 +31,7 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets(); // YENİ: Cihazın çentik boşluğunu hesaplar
   const { subscriptions, loading, fetchSubscriptions, upcomingPayments } =
     useSubscriptionStore();
+  const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { fmt, fmtDisplay, fmtWithOriginal } = useCurrency();
@@ -81,7 +83,7 @@ export default function DashboardScreen() {
 
   const heroGradientColors: [string, string] = isOverBudget
     ? ["#c0392b", "#e74c3c"]
-    : [colors.primary, colors.primaryContainer];
+    : [colors.heroGradientStart, colors.heroGradientEnd];
 
   const getUpcomingBadgeLabel = () => {
     if (upcoming.length === 0) return "";
@@ -108,10 +110,6 @@ export default function DashboardScreen() {
   const handleNavigateToDetail = (id: string) => {
     router.push(`/(app)/subscription/${id}`);
   };
-
-  if (subscriptions.length === 0 && !loading) {
-    // ... (Empty state kodun aynı kalabilir, değişmedi)
-  }
 
   return (
     <View style={styles.container}>
@@ -187,6 +185,42 @@ export default function DashboardScreen() {
             )}
           </LinearGradient>
 
+          {!user && (
+            <View style={styles.guestNotice}>
+              <View style={styles.guestNoticeTop}>
+                <View style={styles.guestNoticeIcon}>
+                  <Ionicons
+                    name="phone-portrait-outline"
+                    size={18}
+                    color={colors.primary}
+                  />
+                </View>
+                <View style={styles.guestNoticeTextBlock}>
+                  <Text style={styles.guestNoticeTitle}>
+                    {t("guest_notice.title")}
+                  </Text>
+                  <Text style={styles.guestNoticeBody}>
+                    {t("guest_notice.body")}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.guestNoticeButton}
+                onPress={() => router.push("/(auth)/login")}
+                activeOpacity={0.75}
+              >
+                <Ionicons
+                  name="mail-outline"
+                  size={17}
+                  color={colors.primary}
+                />
+                <Text style={styles.guestNoticeButtonText}>
+                  {t("guest_notice.sign_in_cta")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* Upcoming Payments (Yaklaşan Ödemeler - Max 7 Gün) */}
           {upcoming.length > 0 && (
             <View style={styles.section}>
@@ -257,17 +291,71 @@ export default function DashboardScreen() {
               <Text style={styles.sectionTitle}>
                 {t("dashboard.recent_subs")}
               </Text>
-              <TouchableOpacity
-                onPress={() => router.push("/(app)/(home)/subscriptions-list")}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.viewAllText}>
-                  {t("dashboard.view_all")}
-                </Text>
-              </TouchableOpacity>
+              {recentSubs.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/(home)/subscriptions-list")}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.viewAllText}>
+                    {t("dashboard.view_all")}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
-            {recentSubs.map((sub) => {
+            {recentSubs.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <View style={styles.emptyIconWrap}>
+                  <Ionicons
+                    name="albums-outline"
+                    size={28}
+                    color={colors.primary}
+                  />
+                </View>
+                <Text style={styles.emptyTitle}>{t("dashboard.no_subs_title")}</Text>
+                <Text style={styles.emptyDesc}>{t("dashboard.no_subs_desc")}</Text>
+
+                <View style={styles.emptyFeatureRow}>
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={18}
+                    color={colors.tertiaryFixedDim}
+                  />
+                  <Text style={styles.emptyFeatureText}>
+                    {t("dashboard.feature_track")}
+                  </Text>
+                </View>
+                <View style={styles.emptyFeatureRow}>
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={18}
+                    color={colors.tertiaryFixedDim}
+                  />
+                  <Text style={styles.emptyFeatureText}>
+                    {t("dashboard.feature_notify")}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/new")}
+                  activeOpacity={0.9}
+                  style={styles.primaryCtaWrapper}
+                >
+                  <LinearGradient
+                    colors={[colors.primarySolid, colors.primarySolidContainer]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.primaryCta}
+                  >
+                    <Ionicons name="add" size={20} color="#fff" />
+                    <Text style={styles.primaryCtaText}>
+                      {t("dashboard.add_button")}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+              </View>
+            ) : recentSubs.map((sub) => {
               // 1. Kategorinin görünen adını buluyoruz
               const categoryLabel = t(`categories.${sub.category}`);
 
@@ -281,46 +369,46 @@ export default function DashboardScreen() {
               const formattedDay =
                 dayName.charAt(0).toUpperCase() + dayName.slice(1);
 
-              return (
-                <TouchableOpacity
-                  key={sub.id}
-                  style={styles.activeRow}
-                  onPress={() => handleNavigateToDetail(sub.id)}
-                >
-                  <View style={styles.activeLeft}>
-                    <SubscriptionIcon
-                      value={sub.emoji}
-                      bgColor={sub.color}
-                      size={24} // İkonu bir tık büyüttük
-                      containerSize={48}
-                      radius={14}
-                    />
-                    <View style={styles.activeTextContainer}>
-                      <Text style={styles.activeName}>{sub.name}</Text>
-                      <Text style={styles.activeMeta}>
-                        {categoryLabel} • {formattedDay}
+                return (
+                  <TouchableOpacity
+                    key={sub.id}
+                    style={styles.activeRow}
+                    onPress={() => handleNavigateToDetail(sub.id)}
+                  >
+                    <View style={styles.activeLeft}>
+                      <SubscriptionIcon
+                        value={sub.emoji}
+                        bgColor={sub.color}
+                        size={24} // İkonu bir tık büyüttük
+                        containerSize={48}
+                        radius={14}
+                      />
+                      <View style={styles.activeTextContainer}>
+                        <Text style={styles.activeName}>{sub.name}</Text>
+                        <Text style={styles.activeMeta}>
+                          {categoryLabel} • {formattedDay}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.activeRight}>
+                      {/* Fiyatı Stitch tasarımındaki gibi daha koyu yaptık */}
+                      <Text style={styles.activeAmount}>
+                        {fmt(sub.amount, sub.currency || "₺")}
+                      </Text>
+                      {/* Tasarımdaki yeşil AUTO-PAY detayını yansıtıyoruz */}
+                      <Text
+                        style={[
+                          styles.payStatus,
+                          !sub.is_active && styles.payStatusManual,
+                        ]}
+                      >
+                        {sub.is_active ? "OTOMATİK" : "MANUEL"}
                       </Text>
                     </View>
-                  </View>
-
-                  <View style={styles.activeRight}>
-                    {/* Fiyatı Stitch tasarımındaki gibi daha koyu yaptık */}
-                    <Text style={styles.activeAmount}>
-                      {fmt(sub.amount, sub.currency || "₺")}
-                    </Text>
-                    {/* Tasarımdaki yeşil AUTO-PAY detayını yansıtıyoruz */}
-                    <Text
-                      style={[
-                        styles.payStatus,
-                        !sub.is_active && styles.payStatusManual,
-                      ]}
-                    >
-                      {sub.is_active ? "OTOMATİK" : "MANUEL"}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+                  </TouchableOpacity>
+                );
+              })}
           </View>
 
           <View style={{ height: 60 }} />
@@ -407,6 +495,59 @@ const createStyles = (colors: AppColors, darkMode: boolean) =>
       marginTop: Spacing.md,
     },
     heroBadgeText: { ...Typography.labelMd, color: "#ffffff" },
+    guestNotice: {
+      backgroundColor: colors.surfaceContainerLowest,
+      borderRadius: 20,
+      padding: Spacing.lg,
+      marginBottom: Spacing.xxxl,
+      shadowColor: colors.onSurface,
+      shadowOpacity: 0.04,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 1,
+    },
+    guestNoticeTop: {
+      flexDirection: "row",
+      gap: Spacing.md,
+    },
+    guestNoticeIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.primaryFixed,
+    },
+    guestNoticeTextBlock: {
+      flex: 1,
+    },
+    guestNoticeTitle: {
+      ...Typography.labelLg,
+      color: colors.onSurface,
+      fontWeight: "800",
+      marginBottom: 4,
+    },
+    guestNoticeBody: {
+      ...Typography.bodySm,
+      color: colors.onSurfaceVariant,
+      lineHeight: 20,
+    },
+    guestNoticeButton: {
+      minHeight: 42,
+      borderRadius: BorderRadius.full,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: Spacing.sm,
+      backgroundColor: colors.surfaceContainerLow,
+      marginTop: Spacing.md,
+      paddingHorizontal: Spacing.lg,
+    },
+    guestNoticeButtonText: {
+      ...Typography.labelMd,
+      color: colors.primary,
+      fontWeight: "800",
+    },
 
     // Section Styles
     // Section Styles
@@ -453,7 +594,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) =>
       width: "100%",
     },
     upcomingBadge: {
-      backgroundColor: colors.surfaceContainerHigh, // Stitch tarzı çok hafif gri/mor arkaplan
+      backgroundColor: colors.surfaceContainerHigh,
       borderRadius: BorderRadius.full,
       paddingHorizontal: 8,
       paddingVertical: 4,
@@ -487,6 +628,67 @@ const createStyles = (colors: AppColors, darkMode: boolean) =>
       borderRadius: 20, // Tasarımdaki gibi daha yumuşak bir kavis
       padding: Spacing.lg,
       marginBottom: Spacing.sm,
+    },
+    emptyCard: {
+      backgroundColor: colors.surfaceContainerLowest,
+      borderRadius: 24,
+      padding: Spacing.xl,
+      shadowColor: colors.onSurface,
+      shadowOpacity: 0.04,
+      shadowRadius: 18,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 1,
+    },
+    emptyIconWrap: {
+      width: 56,
+      height: 56,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.primaryFixed,
+      marginBottom: Spacing.lg,
+    },
+    emptyTitle: {
+      ...Typography.headlineMd,
+      color: colors.onSurface,
+      fontWeight: "800",
+      marginBottom: Spacing.sm,
+    },
+    emptyDesc: {
+      ...Typography.bodyMd,
+      color: colors.onSurfaceVariant,
+      lineHeight: 22,
+      marginBottom: Spacing.lg,
+    },
+    emptyFeatureRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.sm,
+      marginBottom: Spacing.sm,
+    },
+    emptyFeatureText: {
+      ...Typography.bodySm,
+      color: colors.onSurfaceVariant,
+      flex: 1,
+    },
+    primaryCtaWrapper: {
+      marginTop: Spacing.lg,
+      borderRadius: BorderRadius.full,
+      overflow: "hidden",
+    },
+    primaryCta: {
+      minHeight: 52,
+      borderRadius: BorderRadius.full,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: Spacing.sm,
+      paddingHorizontal: Spacing.xl,
+    },
+    primaryCtaText: {
+      ...Typography.labelLg,
+      color: "#ffffff",
+      fontWeight: "800",
     },
     activeLeft: {
       flexDirection: "row",

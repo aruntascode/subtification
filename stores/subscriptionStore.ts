@@ -1,6 +1,7 @@
 import { BillingCycle, Category } from "@/constants/categories";
 import { syncSubscriptionNotifications } from "@/lib/notifications";
 import { supabase } from "@/lib/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 export interface Subscription {
@@ -53,6 +54,68 @@ const normalizeToMonthly = (amount: number, cycle: BillingCycle): number => {
   }
 };
 
+const LOCAL_SUBSCRIPTIONS_KEY = "guest_subscriptions";
+
+const sortByNextBillingDate = (subscriptions: Subscription[]) =>
+  [...subscriptions].sort(
+    (a, b) =>
+      new Date(a.next_billing_date).getTime() -
+      new Date(b.next_billing_date).getTime(),
+  );
+
+const readLocalSubscriptions = async (): Promise<Subscription[]> => {
+  const raw = await AsyncStorage.getItem(LOCAL_SUBSCRIPTIONS_KEY);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeLocalSubscriptions = async (subscriptions: Subscription[]) => {
+  await AsyncStorage.setItem(
+    LOCAL_SUBSCRIPTIONS_KEY,
+    JSON.stringify(subscriptions),
+  );
+};
+
+const createLocalId = () =>
+  `local_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
+
+const getCurrentUser = async () => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
+};
+
+const uploadLocalSubscriptions = async (userId: string) => {
+  const localSubscriptions = await readLocalSubscriptions();
+  if (localSubscriptions.length === 0) return;
+
+  const payload = localSubscriptions.map((subscription) => ({
+    user_id: userId,
+    name: subscription.name,
+    amount: subscription.amount,
+    currency: subscription.currency ?? "₺",
+    billing_cycle: subscription.billing_cycle,
+    category: subscription.category,
+    next_billing_date: subscription.next_billing_date,
+    emoji: subscription.emoji,
+    color: subscription.color,
+    is_active: subscription.is_active,
+    notes: subscription.notes,
+  }));
+
+  const { error } = await supabase.from("subscriptions").insert(payload);
+  if (error) throw error;
+
+  await AsyncStorage.removeItem(LOCAL_SUBSCRIPTIONS_KEY);
+};
+
 export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   subscriptions: [],
   loading: false,
@@ -60,6 +123,19 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   fetchSubscriptions: async () => {
     set({ loading: true });
     try {
+      const user = await getCurrentUser();
+
+      if (!user) {
+        const subscriptions = sortByNextBillingDate(
+          await readLocalSubscriptions(),
+        );
+        set({ subscriptions });
+        await syncSubscriptionNotifications(subscriptions);
+        return;
+      }
+
+      await uploadLocalSubscriptions(user.id);
+
       const { data, error } = await supabase
         .from("subscriptions")
         .select("*")
@@ -76,10 +152,25 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   addSubscription: async (sub) => {
     set({ loading: true });
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      const user = await getCurrentUser();
+
+      if (!user) {
+        const nextSubscription: Subscription = {
+          ...sub,
+          id: createLocalId(),
+        };
+        let nextSubscriptions: Subscription[] = [];
+        set((state) => {
+          nextSubscriptions = sortByNextBillingDate([
+            ...state.subscriptions,
+            nextSubscription,
+          ]);
+          return { subscriptions: nextSubscriptions };
+        });
+        await writeLocalSubscriptions(nextSubscriptions);
+        await syncSubscriptionNotifications(nextSubscriptions);
+        return;
+      }
 
       const { data, error } = await supabase
         .from("subscriptions")
@@ -101,6 +192,23 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   updateSubscription: async (id, updates) => {
     set({ loading: true });
     try {
+      const user = await getCurrentUser();
+
+      if (!user) {
+        let nextSubscriptions: Subscription[] = [];
+        set((state) => {
+          nextSubscriptions = sortByNextBillingDate(
+            state.subscriptions.map((s) =>
+              s.id === id ? { ...s, ...updates } : s,
+            ),
+          );
+          return { subscriptions: nextSubscriptions };
+        });
+        await writeLocalSubscriptions(nextSubscriptions);
+        await syncSubscriptionNotifications(nextSubscriptions);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("subscriptions")
         .update(updates)
@@ -124,6 +232,19 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   deleteSubscription: async (id) => {
     set({ loading: true });
     try {
+      const user = await getCurrentUser();
+
+      if (!user) {
+        let nextSubscriptions: Subscription[] = [];
+        set((state) => {
+          nextSubscriptions = state.subscriptions.filter((s) => s.id !== id);
+          return { subscriptions: nextSubscriptions };
+        });
+        await writeLocalSubscriptions(nextSubscriptions);
+        await syncSubscriptionNotifications(nextSubscriptions);
+        return;
+      }
+
       const { error } = await supabase
         .from("subscriptions")
         .delete()

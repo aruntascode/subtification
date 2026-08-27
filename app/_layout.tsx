@@ -65,7 +65,7 @@ export default function RootLayout() {
   }
 
   const showTabBar =
-    session && segments[0] === "(app)" && subscriptionsInitialized;
+    segments[0] === "(app)" && subscriptionsInitialized;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.surface }}>

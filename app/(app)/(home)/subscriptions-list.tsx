@@ -400,7 +400,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     paddingVertical: Spacing.sm,
     marginRight: Spacing.sm,
   },
-  chipActive: { backgroundColor: colors.primary },
+  chipActive: { backgroundColor: colors.primarySolid },
   chipText: { ...Typography.labelMd, color: colors.onSurfaceVariant },
   chipTextActive: { color: "#ffffff" },
   summary: {

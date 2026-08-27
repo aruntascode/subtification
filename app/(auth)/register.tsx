@@ -120,7 +120,7 @@ export default function RegisterScreen() {
             activeOpacity={0.9}
           >
             <LinearGradient
-              colors={[colors.primary, colors.primaryContainer]}
+              colors={[colors.primarySolid, colors.primarySolidContainer]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.registerButton}

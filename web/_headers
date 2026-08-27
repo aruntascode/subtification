@@ -1,0 +1,14 @@
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), interest-cohort=()
+
+/style.css
+  Cache-Control: public, max-age=3600
+
+/auth/callback
+  Cache-Control: no-store
+
+/.well-known/apple-app-site-association
+  Content-Type: application/json

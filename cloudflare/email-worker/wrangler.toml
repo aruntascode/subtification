@@ -1,9 +1,0 @@
-name = "subtification-bill-email-worker"
-main = "worker.js"
-compatibility_date = "2026-04-18"
-
-[vars]
-SUPABASE_URL = "https://bktrxpodekaoyckfzqst.supabase.co"
-
-# Set this with:
-# npx wrangler secret put BILL_IMPORT_WEBHOOK_SECRET

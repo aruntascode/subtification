@@ -238,7 +238,7 @@ export function AppTabBar() {
       currentSegments.includes("(home)") ||
       (currentSegments[0] === "(app)" &&
         !currentSegments.some((segment) =>
-          ["subscriptions", "analytics", "new", "settings", "subscription", "bill-import"].includes(segment),
+          ["subscriptions", "analytics", "new", "settings", "subscription"].includes(segment),
         ));
 
     if (tabName === "(home)") return isHomeRoute;

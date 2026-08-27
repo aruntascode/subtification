@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subtification'a dönülüyor…</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b7285">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<style>
+  main.wrap { display: grid; place-items: center; min-height: 100dvh; text-align: center; }
+  .panel { max-width: 440px; }
+  .spinner {
+    width: 34px; height: 34px; margin: 0 auto 26px;
+    border: 3px solid var(--outline-variant);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+  .hint { font-size: 14px; color: var(--on-surface-variant); margin-top: 22px; }
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <div class="panel">
+    <div class="spinner" id="spinner"></div>
+    <h1 style="font-size:24px;margin:0 0 10px;">Uygulamaya dönülüyor…</h1>
+    <p style="color:var(--on-surface-variant);margin:0 0 24px;">Subtification birkaç saniye içinde açılacak. Açılmazsa aşağıdaki butona dokun.</p>
+    <a class="btn" id="openBtn" href="#">Subtification'ı aç</a>
+    <p class="hint">Uygulama bu cihazda yüklü değilse bu bağlantı çalışmaz. Bağlantıyı, uygulamanın kurulu olduğu cihazda açman gerekiyor.</p>
+  </div>
+</main>
+
+<script>
+  (function () {
+    // Supabase ya hash fragment (#access_token=...) ya da query (?code=...) ile döner.
+    // İkisini de olduğu gibi uygulamaya taşıyoruz.
+    var payload = window.location.hash || window.location.search || '';
+    var target = 'subtification://auth/callback' + payload;
+
+    var btn = document.getElementById('openBtn');
+    btn.setAttribute('href', target);
+
+    // Otomatik yönlendirme dene.
+    window.location.replace(target);
+
+    // Uygulama açılmadıysa spinner'ı durdur, kullanıcı butona bassın.
+    setTimeout(function () {
+      var spinner = document.getElementById('spinner');
+      if (spinner) spinner.style.display = 'none';
+    }, 2500);
+  })();
+</script>
+
+</body>
+</html>

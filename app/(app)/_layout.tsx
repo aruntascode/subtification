@@ -1,5 +1,6 @@
 import { SubtificationSplash } from "@/components/SubtificationSplash";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
+import { useAuthStore } from "@/stores/authStore";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { Stack } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -8,6 +9,7 @@ import { StyleSheet, View } from "react-native";
 export default function AppLayout() {
   const fetchSubscriptions = useSubscriptionStore((s) => s.fetchSubscriptions);
   const subscriptionsInitialized = useSubscriptionStore((s) => s.initialized);
+  const userId = useAuthStore((s) => s.user?.id ?? null);
   const { colors } = useAppTheme();
   const [showSplash, setShowSplash] = useState(
     () => !subscriptionsInitialized,
@@ -21,7 +23,7 @@ export default function AppLayout() {
     void fetchSubscriptions().catch((error) => {
       console.warn("Abonelikler yüklenemedi.", error);
     });
-  }, [fetchSubscriptions]);
+  }, [fetchSubscriptions, userId]);
 
   useEffect(() => {
     if (!subscriptionsInitialized) {
@@ -50,10 +52,6 @@ export default function AppLayout() {
         />
         <Stack.Screen
           name="settings"
-          options={{ animation: "slide_from_right", gestureEnabled: true }}
-        />
-        <Stack.Screen
-          name="bill-import"
           options={{ animation: "slide_from_right", gestureEnabled: true }}
         />
         <Stack.Screen
