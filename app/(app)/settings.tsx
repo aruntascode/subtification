@@ -1231,7 +1231,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     overflow: "hidden",
   },
   headerOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: darkMode ? "rgba(16, 18, 22, 0.05)" : "rgba(255, 248, 255, 0.05)",
   },
   headerBorder: {
@@ -1389,7 +1389,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     justifyContent: "flex-end",
   },
   modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(25, 27, 34, 0.38)",
   },
   modalSheet: {
@@ -1511,7 +1511,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     marginLeft: Spacing.sm,
   },
   currencyActionBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   currencyActionSheet: {
     borderTopLeftRadius: 32,

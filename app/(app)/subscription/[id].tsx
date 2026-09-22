@@ -626,7 +626,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     overflow: "hidden",
   },
   headerOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: darkMode ? "rgba(16, 18, 22, 0.05)" : "rgba(255, 248, 255, 0.05)",
   },
   headerBorder: {
@@ -667,7 +667,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
 
   // ── Edit Overlay ──
   editOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: colors.surface,
     zIndex: 90,
   },

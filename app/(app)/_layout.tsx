@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   splashOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 20,
     elevation: 20,
   },

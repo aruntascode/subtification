@@ -420,7 +420,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
 
   // ── Backdrop ──
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: darkMode ? "rgba(0, 0, 0, 0.62)" : "rgba(25, 27, 34, 0.45)",
     zIndex: 200,
   },

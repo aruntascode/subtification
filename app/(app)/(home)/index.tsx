@@ -437,7 +437,7 @@ const createStyles = (colors: AppColors, darkMode: boolean) =>
       overflow: "hidden", // BlurView'ün taşmasını önler
     },
     headerOverlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: darkMode
         ? "rgba(16, 18, 22, 0.05)"
         : "rgba(255, 248, 255, 0.05)",
