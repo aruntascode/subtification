@@ -181,8 +181,6 @@
     "email": "E-posta",
     "password": "Şifre",
     "sign_in": "Giriş Yap",
-    "sign_in_google": "Google ile Giriş Yap",
-    "sign_in_apple": "Apple ile Giriş Yap",
     "continue_as_guest": "Giriş yapmadan devam et",
     "login_guest_hint": "İstersen giriş yapmadan kullanabilirsin. Bu modda verilerin sadece cihazda kalır; e-posta ile giriş yaparsan hesabına bağlanır.",
     "forgot_password": "Şifremi Unuttum",

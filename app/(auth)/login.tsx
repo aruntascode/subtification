@@ -24,7 +24,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { signInWithEmail, signInWithGoogle, loading } = useAuthStore();
+  const { signInWithEmail, loading } = useAuthStore();
   const { t } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -41,13 +41,6 @@ export default function LoginScreen() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error: any) {
-      Alert.alert("Google Login Failed", error.message);
-    }
-  };
 
   return (
     <KeyboardAvoidingView
@@ -70,25 +63,6 @@ export default function LoginScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t("auth.login_title")}</Text>
           <Text style={styles.cardSubtitle}>{t("auth.login_guest_hint")}</Text>
-
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={handleGoogleLogin}
-          >
-            <Ionicons name="logo-google" size={20} color={colors.onSurface} />
-            <Text style={styles.socialButtonText}>{t("auth.sign_in_google")}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.socialButton}>
-            <Ionicons name="logo-apple" size={20} color={colors.onSurface} />
-            <Text style={styles.socialButtonText}>{t("auth.sign_in_apple")}</Text>
-          </TouchableOpacity>
-
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
-          </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>EMAIL</Text>
@@ -210,35 +184,6 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
     marginBottom: Spacing.xxl,
-  },
-  socialButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.md,
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: BorderRadius.xl,
-    paddingVertical: 14,
-    marginBottom: Spacing.md,
-  },
-  socialButtonText: {
-    ...Typography.labelLg,
-    color: colors.onSurface,
-  },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: Spacing.xl,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.outlineVariant,
-  },
-  dividerText: {
-    ...Typography.bodySm,
-    color: colors.onSurfaceVariant,
-    marginHorizontal: Spacing.md,
   },
   inputGroup: {
     marginBottom: Spacing.lg,

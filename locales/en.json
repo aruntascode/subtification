@@ -181,8 +181,6 @@
     "email": "Email",
     "password": "Password",
     "sign_in": "Sign In",
-    "sign_in_google": "Continue with Google",
-    "sign_in_apple": "Continue with Apple",
     "continue_as_guest": "Continue without signing in",
     "login_guest_hint": "You can use the app without signing in. In guest mode, data stays only on this device; email sign-in links it to your account.",
     "forgot_password": "Forgot Password",
