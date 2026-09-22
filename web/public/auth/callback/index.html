@@ -3,59 +3,255 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Subtification'a dönülüyor…</title>
+<title>Şifre Sıfırlama — Subtification</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0b7285">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 <style>
-  main.wrap { display: grid; place-items: center; min-height: 100dvh; text-align: center; }
-  .panel { max-width: 440px; }
+  main.wrap { display: grid; place-items: center; min-height: 100dvh; padding-top: 32px; padding-bottom: 32px; }
+  .panel { width: 100%; max-width: 440px; }
+  .panel-icon {
+    width: 60px; height: 60px; border-radius: 30px;
+    display: grid; place-items: center; margin: 0 auto 20px;
+    background: var(--surface-low); font-size: 26px;
+  }
+  .panel h1 { font-size: 23px; margin: 0 0 10px; text-align: center; }
+  .panel > .card > p.lede {
+    color: var(--on-surface-variant); text-align: center; margin: 0 0 26px;
+  }
+  label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--on-surface-variant); margin: 0 0 7px 2px; }
+  input[type="password"] {
+    width: 100%; box-sizing: border-box;
+    background: var(--surface-low); color: var(--on-surface);
+    border: 1px solid transparent; border-radius: var(--radius-sm);
+    padding: 14px 16px; font: inherit; font-size: 16px;
+    margin-bottom: 18px;
+  }
+  input[type="password"]:focus { outline: none; border-color: var(--primary); }
+  .btn { width: 100%; }
+  .btn[disabled] { opacity: 0.6; cursor: not-allowed; }
+  .msg {
+    border-radius: var(--radius-sm); padding: 13px 16px;
+    font-size: 14.5px; margin-bottom: 18px; line-height: 1.5;
+  }
+  .msg-error { background: #fdeceb; color: #93000a; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .msg-error { background: #3a1513; color: #ffb4ab; }
+  }
+  .hint { font-size: 13.5px; color: var(--on-surface-variant); text-align: center; margin: 18px 0 0; line-height: 1.55; }
   .spinner {
-    width: 34px; height: 34px; margin: 0 auto 26px;
-    border: 3px solid var(--outline-variant);
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: spin 0.9s linear infinite;
+    width: 30px; height: 30px; margin: 0 auto;
+    border: 3px solid var(--outline-variant); border-top-color: var(--primary);
+    border-radius: 50%; animation: spin 0.9s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
-  .hint { font-size: 14px; color: var(--on-surface-variant); margin-top: 22px; }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
 
 <main class="wrap">
   <div class="panel">
-    <div class="spinner" id="spinner"></div>
-    <h1 style="font-size:24px;margin:0 0 10px;">Uygulamaya dönülüyor…</h1>
-    <p style="color:var(--on-surface-variant);margin:0 0 24px;">Subtification birkaç saniye içinde açılacak. Açılmazsa aşağıdaki butona dokun.</p>
-    <a class="btn" id="openBtn" href="#">Subtification'ı aç</a>
-    <p class="hint">Uygulama bu cihazda yüklü değilse bu bağlantı çalışmaz. Bağlantıyı, uygulamanın kurulu olduğu cihazda açman gerekiyor.</p>
+
+    <!-- Yükleniyor -->
+    <section id="view-loading" class="card">
+      <div class="spinner"></div>
+    </section>
+
+    <!-- Yeni şifre formu -->
+    <section id="view-form" class="card" hidden>
+      <div class="panel-icon">🔑</div>
+      <h1>Yeni şifreni belirle</h1>
+      <p class="lede">Subtification hesabın için yeni bir şifre seç.</p>
+
+      <div id="form-error" class="msg msg-error" hidden></div>
+
+      <form id="reset-form" novalidate>
+        <label for="pw1">Yeni şifre</label>
+        <input id="pw1" type="password" autocomplete="new-password" placeholder="En az 6 karakter" required>
+
+        <label for="pw2">Yeni şifre (tekrar)</label>
+        <input id="pw2" type="password" autocomplete="new-password" placeholder="Şifreni tekrar yaz" required>
+
+        <button class="btn" id="submit-btn" type="submit">Şifreyi Kaydet</button>
+      </form>
+    </section>
+
+    <!-- Başarılı -->
+    <section id="view-success" class="card" hidden>
+      <div class="panel-icon">✅</div>
+      <h1>Şifren güncellendi</h1>
+      <p class="lede">Artık yeni şifrenle giriş yapabilirsin.</p>
+      <a class="btn" id="open-app" href="subtification://">Subtification'ı Aç</a>
+      <p class="hint">Buton çalışmazsa uygulamayı telefonundan kendin açıp yeni şifrenle giriş yapabilirsin.</p>
+    </section>
+
+    <!-- Mail doğrulandı (kayıt onayı) -->
+    <section id="view-confirmed" class="card" hidden>
+      <div class="panel-icon">🎉</div>
+      <h1>E-postan doğrulandı</h1>
+      <p class="lede">Hesabın hazır. Uygulamaya dönüp giriş yapabilirsin.</p>
+      <a class="btn" href="subtification://">Subtification'ı Aç</a>
+      <p class="hint">Buton çalışmazsa uygulamayı telefonundan kendin açabilirsin.</p>
+    </section>
+
+    <!-- Geçersiz bağlantı -->
+    <section id="view-invalid" class="card" hidden>
+      <div class="panel-icon">⏳</div>
+      <h1>Bağlantı geçersiz</h1>
+      <p class="lede" id="invalid-text">
+        Bu bağlantının süresi dolmuş veya daha önce kullanılmış.
+      </p>
+      <a class="btn" href="subtification://">Subtification'ı Aç</a>
+      <p class="hint">
+        Uygulamadaki “Şifremi Unuttum” ekranından yeni bir bağlantı isteyebilirsin.
+      </p>
+    </section>
+
   </div>
 </main>
 
 <script>
-  (function () {
-    // Supabase ya hash fragment (#access_token=...) ya da query (?code=...) ile döner.
-    // İkisini de olduğu gibi uygulamaya taşıyoruz.
-    var payload = window.location.hash || window.location.search || '';
-    var target = 'subtification://auth/callback' + payload;
+(function () {
+  var SUPABASE_URL = "https://bktrxpodekaoyckfzqst.supabase.co";
+  // Publishable (anon) anahtar — tasarımı gereği herkese açıktır, mobil
+  // uygulama paketinin içinde de bulunur. Gizli bir bilgi değildir.
+  var SUPABASE_KEY = "sb_publishable_tBpAwE-9bguNOQALTUPLTg_rGnVXwe5";
 
-    var btn = document.getElementById('openBtn');
-    btn.setAttribute('href', target);
+  var views = {
+    loading: document.getElementById("view-loading"),
+    form: document.getElementById("view-form"),
+    success: document.getElementById("view-success"),
+    confirmed: document.getElementById("view-confirmed"),
+    invalid: document.getElementById("view-invalid")
+  };
 
-    // Otomatik yönlendirme dene.
-    window.location.replace(target);
+  function show(name) {
+    Object.keys(views).forEach(function (k) { views[k].hidden = k !== name; });
+  }
 
-    // Uygulama açılmadıysa spinner'ı durdur, kullanıcı butona bassın.
-    setTimeout(function () {
-      var spinner = document.getElementById('spinner');
-      if (spinner) spinner.style.display = 'none';
-    }, 2500);
-  })();
+  // Supabase token'ları fragment (#) ile, hataları çoğunlukla query (?) ile döner.
+  function parseParams() {
+    var out = {};
+    var hashIndex = location.href.indexOf("#");
+    var hash = hashIndex === -1 ? "" : location.href.slice(hashIndex + 1);
+    var search = location.search ? location.search.slice(1) : "";
+
+    [search, hash].forEach(function (part) {
+      if (!part) return;
+      part.split("&").forEach(function (pair) {
+        if (!pair) return;
+        var eq = pair.indexOf("=");
+        var k = eq === -1 ? pair : pair.slice(0, eq);
+        var v = eq === -1 ? "" : pair.slice(eq + 1);
+        try {
+          out[decodeURIComponent(k.replace(/\+/g, " "))] =
+            decodeURIComponent(v.replace(/\+/g, " "));
+        } catch (e) {
+          out[k] = v;
+        }
+      });
+    });
+    return out;
+  }
+
+  var params = parseParams();
+
+  // Token'lar adres çubuğunda durmasın — yenilemede de kaybolmasın diye
+  // önce okuduk, sonra temizliyoruz.
+  if (location.hash && history.replaceState) {
+    history.replaceState(null, "", location.pathname);
+  }
+
+  if (params.error || params.error_description) {
+    var text = params.error_description || "";
+    if (text) document.getElementById("invalid-text").textContent = text;
+    show("invalid");
+    return;
+  }
+
+  var accessToken = params.access_token;
+
+  if (!accessToken) {
+    show("invalid");
+    return;
+  }
+
+  if (params.type !== "recovery") {
+    // Kayıt onayı, mail değişikliği vb. — oturum uygulamada açılacak.
+    show("confirmed");
+    return;
+  }
+
+  show("form");
+
+  var form = document.getElementById("reset-form");
+  var errorBox = document.getElementById("form-error");
+  var button = document.getElementById("submit-btn");
+
+  function fail(message) {
+    errorBox.textContent = message;
+    errorBox.hidden = false;
+  }
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    errorBox.hidden = true;
+
+    var pw1 = document.getElementById("pw1").value;
+    var pw2 = document.getElementById("pw2").value;
+
+    if (!pw1 || !pw2) return fail("Lütfen iki alanı da doldur.");
+    if (pw1 !== pw2) return fail("Şifreler birbiriyle eşleşmiyor.");
+    if (pw1.length < 6) return fail("Şifre en az 6 karakter olmalı.");
+
+    button.disabled = true;
+    button.textContent = "Kaydediliyor…";
+
+    fetch(SUPABASE_URL + "/auth/v1/user", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + accessToken
+      },
+      body: JSON.stringify({ password: pw1 })
+    })
+      .then(function (response) {
+        return response.json().then(function (body) {
+          return { ok: response.ok, status: response.status, body: body };
+        });
+      })
+      .then(function (result) {
+        if (result.ok) {
+          show("success");
+          return;
+        }
+
+        if (result.status === 401 || result.status === 403) {
+          show("invalid");
+          return;
+        }
+
+        fail(
+          (result.body && (result.body.msg || result.body.message || result.body.error_description)) ||
+          "Şifre güncellenemedi. Lütfen tekrar dene."
+        );
+        button.disabled = false;
+        button.textContent = "Şifreyi Kaydet";
+      })
+      .catch(function () {
+        fail("Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.");
+        button.disabled = false;
+        button.textContent = "Şifreyi Kaydet";
+      });
+  });
+})();
 </script>
 
 </body>

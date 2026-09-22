@@ -2,6 +2,11 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 
+// Supabase'in gönderdiği doğrulama ve şifre sıfırlama maillerindeki linkler buraya
+// düşer. Şifre değiştirme işlemi o sayfanın kendisinde tamamlanır; kullanıcı
+// sonrasında "Subtification'ı Aç" butonuyla uygulamaya döner.
+const EMAIL_REDIRECT_TO = 'https://subtification.aruntas.com/auth/callback/';
+
 interface AuthState {
   session: Session | null;
   user: User | null;
@@ -51,7 +56,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signUpWithEmail: async (email: string, password: string) => {
     set({ loading: true });
     try {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: EMAIL_REDIRECT_TO },
+      });
       if (error) throw error;
     } finally {
       set({ loading: false });
@@ -72,7 +81,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   resetPassword: async (email: string) => {
     set({ loading: true });
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: EMAIL_REDIRECT_TO,
+      });
       if (error) throw error;
     } finally {
       set({ loading: false });
