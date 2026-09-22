@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "subtification",
+    "name": "Subtification",
     "slug": "subtification",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,7 +8,8 @@
     "scheme": "subtification",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aruntas.subtification"
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +18,8 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.aruntas.subtification"
     },
     "web": {
       "output": "static",
@@ -29,7 +31,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#faf8ff",
+          "backgroundColor": "#fafcfc",
           "dark": {
             "backgroundColor": "#101216"
           }
