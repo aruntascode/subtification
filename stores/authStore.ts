@@ -17,6 +17,7 @@ interface AuthState {
   signUpWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -73,6 +74,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  deleteAccount: async () => {
+    set({ loading: true });
+    try {
+      // Sunucudaki delete_own_account() yalnızca oturumdaki kullanıcıyı siler.
+      // Abonelik kayıtları user_id üzerindeki cascade ile birlikte gider.
+      const { error } = await supabase.rpc('delete_own_account');
+      if (error) throw error;
+      await supabase.auth.signOut();
     } finally {
       set({ loading: false });
     }

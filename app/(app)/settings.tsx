@@ -61,7 +61,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation();
-  const { user, signOut } = useAuthStore();
+  const { user, signOut, deleteAccount } = useAuthStore();
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
   const { displayCurrency, setDisplayCurrency, ratesError } = useCurrencyStore();
 
@@ -521,6 +521,40 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      t("settings.delete_account_confirm_title"),
+      t("settings.delete_account_confirm_message"),
+      [
+        { text: t("settings.delete_account_cancel"), style: "cancel" },
+        {
+          text: t("settings.delete_account_continue"),
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              t("settings.delete_account_final_title"),
+              t("settings.delete_account_final_message"),
+              [
+                { text: t("settings.delete_account_cancel"), style: "cancel" },
+                {
+                  text: t("settings.delete_account_confirm"),
+                  style: "destructive",
+                  onPress: async () => {
+                    try {
+                      await deleteAccount();
+                    } catch (error: any) {
+                      Alert.alert(t("common.error"), error.message);
+                    }
+                  },
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
       {/* Frosted Glass Header */}
@@ -775,6 +809,26 @@ export default function SettingsScreen() {
                 }
               />
             </TouchableOpacity>
+
+            {user && (
+              <TouchableOpacity onPress={handleDeleteAccount} activeOpacity={0.7}>
+                <SettingsRow
+                  styles={styles}
+                  colors={colors}
+                  icon="trash-outline"
+                  iconBg={colors.errorContainer + "1A"}
+                  iconColor={colors.error}
+                  label={t("settings.delete_account")}
+                  trailing={
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color={colors.outline}
+                    />
+                  }
+                />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
