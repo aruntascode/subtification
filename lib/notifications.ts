@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import i18n from "@/locales/i18n";
+import { getNextPaymentDate, isBilling, toDateOnly } from "@/lib/subscriptionDuration";
 
 const NOTIFICATION_PREF_KEY = "push_alerts_enabled";
 const SCHEDULED_NOTIFICATION_IDS_KEY = "scheduled_subscription_notification_ids";
@@ -64,11 +65,16 @@ export async function syncSubscriptionNotifications(subscriptions: Subscription[
 
     const scheduled: StoredNotification[] = [];
     const reminders = subscriptions
-      .filter((sub) => sub.is_active)
-      .map((subscription) => ({
-        subscription,
-        reminderDate: getReminderDate(subscription.next_billing_date),
-      }))
+      .filter(isBilling)
+      .map((subscription) => {
+        const nextPayment = getNextPaymentDate(subscription);
+        return {
+          subscription,
+          reminderDate: nextPayment
+            ? getReminderDate(toDateOnly(nextPayment))
+            : null,
+        };
+      })
       .filter(
         (item): item is { subscription: Subscription; reminderDate: Date } =>
           item.reminderDate !== null,

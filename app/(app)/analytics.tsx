@@ -2,6 +2,7 @@ import { CATEGORIES } from "@/constants/categories";
 import type { AppColors } from "@/constants/colors";
 import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useCurrency, useTotalMonthly, useCategoryTotals } from "@/hooks/useCurrency";
+import { isBilling } from "@/lib/subscriptionDuration";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useSubscriptionStore, Subscription } from "@/stores/subscriptionStore";
 import SubscriptionIcon from "@/components/SubscriptionIcon";
@@ -86,7 +87,7 @@ export default function AnalyticsScreen() {
   const monthly = useTotalMonthly();
   const yearly = monthly * 12;
   const daily = monthly / 30;
-  const activeSubs = subscriptions.filter((s) => s.is_active);
+  const activeSubs = subscriptions.filter(isBilling);
   const pausedSubs = subscriptions.filter((s) => !s.is_active);
 
   const activeWithMonthly: SubscriptionWithMonthly[] = activeSubs.map((s) => ({

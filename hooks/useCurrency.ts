@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useCurrencyStore } from '@/stores/currencyStore';
 import { useSubscriptionStore } from '@/stores/subscriptionStore';
 import { BillingCycle } from '@/constants/categories';
+import { isBilling } from '@/lib/subscriptionDuration';
 
 // subscriptionStore içindeki normalizeToMonthly'yi burada da kullanıyoruz
 function normalizeToMonthly(amount: number, cycle: BillingCycle): number {
@@ -104,7 +105,7 @@ export function useTotalMonthly(): number {
   const { convert, displayCurrency } = useCurrencyStore();
 
   return subscriptions
-    .filter((s) => s.is_active)
+    .filter(isBilling)
     .reduce((sum, s) => {
       const monthly = normalizeToMonthly(s.amount, s.billing_cycle);
       return sum + convert(monthly, s.currency ?? '₺', displayCurrency);
@@ -119,7 +120,7 @@ export function useCategoryTotals() {
   const { convert, displayCurrency } = useCurrencyStore();
 
   const map = new Map<string, number>();
-  for (const s of subscriptions.filter((sub) => sub.is_active)) {
+  for (const s of subscriptions.filter(isBilling)) {
     const monthly = normalizeToMonthly(s.amount, s.billing_cycle);
     const converted = convert(monthly, s.currency ?? '₺', displayCurrency);
     map.set(s.category, (map.get(s.category) ?? 0) + converted);

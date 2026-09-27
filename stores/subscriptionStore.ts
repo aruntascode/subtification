@@ -1,5 +1,6 @@
 import { BillingCycle, Category } from "@/constants/categories";
 import { syncSubscriptionNotifications } from "@/lib/notifications";
+import { isBilling } from "@/lib/subscriptionDuration";
 import { supabase } from "@/lib/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
@@ -16,6 +17,12 @@ export interface Subscription {
   color: string;
   is_active: boolean;
   notes?: string;
+  /** Kaç ay sürecek; null/undefined = süresiz */
+  duration_months?: number | null;
+  /** Taksitli alım mı (süreli olmak zorunda) */
+  is_installment?: boolean;
+  /** Süreli kayıtlarda ilk ödemenin tarihi; kalan ay bu tarihten hesaplanır */
+  first_billing_date?: string | null;
 }
 
 interface SubscriptionState {
@@ -108,6 +115,9 @@ const uploadLocalSubscriptions = async (userId: string) => {
     color: subscription.color,
     is_active: subscription.is_active,
     notes: subscription.notes,
+    duration_months: subscription.duration_months ?? null,
+    is_installment: subscription.is_installment ?? false,
+    first_billing_date: subscription.first_billing_date ?? null,
   }));
 
   const { error } = await supabase.from("subscriptions").insert(payload);
@@ -269,7 +279,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
 
   totalMonthly: () => {
     return get()
-      .subscriptions.filter((s) => s.is_active)
+      .subscriptions.filter(isBilling)
       .reduce(
         (sum, s) => sum + normalizeToMonthly(s.amount, s.billing_cycle),
         0,
@@ -281,7 +291,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
     const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     return get()
       .subscriptions.filter((s) => {
-        if (!s.is_active) return false;
+        if (!isBilling(s)) return false;
         const date = new Date(s.next_billing_date);
         return date >= now && date <= thirtyDays;
       })
@@ -293,7 +303,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   },
 
   byCategory: () => {
-    const subs = get().subscriptions.filter((s) => s.is_active);
+    const subs = get().subscriptions.filter(isBilling);
     const map = new Map<Category, { total: number; items: Subscription[] }>();
     for (const s of subs) {
       const entry = map.get(s.category) ?? { total: 0, items: [] };

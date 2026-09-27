@@ -23,6 +23,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppTabBar } from "@/components/AppTabBar";
+import DurationPicker from "@/components/DurationPicker";
+import { addMonths, parseDateOnly } from "@/lib/subscriptionDuration";
 
 const TR_SERVICES = [
   {
@@ -31,21 +33,9 @@ const TR_SERVICES = [
     color: "#E50914",
     category: "entertainment",
     plans: [
-      { label: "Temel", price: "149.99" },
-      { label: "Standart", price: "229.99" },
-      { label: "Özel (4K)", price: "299.99" },
-    ],
-  },
-  {
-    name: "Spotify",
-    icon: "library-music",
-    color: "#1DB954",
-    category: "entertainment",
-    plans: [
-      { label: "Öğrenci", price: "32.99" },
-      { label: "Bireysel", price: "59.99" },
-      { label: "Duo", price: "79.99" },
-      { label: "Aile", price: "99.99" },
+      { label: "Temel", price: "189.99" },
+      { label: "Standart", price: "289.99" },
+      { label: "Premium", price: "379.99" },
     ],
   },
   {
@@ -53,11 +43,69 @@ const TR_SERVICES = [
     icon: "smart-display",
     color: "#FF0000",
     category: "entertainment",
+    plans: [{ label: "Bireysel", price: "79.99" }],
+  },
+  {
+    name: "Spotify",
+    icon: "library-music",
+    color: "#1DB954",
+    category: "music",
     plans: [
-      { label: "Öğrenci", price: "37.99" },
-      { label: "Bireysel", price: "57.99" },
-      { label: "Aile", price: "115.99" },
+      { label: "Bireysel", price: "99.00" },
+      { label: "Öğrenci", price: "55.00" },
+      { label: "Duo", price: "135.00" },
+      { label: "Aile", price: "165.00" },
     ],
+  },
+  {
+    name: "Amazon Prime",
+    icon: "shopping-cart",
+    color: "#00A8E1",
+    category: "shopping",
+    plans: [
+      { label: "Prime", price: "69.90" },
+      { label: "Prime + Reklamsız Video", price: "129.80" },
+    ],
+  },
+  {
+    name: "Disney+",
+    icon: "movie-filter",
+    color: "#113CCF",
+    category: "entertainment",
+    plans: [
+      { label: "Reklamlı", price: "249.90" },
+      { label: "Reklamsız", price: "449.90" },
+    ],
+  },
+  {
+    name: "HBO Max",
+    icon: "live-tv",
+    color: "#5822B4",
+    category: "entertainment",
+    plans: [
+      { label: "Standart", price: "229.90" },
+      { label: "Özel", price: "299.90" },
+    ],
+  },
+  {
+    name: "iCloud+",
+    icon: "cloud-queue",
+    color: "#3283f6",
+    category: "cloud",
+    plans: [
+      { label: "50 GB", price: "49.99" },
+      { label: "200 GB", price: "169.99" },
+      { label: "2 TB", price: "549.99" },
+      { label: "6 TB", price: "1699.99" },
+      { label: "12 TB", price: "3399.99" },
+    ],
+  },
+  {
+    name: "Apple Music",
+    icon: "music-note",
+    color: "#FA243C",
+    category: "music",
+    plans: [{ label: "Bireysel", price: "89.99" }],
   },
   {
     name: "Exxen",
@@ -65,43 +113,69 @@ const TR_SERVICES = [
     color: "#F2E82E",
     category: "entertainment",
     plans: [
-      { label: "Reklamlı", price: "99.90" },
-      { label: "Reklamsız", price: "137.90" },
+      { label: "Reklamlı", price: "219.00" },
+      { label: "Reklamsız", price: "309.00" },
     ],
   },
   {
-    name: "BluTV",
-    icon: "movie",
-    color: "#0061FF",
+    name: "TOD",
+    icon: "sports-soccer",
+    color: "#6D28D9",
     category: "entertainment",
     plans: [
-      { label: "Aylık", price: "99.90" },
-      { label: "Yıllık (Ay)", price: "49.90" },
+      { label: "Spor Extra", price: "350.00" },
+      { label: "Süper Lig", price: "1590.00" },
     ],
   },
   {
-    name: "Amazon Prime",
-    icon: "shopping-cart",
-    color: "#00A8E1",
-    category: "entertainment",
-    plans: [{ label: "Standart", price: "39.00" }],
+    name: "Xbox Game Pass",
+    icon: "sports-esports",
+    color: "#107C10",
+    category: "gaming",
+    plans: [
+      { label: "Essential", price: "269.00" },
+      { label: "Premium", price: "409.00" },
+      { label: "PC Game Pass", price: "419.00" },
+      { label: "Ultimate", price: "529.00" },
+    ],
   },
   {
-    name: "ChatGPT Plus",
+    name: "PlayStation Plus",
+    icon: "videogame-asset",
+    color: "#003791",
+    category: "gaming",
+    plans: [
+      { label: "Essential", price: "400.00" },
+      { label: "Extra", price: "600.00" },
+      { label: "Deluxe", price: "710.00" },
+    ],
+  },
+  {
+    name: "S Sport Plus",
+    icon: "sports",
+    color: "#E30613",
+    category: "entertainment",
+    plans: [{ label: "Standart", price: "399.00" }],
+  },
+  {
+    name: "ChatGPT",
     icon: "auto-awesome",
     color: "#10A37F",
     category: "productivity",
-    plans: [{ label: "Plus", price: "20.00", forceCurrency: "$" }],
+    plans: [
+      { label: "Go", price: "249.99" },
+      { label: "Plus", price: "999.99" },
+    ],
   },
   {
-    name: "iCloud+",
-    icon: "cloud-queue",
-    color: "#3283f6",
+    name: "Claude",
+    icon: "psychology",
+    color: "#D97757",
     category: "productivity",
     plans: [
-      { label: "50 GB", price: "12.99" },
-      { label: "200 GB", price: "39.99" },
-      { label: "2 TB", price: "129.99" },
+      { label: "Pro", price: "999.99" },
+      { label: "Max 5x", price: "6999.99" },
+      { label: "Max 20x", price: "12999.99" },
     ],
   },
   {
@@ -127,7 +201,15 @@ const AVAILABLE_ICONS = [
   "tv",
   "movie",
   "shopping-cart",
+  "movie-filter",
+  "live-tv",
+  "music-note",
+  "sports-soccer",
+  "sports-esports",
+  "videogame-asset",
+  "sports",
   "auto-awesome",
+  "psychology",
   "cloud-queue",
   "fitness-center",
   "wifi",
@@ -138,6 +220,7 @@ const AVAILABLE_ICONS = [
   "flight",
   "phone-iphone",
   "account-balance-wallet",
+  "credit-card",
   "favorite",
 ];
 
@@ -165,7 +248,7 @@ const sanitizeAmountInput = (value: string) => {
 
 export default function NewSubscriptionScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { addSubscription, loading } = useSubscriptionStore();
   const { custom } = useLocalSearchParams<{ custom?: string }>();
   const insets = useSafeAreaInsets();
@@ -183,6 +266,8 @@ export default function NewSubscriptionScreen() {
   const [activeIcon, setActiveIcon] = useState(AVAILABLE_ICONS[0]);
   const [showAllServices, setShowAllServices] = useState(false);
   const [currency, setCurrency] = useState("₺");
+  const [isInstallment, setIsInstallment] = useState(false);
+  const [durationMonths, setDurationMonths] = useState<number | null>(null);
 
   // YENİ: Notlar State'i
   const [notes, setNotes] = useState("");
@@ -200,6 +285,8 @@ export default function NewSubscriptionScreen() {
   };
 
   const handleSelectService = (service: any) => {
+    // Popüler servisler abonelik; taksit modundaysa geri dön
+    setIsInstallment(false);
     setName(service.name);
     setCategory(service.category as Category);
     setActiveColor(service.color);
@@ -275,6 +362,11 @@ export default function NewSubscriptionScreen() {
       return;
     }
 
+    if (isInstallment && !durationMonths) {
+      Alert.alert(t("common.error"), t("duration.err_installment_months"));
+      return;
+    }
+
     const finalBillingDate = calculateNextBillingDate(billingDay);
 
     try {
@@ -289,12 +381,52 @@ export default function NewSubscriptionScreen() {
         color: activeColor,
         is_active: true,
         notes: notes.trim() || undefined, // YENİ: Notları kaydet
+        duration_months: durationMonths,
+        is_installment: isInstallment,
+        first_billing_date: durationMonths ? finalBillingDate : null,
       });
       router.back();
     } catch (error: any) {
       Alert.alert(t("common.error"), error.message);
     }
   };
+
+  const handleSelectType = (installment: boolean) => {
+    if (installment === isInstallment) return;
+    setIsInstallment(installment);
+    if (installment) {
+      // Taksit süresiz olamaz; plan listesi taksite uymaz
+      setAvailablePlans([]);
+      setActivePlanLabel("");
+      if (durationMonths === null) setDurationMonths(12);
+      if (!name.trim()) {
+        setCategory("shopping");
+        setActiveIcon("credit-card");
+      }
+    }
+  };
+
+  const durationSummary = (() => {
+    if (!durationMonths || !billingDay) return null;
+    const day = parseInt(billingDay, 10);
+    if (day < 1 || day > 31) return null;
+    const last = addMonths(
+      parseDateOnly(calculateNextBillingDate(billingDay)),
+      durationMonths - 1,
+    );
+    const lastLabel = last.toLocaleDateString(i18n.language, {
+      month: "long",
+      year: "numeric",
+    });
+    const parsedAmount = parseFloat(amount);
+    if (isInstallment && parsedAmount > 0) {
+      return t("duration.installment_summary", {
+        total: `${currency}${(parsedAmount * durationMonths).toFixed(2)}`,
+        date: lastLabel,
+      });
+    }
+    return t("duration.summary", { date: lastLabel });
+  })();
 
   const displayedServices = showAllServices
     ? TR_SERVICES
@@ -395,10 +527,41 @@ export default function NewSubscriptionScreen() {
             </View>
 
             <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t("duration.type")}</Text>
+              <View style={styles.currencyRow}>
+                {[false, true].map((installment) => (
+                  <TouchableOpacity
+                    key={String(installment)}
+                    style={[
+                      styles.currencyBtn,
+                      isInstallment === installment && styles.currencyBtnActive,
+                    ]}
+                    onPress={() => handleSelectType(installment)}
+                  >
+                    <Text
+                      style={[
+                        styles.typeBtnText,
+                        isInstallment === installment && styles.currencyBtnTextActive,
+                      ]}
+                    >
+                      {installment
+                        ? t("duration.type_installment")
+                        : t("duration.type_subscription")}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
               <Text style={styles.label}>{t("new_sub.service_name")}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Örn: Ev Kirası"
+                placeholder={
+                  isInstallment
+                    ? t("duration.installment_name_placeholder")
+                    : "Örn: Ev Kirası"
+                }
                 placeholderTextColor={colors.onSurfaceVariant + "80"}
                 value={name}
                 onChangeText={setName}
@@ -481,7 +644,11 @@ export default function NewSubscriptionScreen() {
 
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>{t("new_sub.monthly_cost")}</Text>
+                <Text style={styles.label}>
+                  {isInstallment
+                    ? t("duration.installment_amount")
+                    : t("new_sub.monthly_cost")}
+                </Text>
                 <View style={styles.amountContainer}>
                   <Text style={styles.currencySymbol}>{currency}</Text>
                   <TextInput
@@ -510,6 +677,22 @@ export default function NewSubscriptionScreen() {
                   maxLength={2}
                 />
               </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                {isInstallment
+                  ? t("duration.installment_months")
+                  : t("duration.label")}
+              </Text>
+              <DurationPicker
+                value={durationMonths}
+                onChange={setDurationMonths}
+                allowUnlimited={!isInstallment}
+              />
+              {durationSummary && (
+                <Text style={styles.durationSummary}>{durationSummary}</Text>
+              )}
             </View>
 
             {availablePlans.length > 0 && (
@@ -832,6 +1015,17 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
   currencyBtnText: {
     ...Typography.headlineSm,
     color: colors.onSurfaceVariant,
+  },
+  typeBtnText: {
+    ...Typography.labelMd,
+    fontWeight: "700",
+    color: colors.onSurfaceVariant,
+  },
+  durationSummary: {
+    ...Typography.labelMd,
+    color: colors.onSurfaceVariant,
+    marginTop: Spacing.sm,
+    marginLeft: 4,
   },
   currencyBtnTextActive: {
     color: colors.primary,

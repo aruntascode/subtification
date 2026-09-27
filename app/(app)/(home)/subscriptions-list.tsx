@@ -3,6 +3,11 @@ import { CATEGORIES, Category } from "@/constants/categories";
 import type { AppColors } from "@/constants/colors";
 import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useCurrency } from "@/hooks/useCurrency";
+import {
+  formatDurationProgress,
+  getNextPaymentDate,
+  isBilling,
+} from "@/lib/subscriptionDuration";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { Ionicons } from "@expo/vector-icons";
@@ -49,7 +54,7 @@ export default function SubscriptionsListStackScreen() {
   const filtered = subscriptions.filter((sub) => {
     if (search && !sub.name.toLowerCase().includes(search.toLowerCase()))
       return false;
-    if (statusFilter === "active" && !sub.is_active) return false;
+    if (statusFilter === "active" && !isBilling(sub)) return false;
     if (statusFilter === "paused" && sub.is_active) return false;
     if (categoryFilter !== "all" && sub.category !== categoryFilter)
       return false;
@@ -57,7 +62,7 @@ export default function SubscriptionsListStackScreen() {
   });
 
   const filteredTotal = filtered
-    .filter((s) => s.is_active)
+    .filter(isBilling)
     .reduce((sum, s) => sum + convert(s.amount, s.currency ?? "₺"), 0);
 
   const usedCategories = CATEGORIES.filter((cat) =>
@@ -237,10 +242,15 @@ export default function SubscriptionsListStackScreen() {
 
         {/* Cards */}
         {filtered.map((sub) => {
-          const nextBillDate = new Date(sub.next_billing_date).toLocaleDateString(
-            undefined,
-            { day: "numeric", month: "short", year: "numeric" },
-          );
+          const nextPayment = getNextPaymentDate(sub);
+          const nextBillDate = nextPayment
+            ? nextPayment.toLocaleDateString(undefined, {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : t("duration.finished");
+          const durationProgress = formatDurationProgress(sub, t);
           const categoryLabel = t(`categories.${sub.category}`);
           const cycleLabel =
             t(`common.${sub.billing_cycle}`) || sub.billing_cycle;
@@ -289,6 +299,7 @@ export default function SubscriptionsListStackScreen() {
               <Text style={styles.cardName}>{sub.name}</Text>
               <Text style={styles.cardMeta}>
                 {categoryLabel} • {cycleLabel}
+                {durationProgress ? ` • ${durationProgress}` : ""}
               </Text>
 
               <View style={styles.cardDivider} />

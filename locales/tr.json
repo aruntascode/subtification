@@ -247,5 +247,29 @@
     "weekly": "haftalık",
     "quarterly": "3 aylık",
     "days": "gün"
+  },
+  "duration": {
+    "label": "Süre",
+    "type": "Tür",
+    "type_subscription": "Abonelik",
+    "type_installment": "Taksit",
+    "unlimited": "Süresiz",
+    "months": "{{count}} ay",
+    "custom": "Diğer",
+    "custom_placeholder": "Kaç ay? (örn: 15)",
+    "installment_months": "Taksit Sayısı",
+    "installment_amount": "Aylık Taksit",
+    "installment_name_placeholder": "Örn: iPhone 16",
+    "summary": "Son ödeme: {{date}}",
+    "installment_summary": "Toplam {{total}} · Son taksit: {{date}}",
+    "err_installment_months": "Lütfen taksit sayısını seç.",
+    "progress_installment": "{{paid}}/{{total}} taksit",
+    "progress_months": "{{remaining}} ay kaldı",
+    "finished": "Tamamlandı",
+    "installment_badge": "Taksit",
+    "remaining_title": "Kalan Ödeme",
+    "remaining_value": "{{remaining}} / {{total}} ay",
+    "last_payment": "Son ödeme: {{date}}",
+    "remaining_total": "Kalan tutar: {{amount}}"
   }
 }

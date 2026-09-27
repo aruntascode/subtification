@@ -247,5 +247,29 @@
     "weekly": "weekly",
     "quarterly": "quarterly",
     "days": "days"
+  },
+  "duration": {
+    "label": "Duration",
+    "type": "Type",
+    "type_subscription": "Subscription",
+    "type_installment": "Installment",
+    "unlimited": "Ongoing",
+    "months": "{{count}} mo",
+    "custom": "Other",
+    "custom_placeholder": "How many months? (e.g. 15)",
+    "installment_months": "Number of Installments",
+    "installment_amount": "Monthly Installment",
+    "installment_name_placeholder": "e.g. iPhone 16",
+    "summary": "Last payment: {{date}}",
+    "installment_summary": "Total {{total}} · Last installment: {{date}}",
+    "err_installment_months": "Please choose the number of installments.",
+    "progress_installment": "{{paid}}/{{total}} installments",
+    "progress_months": "{{remaining}} months left",
+    "finished": "Completed",
+    "installment_badge": "Installment",
+    "remaining_title": "Remaining",
+    "remaining_value": "{{remaining}} / {{total}} mo",
+    "last_payment": "Last payment: {{date}}",
+    "remaining_total": "Remaining amount: {{amount}}"
   }
 }

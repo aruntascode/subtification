@@ -27,6 +27,15 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppTabBar } from "@/components/AppTabBar";
+import DurationPicker from "@/components/DurationPicker";
+import {
+  getLastPaymentDate,
+  getNextPaymentDate,
+  getPaidCount,
+  isFinished,
+  parseDateOnly,
+  toDateOnly,
+} from "@/lib/subscriptionDuration";
 
 const AVAILABLE_ICONS = [
   "apps",
@@ -46,6 +55,7 @@ const AVAILABLE_ICONS = [
   "flight",
   "phone-iphone",
   "account-balance-wallet",
+  "credit-card",
   "favorite",
 ];
 
@@ -77,7 +87,7 @@ export default function SubscriptionDetailScreen() {
 
   const subscription = subscriptions.find((s) => s.id === id);
   const { fmtWithOriginal } = useCurrency();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, darkMode, blurTint } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, darkMode), [colors, darkMode]);
@@ -113,6 +123,9 @@ export default function SubscriptionDetailScreen() {
     subscription?.color ?? AVAILABLE_COLORS[0],
   );
   const [editNotes, setEditNotes] = useState(subscription?.notes ?? "");
+  const [editDuration, setEditDuration] = useState<number | null>(
+    subscription?.duration_months ?? null,
+  );
 
   if (!subscription) {
     return (
@@ -127,9 +140,16 @@ export default function SubscriptionDetailScreen() {
     );
   }
 
+  const finished = isFinished(subscription);
+  const nextPaymentDate = getNextPaymentDate(subscription);
+  const lastPaymentDate = getLastPaymentDate(subscription);
+  const paidCount = getPaidCount(subscription);
+  const totalMonths = subscription.duration_months ?? 0;
+  const remainingMonths = totalMonths - paidCount;
+
   const getDaysUntil = () => {
-    const diff =
-      new Date(subscription.next_billing_date).getTime() - Date.now();
+    if (!nextPaymentDate) return 0;
+    const diff = nextPaymentDate.getTime() - Date.now();
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   };
 
@@ -208,7 +228,30 @@ export default function SubscriptionDetailScreen() {
       return;
     }
 
+    if (subscription.is_installment && !editDuration) {
+      Alert.alert(t("common.error"), t("duration.err_installment_months"));
+      return;
+    }
+
     const finalBillingDate = calculateNextBillingDate(editBillingDay);
+
+    // Süreli kayıtta takvimin başlangıcını koru; sadece ödeme günü değiştiyse günü kaydır
+    let firstBillingDate: string | null = null;
+    if (editDuration) {
+      if (subscription.first_billing_date) {
+        const first = parseDateOnly(subscription.first_billing_date);
+        const monthEnd = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+        firstBillingDate = toDateOnly(
+          new Date(
+            first.getFullYear(),
+            first.getMonth(),
+            Math.min(parseInt(editBillingDay, 10), monthEnd),
+          ),
+        );
+      } else {
+        firstBillingDate = finalBillingDate;
+      }
+    }
 
     try {
       await updateSubscription(subscription.id, {
@@ -220,6 +263,8 @@ export default function SubscriptionDetailScreen() {
         next_billing_date: finalBillingDate,
         billing_cycle: "monthly",
         notes: editNotes.trim() || undefined,
+        duration_months: editDuration,
+        first_billing_date: firstBillingDate,
       });
       setIsEditing(false);
     } catch (error: any) {
@@ -274,10 +319,26 @@ export default function SubscriptionDetailScreen() {
             radius={28}
           />
           <Text style={styles.heroNameCenter}>{subscription.name}</Text>
-          <View style={styles.heroCategoryBadge}>
-            <Text style={styles.heroCategoryText}>
-              {categoryLabel.toUpperCase()}
-            </Text>
+          <View style={styles.heroBadgeRow}>
+            <View style={styles.heroCategoryBadge}>
+              <Text style={styles.heroCategoryText}>
+                {categoryLabel.toUpperCase()}
+              </Text>
+            </View>
+            {subscription.is_installment && (
+              <View style={styles.heroCategoryBadge}>
+                <Text style={styles.heroCategoryText}>
+                  {t("duration.installment_badge").toLocaleUpperCase(i18n.language)}
+                </Text>
+              </View>
+            )}
+            {finished && (
+              <View style={[styles.heroCategoryBadge, styles.finishedBadge]}>
+                <Text style={[styles.heroCategoryText, styles.finishedBadgeText]}>
+                  {t("duration.finished").toLocaleUpperCase(i18n.language)}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -332,14 +393,70 @@ export default function SubscriptionDetailScreen() {
             </Text>
             <View style={{ flex: 1, justifyContent: "center" }}>
               <Text style={styles.bentoDateValue}>
-                {formatDate(subscription.next_billing_date)}
+                {nextPaymentDate
+                  ? formatDate(
+                      subscription.duration_months
+                        ? toDateOnly(nextPaymentDate)
+                        : subscription.next_billing_date,
+                    )
+                  : t("duration.finished")}
               </Text>
             </View>
-            <Text style={styles.bentoDaysSub}>
-              {t("subscription_detail.days_left", { days: daysUntil })}
-            </Text>
+            {nextPaymentDate && (
+              <Text style={styles.bentoDaysSub}>
+                {t("subscription_detail.days_left", { days: daysUntil })}
+              </Text>
+            )}
           </View>
         </View>
+
+        {totalMonths > 0 && lastPaymentDate && (
+          <View style={styles.notesCard}>
+            <Text style={styles.notesSectionTitle}>
+              {t("duration.remaining_title")}
+            </Text>
+            <Text style={styles.durationValue}>
+              {subscription.is_installment
+                ? t("duration.progress_installment", {
+                    paid: paidCount,
+                    total: totalMonths,
+                  })
+                : t("duration.remaining_value", {
+                    remaining: remainingMonths,
+                    total: totalMonths,
+                  })}
+            </Text>
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${Math.round((paidCount / totalMonths) * 100)}%`,
+                    backgroundColor: subscription.color,
+                  },
+                ]}
+              />
+            </View>
+            <Text style={styles.durationMeta}>
+              {t("duration.last_payment", {
+                date: lastPaymentDate.toLocaleDateString(i18n.language, {
+                  month: "long",
+                  year: "numeric",
+                }),
+              })}
+            </Text>
+            {remainingMonths > 0 && (
+              <Text style={styles.durationMeta}>
+                {t("duration.remaining_total", {
+                  amount: fmtWithOriginal(
+                    subscription.amount * remainingMonths,
+                    subscription.currency ?? "₺",
+                  ),
+                })}
+              </Text>
+            )}
+          </View>
+        )}
 
         {subscription.notes && (
           <View style={styles.notesCard}>
@@ -511,6 +628,20 @@ export default function SubscriptionDetailScreen() {
                   maxLength={2}
                 />
               </View>
+            </View>
+
+            {/* Süre / Taksit sayısı */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                {subscription.is_installment
+                  ? t("duration.installment_months")
+                  : t("duration.label")}
+              </Text>
+              <DurationPicker
+                value={editDuration}
+                onChange={setEditDuration}
+                allowUnlimited={!subscription.is_installment}
+              />
             </View>
 
             {/* Kategori */}
@@ -688,6 +819,39 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     marginTop: Spacing.lg,
     marginBottom: Spacing.sm,
     textAlign: "center",
+  },
+  heroBadgeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: Spacing.sm,
+  },
+  finishedBadge: {
+    backgroundColor: colors.primaryFixed,
+  },
+  finishedBadgeText: {
+    color: colors.primary,
+  },
+  durationValue: {
+    ...Typography.headlineMd,
+    color: colors.onSurface,
+    marginBottom: Spacing.md,
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: BorderRadius.full,
+    backgroundColor: colors.surfaceContainerHighest,
+    overflow: "hidden",
+    marginBottom: Spacing.md,
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: BorderRadius.full,
+  },
+  durationMeta: {
+    ...Typography.labelMd,
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
   },
   heroCategoryBadge: {
     backgroundColor: colors.surfaceContainerHighest,

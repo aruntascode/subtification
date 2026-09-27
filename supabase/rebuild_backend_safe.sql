@@ -33,6 +33,9 @@ alter table if exists public.subscriptions
   add column if not exists color text default '#0b7285',
   add column if not exists notes text,
   add column if not exists is_active boolean default true,
+  add column if not exists duration_months integer,
+  add column if not exists is_installment boolean not null default false,
+  add column if not exists first_billing_date date,
   add column if not exists created_at timestamptz default now(),
   add column if not exists updated_at timestamptz default now();
 
