@@ -1,4 +1,10 @@
 import SubscriptionIcon from "@/components/SubscriptionIcon";
+import InstallmentSummaryCard from "@/components/home/InstallmentSummaryCard";
+import MonthProgressCard from "@/components/home/MonthProgressCard";
+import PaymentCalendarStrip, {
+  CALENDAR_NEXT_MONTH_DAYS,
+} from "@/components/home/PaymentCalendarStrip";
+import { getPaymentsInMonth } from "@/lib/paymentSchedule";
 import type { AppColors } from "@/constants/colors";
 import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
@@ -58,6 +64,19 @@ export default function DashboardScreen() {
   const upcoming = upcomingPayments().filter(
     (sub) => getDaysUntil(sub.next_billing_date) <= 7,
   );
+
+  // "Bu ay" kartı yalnızca bu ayı, takvim şeridi ek olarak sonraki ayın ilk 15 gününü gösterir
+  const { monthPayments, calendarPayments } = useMemo(() => {
+    const now = new Date();
+    const current = getPaymentsInMonth(subscriptions, now.getFullYear(), now.getMonth());
+    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const nextMonthHead = getPaymentsInMonth(
+      subscriptions,
+      next.getFullYear(),
+      next.getMonth(),
+    ).filter((p) => p.date.getDate() <= CALENDAR_NEXT_MONTH_DAYS);
+    return { monthPayments: current, calendarPayments: [...current, ...nextMonthHead] };
+  }, [subscriptions]);
 
   // YENİ: Listeyi ters çevirip sadece en son eklenen 3 aboneliği alıyoruz
   const recentSubs = [...subscriptions].reverse().slice(0, 3);
@@ -215,68 +234,23 @@ export default function DashboardScreen() {
             </View>
           )}
 
-          {/* Upcoming Payments (Yaklaşan Ödemeler - Max 7 Gün) */}
-          {upcoming.length > 0 && (
-            <View style={styles.section}>
-              {/* Başlığı sectionHeader içine alarak alt boşluğu (16px) eşitledik */}
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>
-                  {t("dashboard.upcoming")}
-                </Text>
-              </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.upcomingScroll}
-              >
-                {upcoming.map((sub) => {
-                  // Stitch tarzı "12 Eki" veya "Oct 12" formatı
-                  const locale = i18n.language.startsWith("tr")
-                    ? "tr-TR"
-                    : "en-US";
-                  const formattedDate = new Date(sub.next_billing_date)
-                    .toLocaleDateString(locale, {
-                      day: "numeric",
-                      month: "short",
-                    })
-                    .toUpperCase();
+          {subscriptions.length > 0 && (
+            <>
+              {/* Bu ay ödenen / kalan */}
+              <MonthProgressCard payments={monthPayments} />
 
-                  return (
-                    <TouchableOpacity
-                      key={sub.id}
-                      style={styles.upcomingCard}
-                      onPress={() => handleNavigateToDetail(sub.id)}
-                    >
-                      {/* Üst Kısım: İkon ve Tarih Rozeti */}
-                      <View style={styles.upcomingTopRow}>
-                        <SubscriptionIcon
-                          value={sub.emoji}
-                          bgColor={sub.color}
-                          size={24} // 20'den 24'e çıkardık (Alttaki listeyle aynı)
-                          containerSize={48} // 40'tan 48'e çıkardık
-                          radius={14} // Kenar kıvrımını da oranladık
-                        />
-                        <View style={styles.upcomingBadge}>
-                          <Text style={styles.upcomingBadgeText}>
-                            {formattedDate}
-                          </Text>
-                        </View>
-                      </View>
+              {/* Ayın ödeme takvimi (eski 7 günlük yaklaşan ödemeler kartlarının yerine) */}
+              <PaymentCalendarStrip
+                payments={calendarPayments}
+                onPressSubscription={handleNavigateToDetail}
+              />
 
-                      {/* Alt Kısım: Servis Adı ve Fiyat */}
-                      <View style={styles.upcomingBottomRow}>
-                        <Text style={styles.upcomingName} numberOfLines={1}>
-                          {sub.name}
-                        </Text>
-                        <Text style={styles.upcomingAmount}>
-                          {fmtWithOriginal(sub.amount, sub.currency || "₺")}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
+              {/* Aktif taksitler; yoksa hiç görünmez */}
+              <InstallmentSummaryCard
+                subscriptions={subscriptions}
+                onPressSubscription={handleNavigateToDetail}
+              />
+            </>
           )}
 
           {/* Recent Subs (Son Eklenen 3 Abonelik) */}

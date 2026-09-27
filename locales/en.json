@@ -297,5 +297,23 @@
     "empty_cta": "Pick the services you use",
     "empty_single": "I'd rather add one by one",
     "continue_empty": "Continue"
+  },
+  "home_month": {
+    "title": "{{month}}",
+    "paid": "Paid",
+    "remaining": "Remaining",
+    "payments_left": "{{count}} payments left",
+    "all_paid": "All paid this month"
+  },
+  "home_calendar": {
+    "title": "Payment Calendar",
+    "no_payments": "No payments on this day",
+    "paid": "Paid"
+  },
+  "home_installments": {
+    "title": "Installments",
+    "monthly_total": "{{amount}}/mo",
+    "summary": "{{count}} active installments · Ending soonest: {{name}}, {{remaining}} months left",
+    "more": "+{{count}} more"
   }
 }

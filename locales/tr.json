@@ -297,5 +297,23 @@
     "empty_cta": "Kullandığın servisleri seç",
     "empty_single": "Tek tek eklemek istiyorum",
     "continue_empty": "Devam et"
+  },
+  "home_month": {
+    "title": "{{month}} ayı",
+    "paid": "Ödenen",
+    "remaining": "Kalan",
+    "payments_left": "{{count}} ödeme kaldı",
+    "all_paid": "Bu ayın ödemeleri tamam"
+  },
+  "home_calendar": {
+    "title": "Ödeme Takvimi",
+    "no_payments": "Bu gün ödeme yok",
+    "paid": "Ödendi"
+  },
+  "home_installments": {
+    "title": "Taksitler",
+    "monthly_total": "aylık {{amount}}",
+    "summary": "{{count}} aktif taksit · En yakın biten: {{name}}, {{remaining}} ay kaldı",
+    "more": "+{{count}} taksit daha"
   }
 }
