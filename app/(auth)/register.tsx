@@ -66,6 +66,7 @@ export default function RegisterScreen() {
         <Ionicons name="arrow-back" size={28} color={colors.onSurface} />
       </TouchableOpacity>
       <ScrollView
+        keyboardDismissMode="interactive"
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >

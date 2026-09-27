@@ -52,6 +52,7 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <ScrollView
+        keyboardDismissMode="interactive"
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >

@@ -24,6 +24,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
 
 type Draft = {
   planLabel: string;
@@ -262,6 +263,7 @@ export default function BulkAddScreen() {
                 <View style={styles.amountContainer}>
                   <Text style={styles.currencySymbol}>{draft.currency}</Text>
                   <TextInput
+                    inputAccessoryViewID={KEYBOARD_DONE_ID}
                     style={[styles.input, styles.amountInput]}
                     value={draft.amount}
                     onChangeText={(text) =>
@@ -276,6 +278,7 @@ export default function BulkAddScreen() {
               <View style={{ flex: 2 }}>
                 <Text style={styles.label}>{t("bulk.billing_day")}</Text>
                 <TextInput
+                  inputAccessoryViewID={KEYBOARD_DONE_ID}
                   style={styles.input}
                   value={draft.day}
                   onChangeText={(text) =>
@@ -320,6 +323,7 @@ export default function BulkAddScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
+          keyboardDismissMode="interactive"
           key={step}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"

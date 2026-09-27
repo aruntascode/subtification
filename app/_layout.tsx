@@ -1,6 +1,7 @@
 import "@/locales/i18n";
 import "react-native-reanimated";
 import { AppTabBar } from "@/components/AppTabBar";
+import { KeyboardDoneBar } from "@/components/KeyboardDoneBar";
 import { SubtificationSplash } from "@/components/SubtificationSplash";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { configureNotificationHandler } from "@/lib/notifications";
@@ -86,6 +87,8 @@ export default function RootLayout() {
       )}
       <StatusBar style={darkMode ? "light" : "dark"} />
       {showTabBar && <AppTabBar />}
+      {/* Sayı klavyesi ve not alanları için klavye üstü "Bitti" çubuğu */}
+      <KeyboardDoneBar />
       {showInitialSplash && (
         <SubtificationSplash
           exiting={ready}

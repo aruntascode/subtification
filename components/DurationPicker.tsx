@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
 
 const PRESET_MONTHS = [3, 6, 9, 12, 18, 24, 36];
 const MAX_MONTHS = 120;
@@ -89,6 +90,7 @@ export default function DurationPicker({
 
       {customMode && (
         <TextInput
+          inputAccessoryViewID={KEYBOARD_DONE_ID}
           style={styles.input}
           value={customText}
           onChangeText={handleCustomChange}

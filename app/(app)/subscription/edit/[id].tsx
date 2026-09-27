@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DurationPicker from "@/components/DurationPicker";
 import { getIconColorOn, isLightColor } from "@/lib/colorContrast";
 import { parseDateOnly, toDateOnly } from "@/lib/subscriptionDuration";
+import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
 
 const AVAILABLE_ICONS = [
   "apps",
@@ -216,6 +217,8 @@ export default function EditSubscriptionScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
+          keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
             styles.editScrollContent,
@@ -299,6 +302,7 @@ export default function EditSubscriptionScreen() {
                   {subscription.currency ?? "₺"}
                 </Text>
                 <TextInput
+                  inputAccessoryViewID={KEYBOARD_DONE_ID}
                   style={[styles.input, styles.amountInput]}
                   value={editAmount}
                   onChangeText={setEditAmount}
@@ -309,6 +313,7 @@ export default function EditSubscriptionScreen() {
             <View style={[styles.inputGroup, { flex: 1 }]}>
               <Text style={styles.label}>{t("new_sub.billing_day")}</Text>
               <TextInput
+                inputAccessoryViewID={KEYBOARD_DONE_ID}
                 style={styles.input}
                 value={editBillingDay}
                 onChangeText={(text) => {
@@ -373,6 +378,7 @@ export default function EditSubscriptionScreen() {
               {t("subscription_detail.notes")}
             </Text>
             <TextInput
+              inputAccessoryViewID={KEYBOARD_DONE_ID}
               style={[styles.input, styles.notesInput]}
               value={editNotes}
               onChangeText={setEditNotes}

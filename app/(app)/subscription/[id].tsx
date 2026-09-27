@@ -323,7 +323,7 @@ export default function SubscriptionDetailScreen() {
             onPress={handleDelete}
             activeOpacity={0.6}
           >
-            <Ionicons name="trash-outline" size={20} color={colors.error} />
+            <Ionicons name="trash-outline" size={20} color={colors.onError} />
             <Text style={styles.deleteButtonText}>
               {t("subscription_detail.delete")}
             </Text>
@@ -584,11 +584,11 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     gap: Spacing.sm,
     paddingVertical: Spacing.xl,
     borderRadius: BorderRadius.xxl,
-    backgroundColor: colors.errorContainer + "33",
+    backgroundColor: colors.error,
   },
   deleteButtonText: {
     ...Typography.labelLg,
-    color: colors.error,
+    color: colors.onError,
     fontWeight: "700",
   },
 

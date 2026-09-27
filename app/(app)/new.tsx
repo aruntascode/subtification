@@ -27,6 +27,7 @@ import { AppTabBar } from "@/components/AppTabBar";
 import DurationPicker from "@/components/DurationPicker";
 import { addMonths, parseDateOnly } from "@/lib/subscriptionDuration";
 import { getIconColorOn, isLightColor } from "@/lib/colorContrast";
+import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
 
 const AVAILABLE_ICONS = [
   "apps",
@@ -287,6 +288,8 @@ export default function NewSubscriptionScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
+          keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled"
           ref={scrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 64 }]}
@@ -493,6 +496,7 @@ export default function NewSubscriptionScreen() {
                 <View style={styles.amountContainer}>
                   <Text style={styles.currencySymbol}>{currency}</Text>
                   <TextInput
+                    inputAccessoryViewID={KEYBOARD_DONE_ID}
                     style={[styles.input, styles.amountInput]}
                     placeholder="0.00"
                     placeholderTextColor={colors.onSurfaceVariant + "80"}
@@ -506,6 +510,7 @@ export default function NewSubscriptionScreen() {
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={styles.label}>{t("new_sub.billing_day")}</Text>
                 <TextInput
+                  inputAccessoryViewID={KEYBOARD_DONE_ID}
                   style={styles.input}
                   placeholder="Örn: 15"
                   placeholderTextColor={colors.onSurfaceVariant + "80"}
@@ -611,6 +616,7 @@ export default function NewSubscriptionScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>{t("subscription_detail.notes")}</Text>
               <TextInput
+                inputAccessoryViewID={KEYBOARD_DONE_ID}
                 style={[styles.input, styles.notesInput]}
                 value={notes}
                 onChangeText={setNotes}

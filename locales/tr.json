@@ -252,7 +252,8 @@
     "yearly": "yıllık",
     "weekly": "haftalık",
     "quarterly": "3 aylık",
-    "days": "gün"
+    "days": "gün",
+    "done": "Bitti"
   },
   "duration": {
     "label": "Süre",

@@ -485,6 +485,8 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 64 }]}
       >

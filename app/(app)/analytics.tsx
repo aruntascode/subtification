@@ -25,6 +25,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, G } from "react-native-svg";
+import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
 
 // ---------- helpers ----------
 
@@ -325,6 +326,8 @@ export default function AnalyticsScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 64 }]}
@@ -399,6 +402,7 @@ export default function AnalyticsScreen() {
 
           <View style={styles.budgetInputRow}>
             <TextInput
+              inputAccessoryViewID={KEYBOARD_DONE_ID}
               ref={budgetInputRef}
               style={styles.budgetInput}
               value={budgetLimitInput}

@@ -132,6 +132,8 @@ export default function SubscriptionsListScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 64 }]}

@@ -252,7 +252,8 @@
     "yearly": "yearly",
     "weekly": "weekly",
     "quarterly": "quarterly",
-    "days": "days"
+    "days": "days",
+    "done": "Done"
   },
   "duration": {
     "label": "Duration",

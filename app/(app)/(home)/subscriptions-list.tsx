@@ -115,6 +115,8 @@ export default function SubscriptionsListStackScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
