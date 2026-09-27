@@ -27,6 +27,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SHEET_HEIGHT = 400;
+/** Solma geçişinin başladığı oran; bunun üstü dokunuşları arkadaki içeriğe geçirir */
+const TAB_BAR_FADE_START = 0.3;
 const SHEET_DISMISS_DISTANCE = 88;
 const SHEET_DISMISS_VELOCITY = 900;
 const SHEET_UPWARD_DRAG_LIMIT = 96;
@@ -342,9 +344,12 @@ export function AppTabBar() {
             colors.surface + "FD",
             colors.surface,
           ]}
-          locations={[0, 0.2, 0.35, 0.55, 0.75]}
+          locations={[TAB_BAR_FADE_START, 0.45, 0.55, 0.65, 0.75]}
           style={styles.tabBarGradient}
+          // Şeffaf üst kısım kör nokta olmasın: dokunuş alttaki listeye geçsin
+          pointerEvents="box-none"
         >
+          {/* Solmanın başladığı yerden aşağısı tamamen sekme çubuğuna ait */}
           <View style={[styles.tabContent, { paddingBottom: Math.max(insets.bottom, 16) }]}>
             {TABS.map((tab) => {
               const isFocused = !tab.isAction && isTabActive(tab.name);
@@ -407,15 +412,17 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     justifyContent: "flex-end",
   },
   tabContent: {
+    height: `${(1 - TAB_BAR_FADE_START) * 100}%`,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "stretch",
     justifyContent: "space-around",
     paddingHorizontal: 16,
   },
+  // Sütunun tamamı dokunulabilir; simge ve yazı altta durur
   tabItemContainer: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
   },
   tabItem: {
     alignItems: "center",

@@ -62,6 +62,10 @@ export default function AppLayout() {
           name="subscription/[id]"
           options={{ animation: "slide_from_right", gestureEnabled: true }}
         />
+        <Stack.Screen
+          name="subscription/edit/[id]"
+          options={{ animation: "slide_from_right", gestureEnabled: true }}
+        />
       </Stack>
       {showSplash && (
         <SubtificationSplash
