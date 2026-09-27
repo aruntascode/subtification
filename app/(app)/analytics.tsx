@@ -7,7 +7,7 @@ import { useAppTheme } from "@/hooks/useAppTheme";
 import { useSubscriptionStore, Subscription } from "@/stores/subscriptionStore";
 import SubscriptionIcon from "@/components/SubscriptionIcon";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useBudgetStore } from "@/stores/budgetStore";
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -136,7 +136,12 @@ export default function AnalyticsScreen() {
   const [donutMode, setDonutMode] = useState<"subscriptions" | "categories">("subscriptions");
   const slideAnim = useRef(new Animated.Value(0)).current;
   const [btnWidth, setBtnWidth] = useState(0);
-  const [budgetLimitInput, setBudgetLimitInput] = useState("");
+  const savedBudgetLimit = useBudgetStore((state) => state.limit);
+  const setSavedBudgetLimit = useBudgetStore((state) => state.setLimit);
+  // Kayıtlı limit bellekte hazır; ekran ilk karede doğru hâliyle çizilir
+  const [budgetLimitInput, setBudgetLimitInput] = useState(() =>
+    savedBudgetLimit > 0 ? savedBudgetLimit.toString() : "",
+  );
   const [budgetSaved, setBudgetSaved] = useState(false);
   const budgetInputRef = useRef<TextInput>(null);
 
@@ -157,15 +162,9 @@ export default function AnalyticsScreen() {
     return () => subscription.remove();
   }, []);
 
-  useEffect(() => {
-    AsyncStorage.getItem("budget_limit").then((val) => {
-      if (val) setBudgetLimitInput(val);
-    });
-  }, []);
-
   const handleSaveBudget = async () => {
     const val = parseFloat(budgetLimitInput) || 0;
-    await AsyncStorage.setItem("budget_limit", val.toString());
+    await setSavedBudgetLimit(val);
     setBudgetLimitInput(val > 0 ? val.toString() : "");
     budgetInputRef.current?.blur();
     Keyboard.dismiss();

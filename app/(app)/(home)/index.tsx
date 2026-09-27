@@ -4,15 +4,15 @@ import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useCurrency, useTotalMonthly } from "@/hooks/useCurrency";
 import { useAuthStore } from "@/stores/authStore";
+import { useBudgetStore } from "@/stores/budgetStore";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Localization from "expo-localization";
 import { useRouter } from "expo-router";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   DeviceEventEmitter,
@@ -43,7 +43,7 @@ export default function DashboardScreen() {
     [colors, darkMode],
   );
 
-  const [budgetLimit, setBudgetLimit] = useState(0);
+  const budgetLimit = useBudgetStore((state) => state.limit);
 
   const onRefresh = useCallback(() => {
     fetchSubscriptions();
@@ -61,12 +61,6 @@ export default function DashboardScreen() {
 
   // YENİ: Listeyi ters çevirip sadece en son eklenen 3 aboneliği alıyoruz
   const recentSubs = [...subscriptions].reverse().slice(0, 3);
-
-  useEffect(() => {
-    AsyncStorage.getItem("budget_limit").then((val) => {
-      if (val) setBudgetLimit(parseFloat(val) || 0);
-    });
-  }, []);
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(

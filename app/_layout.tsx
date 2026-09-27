@@ -6,6 +6,7 @@ import { SubtificationSplash } from "@/components/SubtificationSplash";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { configureNotificationHandler } from "@/lib/notifications";
 import { useAuthStore } from "@/stores/authStore";
+import { useBudgetStore } from "@/stores/budgetStore";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { useThemeStore } from "@/stores/themeStore";
 import * as SystemUI from "expo-system-ui";
@@ -20,8 +21,10 @@ export default function RootLayout() {
   const subscriptionsInitialized = useSubscriptionStore((s) => s.initialized);
   const initializeTheme = useThemeStore((s) => s.initializeTheme);
   const themeHydrated = useThemeStore((s) => s.hydrated);
-  // Kayıtlı tema okunmadan ekranları çizme; yoksa aydınlık→karanlık sıçraması olur
-  const ready = initialized && themeHydrated;
+  const initializeBudget = useBudgetStore((s) => s.initializeBudget);
+  const budgetHydrated = useBudgetStore((s) => s.hydrated);
+  // Kayıtlı tema ve bütçe okunmadan ekranları çizme; yoksa renk/bütçe sıçraması olur
+  const ready = initialized && themeHydrated && budgetHydrated;
   const { colors, darkMode } = useAppTheme();
   const segments = useSegments();
   const router = useRouter();
@@ -35,7 +38,8 @@ export default function RootLayout() {
     configureNotificationHandler();
     initialize();
     initializeTheme();
-  }, [initialize, initializeTheme]);
+    initializeBudget();
+  }, [initialize, initializeTheme, initializeBudget]);
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(colors.surface).catch(() => {});
