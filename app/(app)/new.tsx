@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppTabBar } from "@/components/AppTabBar";
 import DurationPicker from "@/components/DurationPicker";
 import { addMonths, parseDateOnly } from "@/lib/subscriptionDuration";
+import { getIconColorOn, isLightColor } from "@/lib/colorContrast";
 
 const TR_SERVICES = [
   {
@@ -225,16 +226,17 @@ const AVAILABLE_ICONS = [
 ];
 
 const AVAILABLE_COLORS = [
-  "#0B7285",
-  "#2D6CDF",
-  "#00796B",
-  "#10A37F",
-  "#7C3AED",
-  "#D9467B",
-  "#EA580C",
-  "#B45309",
-  "#64748B",
-  "#111827",
+  "#E53935", // kırmızı
+  "#FB8C00", // turuncu
+  "#F9A825", // sarı
+  "#43A047", // yeşil
+  "#1E88E5", // mavi
+  "#8E24AA", // mor
+  "#D81B60", // pembe
+  "#6D4C41", // kahverengi
+  "#757575", // gri
+  "#212121", // siyah
+  "#FFFFFF", // beyaz
 ];
 
 const sanitizeAmountInput = (value: string) => {
@@ -262,7 +264,7 @@ export default function NewSubscriptionScreen() {
   const [amount, setAmount] = useState("");
   const [billingDay, setBillingDay] = useState("");
   const [category, setCategory] = useState<Category>("entertainment");
-  const [activeColor, setActiveColor] = useState(AVAILABLE_COLORS[0]);
+  const [activeColor, setActiveColor] = useState(AVAILABLE_COLORS[4]);
   const [activeIcon, setActiveIcon] = useState(AVAILABLE_ICONS[0]);
   const [showAllServices, setShowAllServices] = useState(false);
   const [currency, setCurrency] = useState("₺");
@@ -492,7 +494,7 @@ export default function NewSubscriptionScreen() {
                     <MaterialIcons
                       name={service.icon as any}
                       size={32}
-                      color="#fff"
+                      color={getIconColorOn(service.color)}
                     />
                   </View>
                   <Text style={styles.serviceName}>{service.name}</Text>
@@ -588,7 +590,9 @@ export default function NewSubscriptionScreen() {
                       name={icon as any}
                       size={24}
                       color={
-                        activeIcon === icon ? "#fff" : colors.onSurfaceVariant
+                        activeIcon === icon
+                          ? getIconColorOn(activeColor)
+                          : colors.onSurfaceVariant
                       }
                     />
                   </TouchableOpacity>
@@ -606,11 +610,15 @@ export default function NewSubscriptionScreen() {
                 {AVAILABLE_COLORS.map((color) => (
                   <TouchableOpacity
                     key={color}
-                    style={[styles.colorChip, { backgroundColor: color }]}
+                    style={[
+                      styles.colorChip,
+                      { backgroundColor: color },
+                      isLightColor(color) && styles.colorChipLight,
+                    ]}
                     onPress={() => setActiveColor(color)}
                   >
                     {activeColor === color && (
-                      <Ionicons name="checkmark" size={20} color="#fff" />
+                      <Ionicons name="checkmark" size={20} color={getIconColorOn(color)} />
                     )}
                   </TouchableOpacity>
                 ))}
@@ -993,6 +1001,10 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     alignItems: "center",
     justifyContent: "center",
     marginHorizontal: 4,
+  },
+  colorChipLight: {
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
   },
   currencyRow: {
     flexDirection: "row",

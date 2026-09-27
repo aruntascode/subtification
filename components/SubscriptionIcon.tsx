@@ -12,6 +12,7 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, View, ViewStyle } from "react-native";
+import { getIconColorOn, isLightColor } from "@/lib/colorContrast";
 
 interface Props {
   /** sub.emoji — MaterialIcons adı ya da unicode emoji */
@@ -57,6 +58,7 @@ export default function SubscriptionIcon({
           borderRadius: radius,
           backgroundColor: bgColor ?? "transparent",
         },
+        isLightColor(bgColor) && styles.lightBorder,
         style,
       ]}
     >
@@ -64,7 +66,7 @@ export default function SubscriptionIcon({
         <MaterialIcons
           name={value as React.ComponentProps<typeof MaterialIcons>["name"]}
           size={size}
-          color="#ffffff"
+          color={bgColor ? getIconColorOn(bgColor) : "#ffffff"}
         />
       ) : (
         <Text style={{ fontSize: size * 0.9, lineHeight: size * 1.1 }}>
@@ -80,5 +82,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
+  },
+  // Beyaz kutu beyaz kartın üstünde kaybolmasın
+  lightBorder: {
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "rgba(25, 27, 34, 0.15)",
   },
 });

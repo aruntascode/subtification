@@ -28,6 +28,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppTabBar } from "@/components/AppTabBar";
 import DurationPicker from "@/components/DurationPicker";
+import { getIconColorOn, isLightColor } from "@/lib/colorContrast";
 import {
   getLastPaymentDate,
   getNextPaymentDate,
@@ -60,16 +61,17 @@ const AVAILABLE_ICONS = [
 ];
 
 const AVAILABLE_COLORS = [
-  "#0B7285",
-  "#2D6CDF",
-  "#00796B",
-  "#10A37F",
-  "#7C3AED",
-  "#D9467B",
-  "#EA580C",
-  "#B45309",
-  "#64748B",
-  "#111827",
+  "#E53935", // kırmızı
+  "#FB8C00", // turuncu
+  "#F9A825", // sarı
+  "#43A047", // yeşil
+  "#1E88E5", // mavi
+  "#8E24AA", // mor
+  "#D81B60", // pembe
+  "#6D4C41", // kahverengi
+  "#757575", // gri
+  "#212121", // siyah
+  "#FFFFFF", // beyaz
 ];
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -432,7 +434,9 @@ export default function SubscriptionDetailScreen() {
                   styles.progressFill,
                   {
                     width: `${Math.round((paidCount / totalMonths) * 100)}%`,
-                    backgroundColor: subscription.color,
+                    backgroundColor: isLightColor(subscription.color)
+                      ? colors.outline
+                      : subscription.color,
                   },
                 ]}
               />
@@ -567,7 +571,9 @@ export default function SubscriptionDetailScreen() {
                       name={icon as any}
                       size={24}
                       color={
-                        editEmoji === icon ? "#fff" : colors.onSurfaceVariant
+                        editEmoji === icon
+                          ? getIconColorOn(editColor)
+                          : colors.onSurfaceVariant
                       }
                     />
                   </TouchableOpacity>
@@ -586,11 +592,15 @@ export default function SubscriptionDetailScreen() {
                 {AVAILABLE_COLORS.map((color) => (
                   <TouchableOpacity
                     key={color}
-                    style={[styles.colorChip, { backgroundColor: color }]}
+                    style={[
+                      styles.colorChip,
+                      { backgroundColor: color },
+                      isLightColor(color) && styles.colorChipLight,
+                    ]}
                     onPress={() => setEditColor(color)}
                   >
                     {editColor === color && (
-                      <Ionicons name="checkmark" size={20} color="#fff" />
+                      <Ionicons name="checkmark" size={20} color={getIconColorOn(color)} />
                     )}
                   </TouchableOpacity>
                 ))}
@@ -1028,6 +1038,10 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     alignItems: "center",
     justifyContent: "center",
     marginHorizontal: 4,
+  },
+  colorChipLight: {
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
   },
   amountContainer: { flexDirection: "row", alignItems: "center" },
   currencySymbol: {
