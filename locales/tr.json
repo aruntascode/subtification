@@ -1,4 +1,15 @@
 {
+  "tabs": {
+    "home": "ANA SAYFA",
+    "subscriptions": "ABONELİKLER",
+    "analytics": "ANALİZLER",
+    "add": "EKLE",
+    "close": "KAPAT",
+    "popular_title": "Popüler Servislerden Seç",
+    "popular_subtitle": "Netflix, Spotify, YouTube ve daha fazlası",
+    "custom_title": "Özel Abonelik Ekle",
+    "custom_subtitle": "İstediğin isim, ikon ve tutarla kaydet"
+  },
   "dashboard": {
     "monthly_spending": "Aylık Harcama",
     "next_payment": "{{name}} • {{days}} gün",

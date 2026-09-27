@@ -4,6 +4,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useGlobalSearchParams, useRouter, useSegments } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 import Reanimated, {
   runOnJS,
@@ -40,7 +41,7 @@ const TABS = [
   {
     name: "(home)",
     route: "/(app)/(home)" as const,
-    label: "HOME",
+    labelKey: "tabs.home",
     icon: "home",
     iconOutline: "home-outline",
     isAction: false,
@@ -48,7 +49,7 @@ const TABS = [
   {
     name: "subscriptions",
     route: "/(app)/subscriptions" as const,
-    label: "SUBS",
+    labelKey: "tabs.subscriptions",
     icon: "albums",
     iconOutline: "albums-outline",
     isAction: false,
@@ -56,7 +57,7 @@ const TABS = [
   {
     name: "analytics",
     route: "/(app)/analytics" as const,
-    label: "TRENDS",
+    labelKey: "tabs.analytics",
     icon: "stats-chart",
     iconOutline: "stats-chart-outline",
     isAction: false,
@@ -64,7 +65,7 @@ const TABS = [
   {
     name: "add_action",
     route: null,
-    label: "ADD",
+    labelKey: "tabs.add",
     icon: "add-circle",
     iconOutline: "add-circle-outline",
     isAction: true,
@@ -73,6 +74,7 @@ const TABS = [
 
 export function AppTabBar() {
   const router = useRouter();
+  const { t } = useTranslation();
   const segments = useSegments();
   const { custom } = useGlobalSearchParams<{ custom?: string | string[] }>();
   const insets = useSafeAreaInsets();
@@ -84,20 +86,20 @@ export function AppTabBar() {
         icon: "apps" as const,
         iconColor: colors.primary,
         iconBg: colors.primary + "18",
-        title: "Popüler Servislerden Seç",
-        subtitle: "Netflix, Spotify, YouTube ve daha fazlası",
+        title: t("tabs.popular_title"),
+        subtitle: t("tabs.popular_subtitle"),
         route: "/(app)/new",
       },
       {
         icon: "edit" as const,
         iconColor: colors.secondary,
         iconBg: colors.secondary + "18",
-        title: "Özel Abonelik Ekle",
-        subtitle: "İstediğin isim, ikon ve tutarla kaydet",
+        title: t("tabs.custom_title"),
+        subtitle: t("tabs.custom_subtitle"),
         route: "/(app)/new?custom=true",
       },
     ],
-    [colors],
+    [colors, t],
   );
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -366,7 +368,7 @@ export function AppTabBar() {
                       />
                     )}
                     <Text style={[styles.tabLabel, { color }]}>
-                      {tab.isAction && sheetOpen ? "KAPAT" : tab.label}
+                      {tab.isAction && sheetOpen ? t("tabs.close") : t(tab.labelKey)}
                     </Text>
                   </View>
                 </TouchableOpacity>

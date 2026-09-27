@@ -1,4 +1,15 @@
 {
+  "tabs": {
+    "home": "HOME",
+    "subscriptions": "SUBS",
+    "analytics": "TRENDS",
+    "add": "ADD",
+    "close": "CLOSE",
+    "popular_title": "Pick a popular service",
+    "popular_subtitle": "Netflix, Spotify, YouTube and more",
+    "custom_title": "Add a custom subscription",
+    "custom_subtitle": "Any name, icon and amount you like"
+  },
   "dashboard": {
     "monthly_spending": "Monthly Spending",
     "next_payment": "{{name}} • {{days}} days",
