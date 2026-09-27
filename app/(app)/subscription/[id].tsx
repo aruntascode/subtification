@@ -76,7 +76,7 @@ export default function SubscriptionDetailScreen() {
   } = useSubscriptionStore();
 
   const subscription = subscriptions.find((s) => s.id === id);
-  const { fmt, fmtWithOriginal } = useCurrency();
+  const { fmtWithOriginal } = useCurrency();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, darkMode, blurTint } = useAppTheme();

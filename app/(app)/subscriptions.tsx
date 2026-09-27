@@ -38,7 +38,7 @@ export default function SubscriptionsListScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { fmt, fmtDisplay, fmtWithOriginal, convert } = useCurrency();
+  const { fmtDisplay, fmtWithOriginal, convert } = useCurrency();
   const scrollRef = useRef<ScrollView>(null);
   const { colors, darkMode, blurTint } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, darkMode), [colors, darkMode]);

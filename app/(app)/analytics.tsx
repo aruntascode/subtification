@@ -232,7 +232,7 @@ export default function AnalyticsScreen() {
     const yearlySavings = biggestSubscription.monthlyConverted * 12 * 0.2;
     savingsTips.push({
       id: `downgrade-${biggestSubscription.id}`,
-      icon: "swap-down-outline",
+      icon: "trending-down-outline",
       title: t("analytics.smart_tip_downgrade_title"),
       description: t("analytics.smart_tip_downgrade_desc", {
         name: biggestSubscription.name,

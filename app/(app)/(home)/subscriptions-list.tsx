@@ -34,7 +34,7 @@ export default function SubscriptionsListStackScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { fmt, fmtDisplay, fmtWithOriginal, convert } = useCurrency();
+  const { fmtDisplay, fmtWithOriginal, convert } = useCurrency();
   const { colors, darkMode, blurTint } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, darkMode), [colors, darkMode]);
 

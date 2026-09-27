@@ -1,5 +1,4 @@
 import type { AppColors } from "@/constants/colors";
-import { getCurrencyBySymbol } from "@/constants/currencies";
 import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import {
@@ -11,7 +10,6 @@ import {
 } from "@/lib/notifications";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/stores/authStore";
-import { useCurrencyStore } from "@/stores/currencyStore";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { useThemeStore } from "@/stores/themeStore";
 import { Ionicons } from "@expo/vector-icons";
@@ -42,7 +40,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppTabBar } from "@/components/AppTabBar";
 
-const SELECTABLE_CURRENCY_SYMBOLS = ["₺", "$", "€", "£", "¥"] as const;
 const CURRENCY_SHEET_CLOSED_Y = 520;
 const CURRENCY_SHEET_DISMISS_DISTANCE = 110;
 const CURRENCY_SHEET_DISMISS_VELOCITY = 900;
@@ -63,10 +60,8 @@ export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
   const { user, signOut, deleteAccount } = useAuthStore();
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
-  const { displayCurrency, setDisplayCurrency, ratesError } = useCurrencyStore();
 
   const [pushAlerts, setPushAlerts] = useState(false);
-  const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [changePasswordVisible, setChangePasswordVisible] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -108,9 +103,6 @@ export default function SettingsScreen() {
     }),
     [colors, darkMode],
   );
-  const currencySheetY = useSharedValue(CURRENCY_SHEET_CLOSED_Y);
-  const currencyGestureStartY = useSharedValue(0);
-  const currencyBackdropProgress = useSharedValue(0);
   const languageSheetY = useSharedValue(CURRENCY_SHEET_CLOSED_Y);
   const languageGestureStartY = useSharedValue(0);
   const languageBackdropProgress = useSharedValue(0);
@@ -122,10 +114,6 @@ export default function SettingsScreen() {
     getPushAlertsEnabled().then(setPushAlerts);
   }, [user]);
 
-  const finishCurrencyDismiss = useCallback(() => {
-    setCurrencyModalVisible(false);
-  }, []);
-
   const finishLanguageDismiss = useCallback(() => {
     setLanguageModalVisible(false);
   }, []);
@@ -133,83 +121,6 @@ export default function SettingsScreen() {
   const finishPasswordDismiss = useCallback(() => {
     setChangePasswordVisible(false);
   }, []);
-
-  const openCurrencyModal = () => {
-    currencySheetY.value = CURRENCY_SHEET_CLOSED_Y;
-    currencyGestureStartY.value = 0;
-    currencyBackdropProgress.value = 0;
-    setCurrencyModalVisible(true);
-    requestAnimationFrame(() => {
-      currencySheetY.value = withSpring(0, {
-        damping: 26,
-        stiffness: 280,
-        mass: 0.9,
-      });
-      currencyBackdropProgress.value = withTiming(1, { duration: 180 });
-    });
-  };
-
-  const closeCurrencyModal = () => {
-    currencyBackdropProgress.value = withTiming(0, { duration: 160 });
-    currencySheetY.value = withTiming(
-      CURRENCY_SHEET_CLOSED_Y,
-      { duration: 190 },
-      (finished) => {
-        if (finished) {
-          runOnJS(finishCurrencyDismiss)();
-        }
-      },
-    );
-  };
-
-  const currencyPanGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .onBegin(() => {
-          currencyGestureStartY.value = currencySheetY.value;
-        })
-        .onUpdate((event) => {
-          const nextY = currencyGestureStartY.value + event.translationY;
-          currencySheetY.value =
-            nextY < 0
-              ? -Math.min(Math.abs(nextY) * 0.32, CURRENCY_SHEET_UPWARD_DRAG_LIMIT)
-              : nextY;
-        })
-        .onEnd((event) => {
-          const shouldDismiss =
-            currencySheetY.value > CURRENCY_SHEET_DISMISS_DISTANCE ||
-            event.velocityY > CURRENCY_SHEET_DISMISS_VELOCITY;
-
-          if (shouldDismiss) {
-            currencyBackdropProgress.value = withTiming(0, { duration: 160 });
-            currencySheetY.value = withTiming(
-              CURRENCY_SHEET_CLOSED_Y,
-              { duration: 190 },
-              (finished) => {
-                if (finished) {
-                  runOnJS(finishCurrencyDismiss)();
-                }
-              },
-            );
-          } else {
-            currencySheetY.value = withSpring(0, {
-              damping: 24,
-              stiffness: 300,
-              mass: 0.9,
-              velocity: event.velocityY,
-            });
-          }
-        }),
-    [currencyBackdropProgress, currencyGestureStartY, currencySheetY, finishCurrencyDismiss],
-  );
-
-  const currencySheetAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: currencySheetY.value }],
-  }));
-
-  const currencyBackdropAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: currencyBackdropProgress.value,
-  }));
 
   const openLanguageModal = () => {
     languageSheetY.value = CURRENCY_SHEET_CLOSED_Y;
@@ -408,47 +319,12 @@ export default function SettingsScreen() {
     }
   };
 
-  const currentCurrency = getCurrencyBySymbol(displayCurrency);
   const isTurkish = i18n.language.startsWith("tr");
-
-  const handleSelectCurrency = async (symbol: string) => {
-    await setDisplayCurrency(symbol);
-    closeCurrencyModal();
-  };
 
   const handleSelectLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
     closeLanguageModal();
   };
-
-  const currencyCopyByIso: Record<string, string> = isTurkish
-    ? {
-        TRY: "Türk Lirası",
-        USD: "ABD Doları",
-        EUR: "Euro",
-        GBP: "İngiliz Sterlini",
-        JPY: "Japon Yeni",
-      }
-    : {
-        TRY: "Turkish Lira",
-        USD: "US Dollar",
-        EUR: "Euro",
-        GBP: "British Pound",
-        JPY: "Japanese Yen",
-      };
-
-  const currencyOptions: PickerOption[] = SELECTABLE_CURRENCY_SYMBOLS.map((symbol) => {
-    const currency = getCurrencyBySymbol(symbol);
-    const title = currencyCopyByIso[currency.iso] ?? currency.name;
-
-    return {
-      key: currency.iso,
-      glyph: currency.symbol,
-      title,
-      selected: displayCurrency === currency.symbol,
-      onPress: () => handleSelectCurrency(currency.symbol),
-    };
-  });
 
   const languageOptions: PickerOption[] = [
     {
@@ -657,49 +533,6 @@ export default function SettingsScreen() {
             {t("settings.preferences_section")}
           </Text>
           <View style={[styles.settingsCard, { backgroundColor: colors.surfaceContainerLow }]}>
-            {/* --- CURRENCY ROW --- */}
-            <TouchableOpacity
-              style={styles.settingsRow}
-              activeOpacity={0.7}
-              onPress={openCurrencyModal}
-            >
-              <View style={styles.settingsRowLeft}>
-                <View
-                  style={[
-                    styles.settingsIcon,
-                    { backgroundColor: colors.secondaryContainer + "1A" },
-                  ]}
-                >
-                  <Ionicons
-                    name="card-outline"
-                    size={18}
-                    color={colors.secondary}
-                  />
-                </View>
-                <View>
-                  <Text style={[styles.settingsLabel, { color: colors.onSurface }]}>
-                    {t("settings.display_currency")}
-                  </Text>
-                  {ratesError && (
-                    <Text style={styles.ratesWarning}>
-                      ⚠ {t("settings.rates_error")}
-                    </Text>
-                  )}
-                </View>
-              </View>
-              <View style={styles.currencyTrailing}>
-                <Text style={[styles.trailingText, { color: colors.onSurfaceVariant }]}>
-                  {currentCurrency.symbol} {currentCurrency.iso}
-                </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color={colors.outline}
-                />
-              </View>
-            </TouchableOpacity>
-
-            <View style={[styles.divider, { backgroundColor: colors.outlineVariant + "33" }]} />
 
             {/* --- LANGUAGE ROW --- */}
             <TouchableOpacity
@@ -875,52 +708,6 @@ export default function SettingsScreen() {
         <Text style={[styles.version, { color: colors.outlineVariant }]}>{t("settings.app_version")}</Text>
         <View style={{ height: 40 }} />
       </ScrollView>
-
-      {/* ── CURRENCY PICKER MODAL ── */}
-      <Modal
-        visible={currencyModalVisible}
-        animationType="none"
-        transparent
-        statusBarTranslucent
-        onRequestClose={closeCurrencyModal}
-      >
-        <GestureHandlerRootView style={styles.modalOverlay}>
-          <Reanimated.View
-            pointerEvents="none"
-            style={[
-              styles.currencyActionBackdrop,
-              { backgroundColor: currencySheetColors.backdrop },
-              currencyBackdropAnimatedStyle,
-            ]}
-          />
-          <Pressable style={StyleSheet.absoluteFill} onPress={closeCurrencyModal} />
-          <GestureDetector gesture={currencyPanGesture}>
-            <Reanimated.View
-              style={[
-                styles.currencyActionSheet,
-                { backgroundColor: currencySheetColors.sheet },
-                { paddingBottom: Math.max(insets.bottom, 12) },
-                currencySheetAnimatedStyle,
-              ]}
-            >
-              <View
-                pointerEvents="none"
-                style={[
-                  styles.currencyActionBottomFill,
-                  { backgroundColor: currencySheetColors.sheet },
-                ]}
-              />
-              <PreferencePickerContent
-                styles={styles}
-                sheetColors={currencySheetColors}
-                title={t("settings.display_currency")}
-                sectionLabel={isTurkish ? "Para birimini seç" : "Choose currency"}
-                options={currencyOptions}
-              />
-            </Reanimated.View>
-          </GestureDetector>
-        </GestureHandlerRootView>
-      </Modal>
 
       {/* ── YENİ: LANGUAGE PICKER MODAL ── */}
       <Modal
@@ -1410,8 +1197,6 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     backgroundColor: colors.outlineVariant + "1A",
     marginHorizontal: Spacing.lg,
   },
-  currencyTrailing: { flexDirection: "row", alignItems: "center", gap: 6 },
-  ratesWarning: { ...Typography.labelSm, color: colors.error, marginTop: 1 },
 
   // Sign Out
   signOutButton: {

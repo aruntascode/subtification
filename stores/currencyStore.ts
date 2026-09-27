@@ -34,8 +34,6 @@ interface CurrencyState {
   initialize: () => Promise<void>;
   /** Frankfurter'dan kur günceller (TTL'e göre önbellekler) */
   fetchRates: () => Promise<void>;
-  /** Görüntüleme para birimini değiştirir ve kalıcı saklar */
-  setDisplayCurrency: (symbol: string) => Promise<void>;
 
   /**
    * Miktar dönüştür.
@@ -64,13 +62,11 @@ export const useCurrencyStore = create<CurrencyState>((set, get) => ({
   ratesError: false,
 
   initialize: async () => {
-    // 1. Kaydedilmiş görüntüleme para birimini yükle
-    try {
-      const saved = await AsyncStorage.getItem(DISPLAY_CURRENCY_KEY);
-      if (saved) set({ displayCurrency: saved });
-    } catch {}
+    // Görüntüleme para birimi her zaman ₺; eski sürümden kalan seçimi temizle
+    set({ displayCurrency: '₺' });
+    AsyncStorage.removeItem(DISPLAY_CURRENCY_KEY).catch(() => {});
 
-    // 2. Önbellekten kurları yükle (veya API'yi çek)
+    // Önbellekten kurları yükle (veya API'yi çek)
     try {
       const raw = await AsyncStorage.getItem(RATES_CACHE_KEY);
       if (raw) {
@@ -112,13 +108,6 @@ export const useCurrencyStore = create<CurrencyState>((set, get) => ({
       // API başarısız → yedek kurları kullan, hata bayrağını set et
       set({ rates: FALLBACK_RATES, ratesLoading: false, ratesError: true });
     }
-  },
-
-  setDisplayCurrency: async (symbol: string) => {
-    set({ displayCurrency: symbol });
-    try {
-      await AsyncStorage.setItem(DISPLAY_CURRENCY_KEY, symbol);
-    } catch {}
   },
 
   convert: (amount, fromSymbol, toSymbol) => {

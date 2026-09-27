@@ -34,7 +34,7 @@ export default function DashboardScreen() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const { fmt, fmtDisplay, fmtWithOriginal } = useCurrency();
+  const { fmtDisplay, fmtWithOriginal } = useCurrency();
   const monthlyConverted = useTotalMonthly();
   const scrollRef = useRef<ScrollView>(null);
   const { colors, darkMode, blurTint } = useAppTheme();
@@ -394,7 +394,7 @@ export default function DashboardScreen() {
                     <View style={styles.activeRight}>
                       {/* Fiyatı Stitch tasarımındaki gibi daha koyu yaptık */}
                       <Text style={styles.activeAmount}>
-                        {fmt(sub.amount, sub.currency || "₺")}
+                        {fmtWithOriginal(sub.amount, sub.currency || "₺")}
                       </Text>
                       {/* Tasarımdaki yeşil AUTO-PAY detayını yansıtıyoruz */}
                       <Text
