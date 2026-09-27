@@ -26,7 +26,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const SHEET_HEIGHT = 300;
+const SHEET_HEIGHT = 400;
 const SHEET_DISMISS_DISTANCE = 88;
 const SHEET_DISMISS_VELOCITY = 900;
 const SHEET_UPWARD_DRAG_LIMIT = 96;
@@ -89,6 +89,14 @@ export function AppTabBar() {
         title: t("tabs.popular_title"),
         subtitle: t("tabs.popular_subtitle"),
         route: "/(app)/new",
+      },
+      {
+        icon: "library-add" as const,
+        iconColor: colors.tertiaryFixedDim,
+        iconBg: colors.tertiaryFixedDim + "18",
+        title: t("tabs.bulk_title"),
+        subtitle: t("tabs.bulk_subtitle"),
+        route: "/(app)/bulk-add",
       },
       {
         icon: "edit" as const,

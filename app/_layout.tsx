@@ -17,11 +17,14 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 export default function RootLayout() {
   const { session, initialized, initialize } = useAuthStore();
   const subscriptionsInitialized = useSubscriptionStore((s) => s.initialized);
-  const { initializeTheme } = useThemeStore();
+  const initializeTheme = useThemeStore((s) => s.initializeTheme);
+  const themeHydrated = useThemeStore((s) => s.hydrated);
+  // Kayıtlı tema okunmadan ekranları çizme; yoksa aydınlık→karanlık sıçraması olur
+  const ready = initialized && themeHydrated;
   const { colors, darkMode } = useAppTheme();
   const segments = useSegments();
   const router = useRouter();
-  const [showInitialSplash, setShowInitialSplash] = useState(() => !initialized);
+  const [showInitialSplash, setShowInitialSplash] = useState(() => !ready);
 
   const handleInitialSplashExit = useCallback(() => {
     setShowInitialSplash(false);
@@ -48,12 +51,12 @@ export default function RootLayout() {
   }, [session, initialized, segments, router]);
 
   useEffect(() => {
-    if (!initialized) {
+    if (!ready) {
       setShowInitialSplash(true);
     }
-  }, [initialized]);
+  }, [ready]);
 
-  if (!initialized && showInitialSplash) {
+  if (!ready && showInitialSplash) {
     return (
       <GestureHandlerRootView
         style={{ flex: 1, backgroundColor: colors.surface }}
@@ -64,12 +67,15 @@ export default function RootLayout() {
     );
   }
 
+  // Toplu ekleme kendi alt butonunu kullanıyor; sekme çubuğu onu örtmesin
   const showTabBar =
-    segments[0] === "(app)" && subscriptionsInitialized;
+    segments[0] === "(app)" &&
+    (segments as string[])[1] !== "bulk-add" &&
+    subscriptionsInitialized;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.surface }}>
-      {initialized && (
+      {ready && (
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(app)" />
           <Stack.Screen
@@ -82,7 +88,7 @@ export default function RootLayout() {
       {showTabBar && <AppTabBar />}
       {showInitialSplash && (
         <SubtificationSplash
-          exiting={initialized}
+          exiting={ready}
           onExitComplete={handleInitialSplashExit}
           style={styles.splashOverlay}
         />

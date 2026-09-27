@@ -51,6 +51,10 @@ export default function AppLayout() {
           options={{ animation: "slide_from_right", gestureEnabled: true }}
         />
         <Stack.Screen
+          name="bulk-add"
+          options={{ animation: "slide_from_right", gestureEnabled: true }}
+        />
+        <Stack.Screen
           name="settings"
           options={{ animation: "slide_from_right", gestureEnabled: true }}
         />

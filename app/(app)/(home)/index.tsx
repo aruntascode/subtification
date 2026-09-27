@@ -336,8 +336,9 @@ export default function DashboardScreen() {
                   </Text>
                 </View>
 
+                {/* Yeni kullanıcı için ana yol: servisleri tek seferde seç */}
                 <TouchableOpacity
-                  onPress={() => router.push("/(app)/new")}
+                  onPress={() => router.push("/(app)/bulk-add")}
                   activeOpacity={0.9}
                   style={styles.primaryCtaWrapper}
                 >
@@ -347,11 +348,20 @@ export default function DashboardScreen() {
                     end={{ x: 1, y: 0 }}
                     style={styles.primaryCta}
                   >
-                    <Ionicons name="add" size={20} color="#fff" />
+                    <Ionicons name="apps" size={20} color="#fff" />
                     <Text style={styles.primaryCtaText}>
-                      {t("dashboard.add_button")}
+                      {t("bulk.empty_cta")}
                     </Text>
                   </LinearGradient>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/new")}
+                  activeOpacity={0.7}
+                  style={styles.secondaryCta}
+                >
+                  <Text style={styles.secondaryCtaText}>
+                    {t("bulk.empty_single")}
+                  </Text>
                 </TouchableOpacity>
 
               </View>
@@ -689,6 +699,16 @@ const createStyles = (colors: AppColors, darkMode: boolean) =>
       ...Typography.labelLg,
       color: "#ffffff",
       fontWeight: "800",
+    },
+    secondaryCta: {
+      marginTop: Spacing.sm,
+      paddingVertical: Spacing.md,
+      alignItems: "center",
+    },
+    secondaryCtaText: {
+      ...Typography.labelLg,
+      color: colors.primary,
+      fontWeight: "700",
     },
     activeLeft: {
       flexDirection: "row",

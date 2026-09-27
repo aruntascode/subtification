@@ -8,7 +8,9 @@
     "popular_title": "Pick a popular service",
     "popular_subtitle": "Netflix, Spotify, YouTube and more",
     "custom_title": "Add a custom subscription",
-    "custom_subtitle": "Any name, icon and amount you like"
+    "custom_subtitle": "Any name, icon and amount you like",
+    "bulk_title": "Bulk Add",
+    "bulk_subtitle": "Pick all the services you use at once"
   },
   "dashboard": {
     "monthly_spending": "Monthly Spending",
@@ -127,7 +129,6 @@
     "tap_to_sign_in": "Your data stays on this device. Sign in with email to link it to your account.",
     "preferences_section": "PREFERENCES",
     "language": "Language",
-    "dark_mode": "Dark Mode",
     "live_rates": "Live rates active",
     "rates_loading": "Fetching live rates...",
     "rates_retry": "Retry",
@@ -168,7 +169,12 @@
     "change_password_mismatch": "New passwords do not match.",
     "change_password_too_short": "Password must be at least 6 characters.",
     "change_password_wrong_current": "Current password is incorrect.",
-    "change_password_success": "Password changed successfully."
+    "change_password_success": "Password changed successfully.",
+    "appearance": "Appearance",
+    "theme_system": "System",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "choose_theme": "Choose appearance"
   },
   "new_sub": {
     "title": "Add Subscription",
@@ -271,5 +277,24 @@
     "remaining_value": "{{remaining}} / {{total}} mo",
     "last_payment": "Last payment: {{date}}",
     "remaining_total": "Remaining amount: {{amount}}"
+  },
+  "bulk": {
+    "title": "Bulk Add",
+    "select_title": "Which ones do you use?",
+    "select_subtitle": "Tick every service you pay for. You'll pick plans and billing days in the next step.",
+    "continue": "Continue ({{count}})",
+    "already_added": "Already added",
+    "review_title": "Check your plans",
+    "review_subtitle": "Prices are filled from the selected plan. If you don't know the billing day, leave it empty and today's day will be used.",
+    "amount": "Monthly amount",
+    "billing_day": "Billing day",
+    "day_placeholder": "e.g. 15",
+    "save": "Save {{count}} subscriptions",
+    "remove": "Remove",
+    "err_amount": "Enter a valid amount for {{name}}.",
+    "err_day": "Billing day for {{name}} must be between 1 and 31.",
+    "empty_cta": "Pick the services you use",
+    "empty_single": "I'd rather add one by one",
+    "continue_empty": "Continue"
   }
 }

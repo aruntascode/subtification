@@ -8,7 +8,9 @@
     "popular_title": "Popüler Servislerden Seç",
     "popular_subtitle": "Netflix, Spotify, YouTube ve daha fazlası",
     "custom_title": "Özel Abonelik Ekle",
-    "custom_subtitle": "İstediğin isim, ikon ve tutarla kaydet"
+    "custom_subtitle": "İstediğin isim, ikon ve tutarla kaydet",
+    "bulk_title": "Toplu Ekle",
+    "bulk_subtitle": "Kullandığın servisleri tek seferde seç"
   },
   "dashboard": {
     "monthly_spending": "Aylık Harcama",
@@ -127,7 +129,6 @@
     "tap_to_sign_in": "Verilerin bu cihazda saklanır. E-posta ile giriş yaparsan hesabına bağlanır.",
     "preferences_section": "TERCİHLER",
     "language": "Dil",
-    "dark_mode": "Karanlık Mod",
     "live_rates": "Canlı kurlar aktif",
     "rates_loading": "Kurlar güncelleniyor...",
     "rates_retry": "Tekrar Dene",
@@ -168,7 +169,12 @@
     "change_password_mismatch": "Yeni şifreler eşleşmiyor.",
     "change_password_too_short": "Şifre en az 6 karakter olmalı.",
     "change_password_wrong_current": "Mevcut şifre yanlış.",
-    "change_password_success": "Şifren başarıyla değiştirildi."
+    "change_password_success": "Şifren başarıyla değiştirildi.",
+    "appearance": "Görünüm",
+    "theme_system": "Sistem",
+    "theme_light": "Aydınlık",
+    "theme_dark": "Karanlık",
+    "choose_theme": "Görünümü seç"
   },
   "new_sub": {
     "title": "Abonelik Ekle",
@@ -271,5 +277,24 @@
     "remaining_value": "{{remaining}} / {{total}} ay",
     "last_payment": "Son ödeme: {{date}}",
     "remaining_total": "Kalan tutar: {{amount}}"
+  },
+  "bulk": {
+    "title": "Toplu Ekle",
+    "select_title": "Hangilerini kullanıyorsun?",
+    "select_subtitle": "Kullandığın tüm servisleri işaretle. Planları ve ödeme günlerini bir sonraki adımda seçeceksin.",
+    "continue": "Devam et ({{count}})",
+    "already_added": "Zaten ekli",
+    "review_title": "Planları kontrol et",
+    "review_subtitle": "Fiyatlar seçtiğin plana göre doldu. Ödeme gününü bilmiyorsan boş bırakabilirsin, bugünün günü kullanılır.",
+    "amount": "Aylık tutar",
+    "billing_day": "Ödeme günü",
+    "day_placeholder": "Örn: 15",
+    "save": "{{count}} aboneliği kaydet",
+    "remove": "Kaldır",
+    "err_amount": "{{name}} için geçerli bir tutar gir.",
+    "err_day": "{{name}} için ödeme günü 1 ile 31 arasında olmalı.",
+    "empty_cta": "Kullandığın servisleri seç",
+    "empty_single": "Tek tek eklemek istiyorum",
+    "continue_empty": "Devam et"
   }
 }

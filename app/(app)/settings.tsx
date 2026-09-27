@@ -11,8 +11,8 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/stores/authStore";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
-import { useThemeStore } from "@/stores/themeStore";
-import { Ionicons } from "@expo/vector-icons";
+import { useThemeStore, type ThemeMode } from "@/stores/themeStore";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -49,6 +49,8 @@ const CURRENCY_SHEET_BOTTOM_FILL_HEIGHT = 140;
 type PickerOption = {
   key: string;
   glyph: string;
+  /** Verilirse glyph metni yerine bu MaterialIcons simgesi çizilir */
+  icon?: React.ComponentProps<typeof MaterialIcons>["name"];
   title: string;
   selected: boolean;
   onPress: () => void;
@@ -73,8 +75,10 @@ export default function SettingsScreen() {
 
   // YENİ: Dil Modalı için State
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  // Dil ve görünüm aynı alttan açılan pencereyi paylaşır
+  const [preferenceKind, setPreferenceKind] = useState<"language" | "theme">("language");
 
-  const { darkMode, setDarkMode } = useThemeStore();
+  const { darkMode, mode: themeMode, setMode: setThemeMode } = useThemeStore();
   const { colors, blurTint } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, darkMode), [colors, darkMode]);
   const currencySheetColors = useMemo(
@@ -122,7 +126,8 @@ export default function SettingsScreen() {
     setChangePasswordVisible(false);
   }, []);
 
-  const openLanguageModal = () => {
+  const openLanguageModal = (kind: "language" | "theme" = "language") => {
+    setPreferenceKind(kind);
     languageSheetY.value = CURRENCY_SHEET_CLOSED_Y;
     languageGestureStartY.value = 0;
     languageBackdropProgress.value = 0;
@@ -343,6 +348,27 @@ export default function SettingsScreen() {
     },
   ];
 
+  const handleSelectTheme = (mode: ThemeMode) => {
+    setThemeMode(mode);
+    closeLanguageModal();
+  };
+
+  const themeOptions: PickerOption[] = (["system", "light", "dark"] as const).map(
+    (option) => ({
+      key: option,
+      glyph: "",
+      icon:
+        option === "system"
+          ? "brightness-auto"
+          : option === "light"
+            ? "light-mode"
+            : "dark-mode",
+      title: t(`settings.theme_${option}`),
+      selected: themeMode === option,
+      onPress: () => handleSelectTheme(option),
+    }),
+  );
+
   const handlePushAlertsChange = async (enabled: boolean) => {
     try {
       if (!enabled) {
@@ -536,7 +562,7 @@ export default function SettingsScreen() {
 
             {/* --- LANGUAGE ROW --- */}
             <TouchableOpacity
-              onPress={openLanguageModal}
+              onPress={() => openLanguageModal("language")}
               activeOpacity={0.7}
             >
               <SettingsRow
@@ -569,25 +595,37 @@ export default function SettingsScreen() {
 
             <View style={[styles.divider, { backgroundColor: colors.outlineVariant + "33" }]} />
 
-            <SettingsRow
+            <TouchableOpacity
+              onPress={() => openLanguageModal("theme")}
+              activeOpacity={0.7}
+            >
+              <SettingsRow
                 styles={styles}
                 colors={colors}
-              icon="moon-outline"
-              iconBg={colors.primaryContainer + "1A"}
-              iconColor={colors.primary}
-              label={t("settings.dark_mode")}
-              trailing={
-                <Switch
-                  value={darkMode}
-                  onValueChange={setDarkMode}
-                  trackColor={{
-                    false: colors.surfaceContainerHighest,
-                    true: colors.tertiaryFixed,
-                  }}
-                  thumbColor="#fff"
-                />
-              }
-            />
+                icon="moon-outline"
+                iconBg={colors.primaryContainer + "1A"}
+                iconColor={colors.primary}
+                label={t("settings.appearance")}
+                trailing={
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <Text style={[styles.trailingText, { color: colors.onSurfaceVariant }]}>
+                      {t(`settings.theme_${themeMode}`)}
+                    </Text>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color={colors.outline}
+                    />
+                  </View>
+                }
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -746,9 +784,19 @@ export default function SettingsScreen() {
               <PreferencePickerContent
                 styles={styles}
                 sheetColors={currencySheetColors}
-                title={t("settings.language")}
-                sectionLabel={isTurkish ? "Dili seç" : "Choose language"}
-                options={languageOptions}
+                title={
+                  preferenceKind === "theme"
+                    ? t("settings.appearance")
+                    : t("settings.language")
+                }
+                sectionLabel={
+                  preferenceKind === "theme"
+                    ? t("settings.choose_theme")
+                    : isTurkish
+                      ? "Dili seç"
+                      : "Choose language"
+                }
+                options={preferenceKind === "theme" ? themeOptions : languageOptions}
               />
             </Reanimated.View>
           </GestureDetector>
@@ -1006,18 +1054,30 @@ function PreferencePickerContent({
                 },
               ]}
             >
-              <Text
-                style={[
-                  styles.preferenceOptionGlyphText,
-                  {
-                    color: option.selected
+              {option.icon ? (
+                <MaterialIcons
+                  name={option.icon}
+                  size={22}
+                  color={
+                    option.selected
                       ? sheetColors.selectedIconText
-                      : sheetColors.iconText,
-                  },
-                ]}
-              >
-                {option.glyph}
-              </Text>
+                      : sheetColors.iconText
+                  }
+                />
+              ) : (
+                <Text
+                  style={[
+                    styles.preferenceOptionGlyphText,
+                    {
+                      color: option.selected
+                        ? sheetColors.selectedIconText
+                        : sheetColors.iconText,
+                    },
+                  ]}
+                >
+                  {option.glyph}
+                </Text>
+              )}
             </View>
 
             <View style={styles.preferenceOptionCopy}>

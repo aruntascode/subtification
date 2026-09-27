@@ -33,6 +33,10 @@ interface SubscriptionState {
   addSubscription: (
     sub: Omit<Subscription, "id" | "user_id" | "created_at" | "updated_at">,
   ) => Promise<void>;
+  /** Birden fazla aboneliği tek istekte ekler (toplu ekleme ekranı) */
+  addSubscriptions: (
+    subs: Omit<Subscription, "id" | "user_id" | "created_at" | "updated_at">[],
+  ) => Promise<void>;
   updateSubscription: (
     id: string,
     updates: Partial<Subscription>,
@@ -191,6 +195,49 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
       let nextSubscriptions: Subscription[] = [];
       set((state) => {
         nextSubscriptions = [...state.subscriptions, data];
+        return { subscriptions: nextSubscriptions };
+      });
+      await syncSubscriptionNotifications(nextSubscriptions);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  addSubscriptions: async (subs) => {
+    if (subs.length === 0) return;
+    set({ loading: true });
+    try {
+      const user = await getCurrentUser();
+
+      if (!user) {
+        const created: Subscription[] = subs.map((sub) => ({
+          ...sub,
+          id: createLocalId(),
+        }));
+        let nextSubscriptions: Subscription[] = [];
+        set((state) => {
+          nextSubscriptions = sortByNextBillingDate([
+            ...state.subscriptions,
+            ...created,
+          ]);
+          return { subscriptions: nextSubscriptions };
+        });
+        await writeLocalSubscriptions(nextSubscriptions);
+        await syncSubscriptionNotifications(nextSubscriptions);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .insert(subs.map((sub) => ({ ...sub, user_id: user.id })))
+        .select();
+      if (error) throw error;
+      let nextSubscriptions: Subscription[] = [];
+      set((state) => {
+        nextSubscriptions = sortByNextBillingDate([
+          ...state.subscriptions,
+          ...(data ?? []),
+        ]);
         return { subscriptions: nextSubscriptions };
       });
       await syncSubscriptionNotifications(nextSubscriptions);
