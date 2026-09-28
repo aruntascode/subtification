@@ -21,11 +21,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppTabBar } from "@/components/AppTabBar";
 import { isLightColor } from "@/lib/colorContrast";
 import {
+  getDaysUntilNextPayment,
+  getEstimatedTotalPaid,
   getLastPaymentDate,
   getNextPaymentDate,
   getPaidCount,
+  getScheduleAnchor,
   isFinished,
-  toDateOnly,
 } from "@/lib/subscriptionDuration";
 
 export default function SubscriptionDetailScreen() {
@@ -63,11 +65,11 @@ export default function SubscriptionDetailScreen() {
   const totalMonths = subscription.duration_months ?? 0;
   const remainingMonths = totalMonths - paidCount;
 
-  const getDaysUntil = () => {
-    if (!nextPaymentDate) return 0;
-    const diff = nextPaymentDate.getTime() - Date.now();
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-  };
+  const getDaysUntil = () => getDaysUntilNextPayment(subscription) ?? 0;
+
+  // Başlangıçtan bu yana (süresiz abonelikler için "şimdiye kadar" bilgisi)
+  const startDate = getScheduleAnchor(subscription);
+  const totalPaid = getEstimatedTotalPaid(subscription);
 
   const categoryLabel = t(`categories.${subscription.category}`);
   const daysUntil = getDaysUntil();
@@ -102,14 +104,12 @@ export default function SubscriptionDetailScreen() {
     );
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", {
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString(i18n.language, {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
-  };
 
   const cycleLabel = (c: string) => {
     switch (c) {
@@ -222,13 +222,7 @@ export default function SubscriptionDetailScreen() {
             </Text>
             <View style={{ flex: 1, justifyContent: "center" }}>
               <Text style={styles.bentoDateValue}>
-                {nextPaymentDate
-                  ? formatDate(
-                      subscription.duration_months
-                        ? toDateOnly(nextPaymentDate)
-                        : subscription.next_billing_date,
-                    )
-                  : t("duration.finished")}
+                {nextPaymentDate ? formatDate(nextPaymentDate) : t("duration.finished")}
               </Text>
             </View>
             {nextPaymentDate && (
@@ -238,6 +232,30 @@ export default function SubscriptionDetailScreen() {
             )}
           </View>
         </View>
+
+        {/* Süresiz aboneliklerde başlangıçtan bu yana özet */}
+        {!totalMonths && totalPaid.count > 0 && (
+          <View style={styles.notesCard}>
+            <Text style={styles.notesSectionTitle}>
+              {t("subscription_detail.since_title")}
+            </Text>
+            <Text style={styles.durationValue}>
+              {t("subscription_detail.since_value", {
+                date: startDate.toLocaleDateString(i18n.language, {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                }),
+              })}
+            </Text>
+            <Text style={styles.durationMeta}>
+              {t("subscription_detail.since_total", {
+                count: totalPaid.count,
+                amount: fmtWithOriginal(totalPaid.total, subscription.currency ?? "₺"),
+              })}
+            </Text>
+          </View>
+        )}
 
         {totalMonths > 0 && lastPaymentDate && (
           <View style={styles.notesCard}>

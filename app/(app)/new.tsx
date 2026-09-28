@@ -32,7 +32,12 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppTabBar } from "@/components/AppTabBar";
 import DurationPicker from "@/components/DurationPicker";
-import { addMonths, parseDateOnly, toDateOnly } from "@/lib/subscriptionDuration";
+import {
+  addMonths,
+  getNextPaymentDate,
+  parseDateOnly,
+  toDateOnly,
+} from "@/lib/subscriptionDuration";
 import { getIconColorOn, isLightColor } from "@/lib/colorContrast";
 import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
 
@@ -79,9 +84,6 @@ const AVAILABLE_COLORS = [
   "#212121", // siyah
   "#FFFFFF", // beyaz
 ];
-
-const startOfDay = (date: Date) =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
 const sanitizeAmountInput = (value: string) => {
   const normalized = value.replace(",", ".");
@@ -197,7 +199,8 @@ export default function NewSubscriptionScreen() {
       return;
     }
 
-    const finalBillingDate = billingDate;
+    // Girilen başlangıç tarihi takvimin çapası; sonraki ödeme ondan hesaplanır
+    const nextPayment = getNextPaymentDate(schedulePreview);
 
     try {
       await addSubscription({
@@ -206,14 +209,14 @@ export default function NewSubscriptionScreen() {
         currency: currency,
         billing_cycle: isInstallment ? "monthly" : billingCycle,
         category: category,
-        next_billing_date: finalBillingDate,
+        next_billing_date: toDateOnly(nextPayment ?? parseDateOnly(billingDate)),
         emoji: activeIcon,
         color: activeColor,
         is_active: true,
         notes: notes.trim() || undefined, // YENİ: Notları kaydet
         duration_months: durationMonths,
         is_installment: isInstallment,
-        first_billing_date: durationMonths ? finalBillingDate : null,
+        first_billing_date: billingDate,
       });
       router.back();
     } catch (error: any) {
@@ -253,6 +256,16 @@ export default function NewSubscriptionScreen() {
     }
     return t("duration.summary", { date: lastLabel });
   })();
+
+  // Formdaki değerlerle takvim önizlemesi: "Sonraki ödeme: 15 Ekim 2026"
+  const schedulePreview = {
+    is_active: true,
+    next_billing_date: billingDate,
+    first_billing_date: billingDate,
+    billing_cycle: isInstallment ? ("monthly" as const) : billingCycle,
+    duration_months: durationMonths,
+  };
+  const nextPaymentPreview = getNextPaymentDate(schedulePreview);
 
   const parsedAmount = parseFloat(amount);
   const yearlyHint =
@@ -539,17 +552,24 @@ export default function NewSubscriptionScreen() {
                 <Text style={styles.label}>
                   {isInstallment
                     ? t("duration.first_installment")
-                    : t("new_sub.next_payment")}
+                    : t("new_sub.start_date")}
                 </Text>
-                <DateField
-                  value={billingDate}
-                  onChange={setBillingDate}
-                  // Taksit geçmişte başlamış olabilir; abonelikte sonraki ödeme bugünden önce olamaz
-                  minimumDate={isInstallment ? undefined : startOfDay(new Date())}
-                />
+                {/* Başlangıç geçmişte olabilir; sonraki ödeme ondan hesaplanır */}
+                <DateField value={billingDate} onChange={setBillingDate} />
               </View>
             </View>
-            {yearlyHint && <Text style={styles.cycleHint}>{yearlyHint}</Text>}
+            <Text style={styles.cycleHint}>
+              {nextPaymentPreview
+                ? t("new_sub.next_payment_preview", {
+                    date: nextPaymentPreview.toLocaleDateString(i18n.language, {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    }),
+                  })
+                : t("duration.finished")}
+              {yearlyHint ? `\n${yearlyHint}` : ""}
+            </Text>
 
             {billingCycle === "monthly" && (
             <View style={styles.inputGroup}>

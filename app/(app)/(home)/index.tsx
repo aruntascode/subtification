@@ -11,7 +11,11 @@ import { useAppTheme } from "@/hooks/useAppTheme";
 import { useCurrency, useTotalMonthly } from "@/hooks/useCurrency";
 import { useAuthStore } from "@/stores/authStore";
 import { isOverBudget, useBudgetStore } from "@/stores/budgetStore";
-import { useSubscriptionStore } from "@/stores/subscriptionStore";
+import { useSubscriptionStore, type Subscription } from "@/stores/subscriptionStore";
+import {
+  getDaysUntilNextPayment,
+  getNextPaymentDate,
+} from "@/lib/subscriptionDuration";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
@@ -56,15 +60,11 @@ export default function DashboardScreen() {
     fetchSubscriptions();
   }, [fetchSubscriptions]);
 
-  const getDaysUntil = (dateStr: string) => {
-    const diff = new Date(dateStr).getTime() - Date.now();
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-  };
+  // Sonraki ödeme takvimden hesaplanır; kayıtlı tarih eskiyebilir
+  const getDaysUntil = (sub: Subscription) => getDaysUntilNextPayment(sub) ?? 0;
 
   // YENİ: Sadece ödemesine 7 gün veya daha az kalanları filtreler
-  const upcoming = upcomingPayments().filter(
-    (sub) => getDaysUntil(sub.next_billing_date) <= 7,
-  );
+  const upcoming = upcomingPayments().filter((sub) => getDaysUntil(sub) <= 7);
 
   // "Bu ay" kartı yalnızca bu ayı, takvim şeridi ek olarak sonraki ayın ilk 15 gününü gösterir
   const { monthPayments, calendarPayments } = useMemo(() => {
@@ -107,7 +107,7 @@ export default function DashboardScreen() {
 
   const getUpcomingBadgeLabel = () => {
     if (upcoming.length === 0) return "";
-    const days = getDaysUntil(upcoming[0].next_billing_date);
+    const days = getDaysUntil(upcoming[0]);
     const locale = (() => {
       try {
         return Localization.getLocales()[0]?.languageTag ?? "en";
@@ -118,7 +118,7 @@ export default function DashboardScreen() {
     const dateLabel =
       days <= 7
         ? t("dashboard.next_payment", { name: upcoming[0].name, days })
-        : new Date(upcoming[0].next_billing_date).toLocaleDateString(locale, {
+        : (getNextPaymentDate(upcoming[0]) ?? new Date()).toLocaleDateString(locale, {
             day: "numeric",
             month: "short",
           });
@@ -368,15 +368,12 @@ export default function DashboardScreen() {
               // 1. Kategorinin görünen adını buluyoruz
               const categoryLabel = t(`categories.${sub.category}`);
 
-              // 2. Ödeme gününü ismen (Pazartesi, Salı vb.) buluyoruz
+              // 2. Takvimden hesaplanan sonraki ödeme tarihi ("15 Eki"); bitmişse "Tamamlandı"
               const locale = i18n.language.startsWith("tr") ? "tr-TR" : "en-US";
-              const dayName = new Date(
-                sub.next_billing_date,
-              ).toLocaleDateString(locale, { weekday: "long" });
-
-              // İlk harfi büyük yapmak için küçük bir dokunuş
-              const formattedDay =
-                dayName.charAt(0).toUpperCase() + dayName.slice(1);
+              const nextPayment = getNextPaymentDate(sub);
+              const formattedDay = nextPayment
+                ? nextPayment.toLocaleDateString(locale, { day: "numeric", month: "short" })
+                : t("duration.finished");
 
                 return (
                   <TouchableOpacity

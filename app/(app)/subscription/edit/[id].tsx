@@ -25,7 +25,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DurationPicker from "@/components/DurationPicker";
 import { getIconColorOn, isLightColor } from "@/lib/colorContrast";
-import { toDateOnly } from "@/lib/subscriptionDuration";
+import { getNextPaymentDate, parseDateOnly, toDateOnly } from "@/lib/subscriptionDuration";
 import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
 
 const AVAILABLE_ICONS = [
@@ -75,12 +75,12 @@ export default function EditSubscriptionScreen() {
   const { subscriptions, updateSubscription, loading } = useSubscriptionStore();
 
   const subscription = subscriptions.find((s) => s.id === id);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, darkMode, blurTint } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, darkMode), [colors, darkMode]);
 
-  // Süreli kayıtta tarih alanı ilk ödemeyi, değilse sonraki ödemeyi düzenler
+  // Tarih alanı takvimin çapasını (başlangıç) düzenler; eski kayıtlarda kayıtlı ödeme tarihi
   const initialDate = subscription
     ? (subscription.first_billing_date ?? subscription.next_billing_date).slice(0, 10)
     : toDateOnly(new Date());
@@ -120,6 +120,15 @@ export default function EditSubscriptionScreen() {
     );
   }
 
+  // Formdaki değerlerle takvim önizlemesi
+  const nextPaymentPreview = getNextPaymentDate({
+    is_active: true,
+    next_billing_date: editDate,
+    first_billing_date: editDate,
+    billing_cycle: subscription.is_installment ? "monthly" : editCycle,
+    duration_months: editCycle === "yearly" ? null : editDuration,
+  });
+
   const handleSaveEdit = async () => {
     if (!editName.trim()) {
       Alert.alert(t("common.error"), t("new_sub.err_name"));
@@ -145,12 +154,20 @@ export default function EditSubscriptionScreen() {
         category: editCategory,
         emoji: editEmoji,
         color: editColor,
-        next_billing_date: editDate,
+        next_billing_date: toDateOnly(
+          getNextPaymentDate({
+            is_active: true,
+            next_billing_date: editDate,
+            first_billing_date: editDate,
+            billing_cycle: cycle,
+            duration_months: duration,
+          }) ?? parseDateOnly(editDate),
+        ),
         billing_cycle: cycle,
         notes: editNotes.trim() || undefined,
         duration_months: duration,
-        // Süreli kayıtta takvim bu tarihten başlar
-        first_billing_date: duration ? editDate : null,
+        // Takvim bu tarihten başlar; sonraki ödeme her yerde buradan hesaplanır
+        first_billing_date: editDate,
       });
       router.back();
     } catch (error: any) {
@@ -308,13 +325,22 @@ export default function EditSubscriptionScreen() {
               <Text style={styles.label}>
                 {subscription.is_installment
                   ? t("duration.first_installment")
-                  : editDuration && editCycle !== "yearly"
-                    ? t("new_sub.first_payment")
-                    : t("new_sub.next_payment")}
+                  : t("new_sub.start_date")}
               </Text>
               <DateField value={editDate} onChange={setEditDate} />
             </View>
           </View>
+          <Text style={styles.previewText}>
+            {nextPaymentPreview
+              ? t("new_sub.next_payment_preview", {
+                  date: nextPaymentPreview.toLocaleDateString(i18n.language, {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  }),
+                })
+              : t("duration.finished")}
+          </Text>
 
           {/* Süre / Taksit sayısı (yıllıkta gizli) */}
           {editCycle !== "yearly" && (
@@ -505,6 +531,13 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
   },
   amountInput: { flex: 1, paddingLeft: 42 },
   cycleRow: { flexDirection: "row", gap: Spacing.sm },
+  previewText: {
+    ...Typography.labelMd,
+    color: colors.onSurfaceVariant,
+    marginTop: -Spacing.md,
+    marginBottom: Spacing.xl,
+    marginLeft: 4,
+  },
   cycleBtn: {
     flex: 1,
     alignItems: "center",

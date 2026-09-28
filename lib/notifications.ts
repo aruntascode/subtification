@@ -3,12 +3,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import i18n from "@/locales/i18n";
-import { getNextPaymentDate, isBilling, toDateOnly } from "@/lib/subscriptionDuration";
+import {
+  getNextPaymentDate,
+  getPaidCount,
+  getPaymentOccurrence,
+  isBilling,
+  toDateOnly,
+} from "@/lib/subscriptionDuration";
 
 const NOTIFICATION_PREF_KEY = "push_alerts_enabled";
 const SCHEDULED_NOTIFICATION_IDS_KEY = "scheduled_subscription_notification_ids";
 const ANDROID_CHANNEL_ID = "subscription-reminders";
 const REMINDER_HOUR = 9;
+const REMINDERS_PER_SUBSCRIPTION = 3;
 
 type StoredNotification = {
   subscriptionId: string;
@@ -64,17 +71,19 @@ export async function syncSubscriptionNotifications(subscriptions: Subscription[
     await cancelSubscriptionNotifications();
 
     const scheduled: StoredNotification[] = [];
+    // Uygulama uzun süre açılmasa da hatırlatmalar sürsün diye her abonelik için
+    // sıradaki birkaç ödemeyi planla. iOS en fazla 64 bekleyen bildirime izin verir;
+    // en yakın 60'ı tutulur.
     const reminders = subscriptions
       .filter(isBilling)
-      .map((subscription) => {
-        const nextPayment = getNextPaymentDate(subscription);
-        return {
-          subscription,
-          reminderDate: nextPayment
-            ? getReminderDate(toDateOnly(nextPayment))
-            : null,
-        };
-      })
+      .flatMap((subscription) =>
+        getUpcomingPaymentDates(subscription, REMINDERS_PER_SUBSCRIPTION).map(
+          (paymentDate) => ({
+            subscription,
+            reminderDate: getReminderDate(toDateOnly(paymentDate)),
+          }),
+        ),
+      )
       .filter(
         (item): item is { subscription: Subscription; reminderDate: Date } =>
           item.reminderDate !== null,
@@ -158,6 +167,19 @@ async function ensureAndroidChannel() {
     vibrationPattern: [0, 250, 250, 250],
     lightColor: "#5ddce1",
   });
+}
+
+/** Takvimden hesaplanan sıradaki `count` ödeme (süreli kayıtta süreyle sınırlı) */
+function getUpcomingPaymentDates(subscription: Subscription, count: number): Date[] {
+  const first = getNextPaymentDate(subscription);
+  if (!first) return [];
+  const startIndex = getPaidCount(subscription);
+  const limit = subscription.duration_months ?? Number.POSITIVE_INFINITY;
+  const dates: Date[] = [];
+  for (let k = startIndex; k < limit && dates.length < count; k++) {
+    dates.push(getPaymentOccurrence(subscription, k));
+  }
+  return dates;
 }
 
 function getReminderDate(nextBillingDate: string) {

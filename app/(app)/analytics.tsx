@@ -2,7 +2,7 @@ import { CATEGORIES } from "@/constants/categories";
 import type { AppColors } from "@/constants/colors";
 import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useCurrency, useTotalMonthly, useCategoryTotals } from "@/hooks/useCurrency";
-import { isBilling } from "@/lib/subscriptionDuration";
+import { getDaysUntilNextPayment, isBilling } from "@/lib/subscriptionDuration";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useSubscriptionStore, Subscription } from "@/stores/subscriptionStore";
 import SubscriptionIcon from "@/components/SubscriptionIcon";
@@ -54,13 +54,9 @@ function toMonthly(amount: number, cycle: string): number {
   }
 }
 
-/** Days until a date from today */
-function daysUntil(dateStr: string): number {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr);
-  target.setHours(0, 0, 0, 0);
-  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+/** Sonraki ödemeye kalan gün; takvimden hesaplanır (kayıtlı tarih eskiyebilir). Bitmişse -1 */
+function daysUntil(sub: Subscription): number {
+  return getDaysUntilNextPayment(sub) ?? -1;
 }
 
 type SubscriptionWithMonthly = Subscription & { monthlyConverted: number };
@@ -129,14 +125,10 @@ export default function AnalyticsScreen() {
   // Upcoming payments (next 30 days)
   const upcoming = [...activeSubs]
     .filter((s) => {
-      const d = daysUntil(s.next_billing_date);
+      const d = daysUntil(s);
       return d >= 0 && d <= 30;
     })
-    .sort(
-      (a, b) =>
-        new Date(a.next_billing_date).getTime() -
-        new Date(b.next_billing_date).getTime(),
-    );
+    .sort((a, b) => daysUntil(a) - daysUntil(b));
 
   // Donut chart mode: "subscriptions" | "categories"
   const [donutMode, setDonutMode] = useState<"subscriptions" | "categories">("subscriptions");
@@ -272,12 +264,12 @@ export default function AnalyticsScreen() {
   // 3) Urgent renewal review in next 7 days
   const urgentRenewal = [...activeWithMonthly]
     .filter((s) => {
-      const d = daysUntil(s.next_billing_date);
+      const d = daysUntil(s);
       return d >= 0 && d <= 7;
     })
     .sort((a, b) => b.monthlyConverted - a.monthlyConverted)[0];
   if (urgentRenewal) {
-    const days = daysUntil(urgentRenewal.next_billing_date);
+    const days = daysUntil(urgentRenewal);
     const when =
       days === 0
         ? t("analytics.today")
@@ -678,7 +670,7 @@ export default function AnalyticsScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{t("analytics.upcoming_payments")}</Text>
             {upcoming.map((sub) => {
-              const days = daysUntil(sub.next_billing_date);
+              const days = daysUntil(sub);
               const isUrgent = days <= 3;
               return (
                 <View key={sub.id} style={styles.upcomingRow}>

@@ -74,7 +74,10 @@
     "delete_confirm_message": "This subscription will be permanently deleted.",
     "delete_cancel": "Cancel",
     "delete_confirm": "Delete",
-    "yearly_cost": "Yearly Cost"
+    "yearly_cost": "Yearly Cost",
+    "since_title": "Subscription History",
+    "since_value": "Since {{date}}",
+    "since_total": "{{count}} payments so far · about {{amount}}"
   },
   "analytics": {
     "title": "Trends",
@@ -248,8 +251,9 @@
     "cycle_yearly": "Yearly",
     "yearly_cost": "Yearly amount",
     "next_payment": "Next payment",
-    "first_payment": "First payment",
-    "yearly_monthly_equivalent": "Works out to {{amount}} per month."
+    "yearly_monthly_equivalent": "Works out to {{amount}} per month.",
+    "start_date": "When did you start?",
+    "next_payment_preview": "Next payment: {{date}}"
   },
   "auth": {
     "login_title": "Welcome back",

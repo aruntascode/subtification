@@ -1,6 +1,10 @@
 import { BillingCycle, Category } from "@/constants/categories";
 import { syncSubscriptionNotifications } from "@/lib/notifications";
-import { isBilling } from "@/lib/subscriptionDuration";
+import {
+  getDaysUntilNextPayment,
+  getNextPaymentDate,
+  isBilling,
+} from "@/lib/subscriptionDuration";
 import { supabase } from "@/lib/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
@@ -71,12 +75,13 @@ const normalizeToMonthly = (amount: number, cycle: BillingCycle): number => {
 
 const LOCAL_SUBSCRIPTIONS_KEY = "guest_subscriptions";
 
+// Kayıtlı tarih eskiyebilir; sıralama takvimden hesaplanan sonraki ödemeye göre.
+// Biten süreli kayıtlar sona gider.
+const nextPaymentTime = (s: Subscription) =>
+  getNextPaymentDate(s)?.getTime() ?? Number.POSITIVE_INFINITY;
+
 const sortByNextBillingDate = (subscriptions: Subscription[]) =>
-  [...subscriptions].sort(
-    (a, b) =>
-      new Date(a.next_billing_date).getTime() -
-      new Date(b.next_billing_date).getTime(),
-  );
+  [...subscriptions].sort((a, b) => nextPaymentTime(a) - nextPaymentTime(b));
 
 const readLocalSubscriptions = async (): Promise<Subscription[]> => {
   const raw = await AsyncStorage.getItem(LOCAL_SUBSCRIPTIONS_KEY);
@@ -159,7 +164,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         .select("*")
         .order("next_billing_date", { ascending: true });
       if (error) throw error;
-      const subscriptions = data ?? [];
+      const subscriptions = sortByNextBillingDate(data ?? []);
       set({ subscriptions });
       await syncSubscriptionNotifications(subscriptions);
     } finally {
@@ -393,21 +398,14 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
       );
   },
 
-  upcomingPayments: () => {
-    const now = new Date();
-    const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    return get()
-      .subscriptions.filter((s) => {
+  upcomingPayments: () =>
+    sortByNextBillingDate(
+      get().subscriptions.filter((s) => {
         if (!isBilling(s)) return false;
-        const date = new Date(s.next_billing_date);
-        return date >= now && date <= thirtyDays;
-      })
-      .sort(
-        (a, b) =>
-          new Date(a.next_billing_date).getTime() -
-          new Date(b.next_billing_date).getTime(),
-      );
-  },
+        const days = getDaysUntilNextPayment(s);
+        return days !== null && days <= 30;
+      }),
+    ),
 
   byCategory: () => {
     const subs = get().subscriptions.filter(isBilling);

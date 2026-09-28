@@ -135,22 +135,24 @@ export default function BulkAddScreen() {
       await addSubscriptions(
         selectedServices.map((service) => {
           const draft = drafts[service.name];
+          const nextDate =
+            draft.cycle === "yearly"
+              ? draft.date
+              : getNextBillingDateForDay(draft.day ? parseInt(draft.day, 10) : today);
           return {
             name: service.name,
             amount: parseFloat(draft.amount),
             currency: draft.currency,
             billing_cycle: draft.cycle,
             category: service.category,
-            next_billing_date:
-              draft.cycle === "yearly"
-                ? draft.date
-                : getNextBillingDateForDay(draft.day ? parseInt(draft.day, 10) : today),
+            next_billing_date: nextDate,
             emoji: service.icon,
             color: service.color,
             is_active: true,
             duration_months: null,
             is_installment: false,
-            first_billing_date: null,
+            // Hızlı girişte başlangıç bilinmiyor; sonraki ödeme de takvimin geçerli bir çapası
+            first_billing_date: nextDate,
           };
         }),
       );

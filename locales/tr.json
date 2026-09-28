@@ -74,7 +74,10 @@
     "delete_confirm_message": "Bu abonelik kalıcı olarak silinecek.",
     "delete_cancel": "İptal",
     "delete_confirm": "Sil",
-    "yearly_cost": "Yıllık Maliyet"
+    "yearly_cost": "Yıllık Maliyet",
+    "since_title": "Abonelik Geçmişi",
+    "since_value": "{{date}} tarihinden beri",
+    "since_total": "Şimdiye kadar {{count}} ödeme · yaklaşık {{amount}}"
   },
   "analytics": {
     "title": "Trendler",
@@ -248,8 +251,9 @@
     "cycle_yearly": "Yıllık",
     "yearly_cost": "Yıllık tutar",
     "next_payment": "Sonraki ödeme",
-    "first_payment": "İlk ödeme",
-    "yearly_monthly_equivalent": "Aylık {{amount}} tutarına denk geliyor."
+    "yearly_monthly_equivalent": "Aylık {{amount}} tutarına denk geliyor.",
+    "start_date": "Ne zaman başladın?",
+    "next_payment_preview": "Sonraki ödeme: {{date}}"
   },
   "auth": {
     "login_title": "Tekrar hoş geldin",
