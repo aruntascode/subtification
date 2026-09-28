@@ -2,7 +2,7 @@ import { BillingCycle, CATEGORIES, Category } from "@/constants/categories";
 import DateField from "@/components/DateField";
 import InfoLabel from "@/components/InfoLabel";
 import type { AppColors } from "@/constants/colors";
-import { BorderRadius, Spacing, Typography } from "@/constants/typography";
+import { BorderRadius, FIELD_HEIGHT, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -65,6 +65,15 @@ const AVAILABLE_COLORS = [
   "#FFFFFF", // beyaz
 ];
 
+const sanitizeAmountInput = (value: string) => {
+  const normalized = value.replace(",", ".");
+  const [whole = "", ...decimalParts] = normalized.split(".");
+  const digitsOnly = whole.replace(/\D/g, "");
+  const decimal = decimalParts.join("").replace(/\D/g, "");
+
+  return decimalParts.length > 0 ? `${digitsOnly}.${decimal}` : digitsOnly;
+};
+
 export default function EditSubscriptionScreen() {
   // cycle/amount: Analizlerdeki "Yıllığa geç" ipucundan ön doldurma
   const { id, cycle: cycleParam, amount: amountParam } = useLocalSearchParams<{
@@ -97,8 +106,8 @@ export default function EditSubscriptionScreen() {
     amountParam ?? subscription?.amount.toString() ?? "",
   );
   const [editDate, setEditDate] = useState(initialDate);
-  // Döngü kayıttan gelir (seçici yok); "Yıllığa geç" ipucu yıllık olarak açar
-  const [editCycle] = useState<BillingCycle>(
+  // Döngü kayıttan gelir; "Yıllığa geç" ipucu yıllık olarak açar
+  const [editCycle, setEditCycle] = useState<BillingCycle>(
     cycleParam === "yearly" ? "yearly" : (subscription?.billing_cycle ?? "monthly"),
   );
   const [editCategory, setEditCategory] = useState<Category>(
@@ -125,6 +134,11 @@ export default function EditSubscriptionScreen() {
       </View>
     );
   }
+
+  // Aylık/yıllık; eski haftalık ya da 3 aylık kayıtta o döngü de seçenek olarak kalır
+  const cycleOptions: BillingCycle[] = ["monthly", "yearly"].includes(subscription.billing_cycle)
+    ? ["monthly", "yearly"]
+    : ["monthly", "yearly", subscription.billing_cycle];
 
   // Formdaki değerlerle takvim önizlemesi
   const nextPaymentPreview = getNextPaymentDate({
@@ -170,10 +184,16 @@ export default function EditSubscriptionScreen() {
           }) ?? parseDateOnly(editDate),
         ),
         billing_cycle: cycle,
-        notes: editNotes.trim() || undefined,
+        // undefined gönderilirse Supabase alanı güncellemez; not silinebilsin
+        notes: editNotes.trim() || null,
         duration_months: duration,
-        // Takvim bu tarihten başlar; sonraki ödeme her yerde buradan hesaplanır
-        first_billing_date: editDate,
+        // Takvim bu tarihten başlar; sonraki ödeme her yerde buradan hesaplanır.
+        // Tarih ve döngü değişmediyse eski çapa korunur; yoksa bu ay önceden
+        // yapılmış ödeme takvimden düşer.
+        first_billing_date:
+          editDate === initialDate && cycle === subscription.billing_cycle
+            ? (subscription.first_billing_date ?? subscription.next_billing_date).slice(0, 10)
+            : editDate,
       });
       router.back();
     } catch (error: any) {
@@ -282,13 +302,15 @@ export default function EditSubscriptionScreen() {
           {/* Tutar ve ödeme tarihi */}
           <View style={styles.row}>
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>
-                {subscription.is_installment
-                  ? t("duration.installment_amount")
-                  : editCycle === "yearly"
-                    ? t("new_sub.yearly_cost")
-                    : t("new_sub.monthly_cost")}
-              </Text>
+              <InfoLabel
+                label={
+                  subscription.is_installment
+                    ? t("duration.installment_amount")
+                    : editCycle === "yearly"
+                      ? t("new_sub.yearly_cost")
+                      : t("new_sub.monthly_cost")
+                }
+              />
               <View style={styles.amountContainer}>
                 <Text style={styles.currencySymbol}>
                   {subscription.currency ?? "₺"}
@@ -297,18 +319,20 @@ export default function EditSubscriptionScreen() {
                   inputAccessoryViewID={KEYBOARD_DONE_ID}
                   style={[styles.input, styles.amountInput]}
                   value={editAmount}
-                  onChangeText={setEditAmount}
+                  onChangeText={(text) => setEditAmount(sanitizeAmountInput(text))}
                   keyboardType="decimal-pad"
                 />
               </View>
             </View>
             <View style={[styles.inputGroup, { flex: 1 }]}>
               {isDurationBased ? (
-                <Text style={styles.label}>
-                  {subscription.is_installment
-                    ? t("duration.first_installment")
-                    : t("new_sub.first_payment")}
-                </Text>
+                <InfoLabel
+                  label={
+                    subscription.is_installment
+                      ? t("duration.first_installment")
+                      : t("new_sub.first_payment")
+                  }
+                />
               ) : (
                 <InfoLabel
                   label={t("new_sub.next_payment")}
@@ -337,6 +361,31 @@ export default function EditSubscriptionScreen() {
                   })
                 : t("duration.finished")}
             </Text>
+          )}
+
+          {/* Ödeme döngüsü (taksit her zaman aylık) */}
+          {!subscription.is_installment && (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t("subscription_detail.billing_cycle")}</Text>
+              <View style={styles.cycleRow}>
+                {cycleOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option}
+                    style={[styles.cycleBtn, editCycle === option && styles.cycleBtnActive]}
+                    onPress={() => setEditCycle(option)}
+                  >
+                    <Text
+                      style={[
+                        styles.cycleBtnText,
+                        editCycle === option && styles.cycleBtnTextActive,
+                      ]}
+                    >
+                      {t(`cycles.${option}`)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
           )}
 
           {/* Süre / Taksit sayısı (yıllıkta gizli) */}
@@ -473,9 +522,38 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
 
   // ── Edit Form ──
   row: { flexDirection: "row", gap: Spacing.md },
+  cycleRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  cycleBtn: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surfaceContainerHighest,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  cycleBtnActive: {
+    backgroundColor: colors.primaryFixed,
+    borderColor: colors.primary,
+  },
+  cycleBtnText: {
+    ...Typography.labelMd,
+    fontWeight: "700",
+    color: colors.onSurfaceVariant,
+  },
+  cycleBtnTextActive: {
+    color: colors.primary,
+    fontWeight: "800",
+  },
   inputGroup: { marginBottom: Spacing.xl },
   label: {
     fontSize: 10,
+    // ⓘ ikonlu etiketle (InfoLabel) aynı yükseklik; yan yana kutular hizalı kalsın
+    lineHeight: 14,
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: 1.5,
@@ -526,7 +604,8 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     fontWeight: "700",
     color: colors.onSurfaceVariant,
   },
-  amountInput: { flex: 1, paddingLeft: 42 },
+  // Yanındaki tarih alanıyla aynı boy
+  amountInput: { flex: 1, paddingLeft: 42, height: FIELD_HEIGHT, paddingVertical: 0 },
   previewText: {
     ...Typography.labelMd,
     color: colors.onSurfaceVariant,

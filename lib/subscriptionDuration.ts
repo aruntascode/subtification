@@ -125,13 +125,3 @@ export const formatDurationProgress = (
   }
   return t("duration.progress_months", { remaining: getRemainingCount(sub) });
 };
-
-/** Ayın verilen günü için bir sonraki ödeme tarihi; gün bugün ya da geçmişse gelecek ay */
-export const getNextBillingDateForDay = (day: number): string => {
-  const today = startOfToday();
-  let candidate = new Date(today.getFullYear(), today.getMonth(), 1);
-  if (day <= today.getDate()) candidate = addMonths(candidate, 1);
-  const lastDay = new Date(candidate.getFullYear(), candidate.getMonth() + 1, 0).getDate();
-  candidate.setDate(Math.min(day, lastDay));
-  return toDateOnly(candidate);
-};

@@ -113,3 +113,10 @@ export const Spacing = {
   xxxl: 32,
   huge: 40,
 } as const;
+
+/**
+ * Tek satırlık form kutularının yüksekliği. Yan yana duran tutar ve tarih
+ * alanları aynı boyda olsun diye iç boşluk yerine sabit yükseklik kullanılır
+ * (iOS'ta TextInput ile Text aynı yazı boyutunda farklı yükseklik alabiliyor).
+ */
+export const FIELD_HEIGHT = 52;

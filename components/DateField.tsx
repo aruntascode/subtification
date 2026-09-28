@@ -1,5 +1,5 @@
 import type { AppColors } from "@/constants/colors";
-import { BorderRadius, Spacing } from "@/constants/typography";
+import { BorderRadius, FIELD_HEIGHT, Spacing } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { parseDateOnly, toDateOnly } from "@/lib/subscriptionDuration";
 import DateTimePicker, {
@@ -110,7 +110,7 @@ const createStyles = (colors: AppColors) =>
       backgroundColor: colors.surfaceContainerHighest,
       borderRadius: BorderRadius.xl,
       paddingHorizontal: Spacing.lg,
-      paddingVertical: Platform.OS === "ios" ? 16 : 14,
+      height: FIELD_HEIGHT,
     },
     fieldText: {
       flexShrink: 1,

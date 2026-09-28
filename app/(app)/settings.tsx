@@ -38,7 +38,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AppTabBar } from "@/components/AppTabBar";
 
 const CURRENCY_SHEET_CLOSED_Y = 520;
 const CURRENCY_SHEET_DISMISS_DISTANCE = 110;
@@ -932,7 +931,6 @@ export default function SettingsScreen() {
         </GestureHandlerRootView>
       </Modal>
 
-      <AppTabBar />
     </View>
   );
 }

@@ -6,11 +6,17 @@ import {
   type PopularService,
   type ServicePlan,
 } from "@/constants/services";
-import { BorderRadius, Spacing, Typography } from "@/constants/typography";
+import { BorderRadius, FIELD_HEIGHT, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { getIconColorOn } from "@/lib/colorContrast";
-import { getNextBillingDateForDay, toDateOnly } from "@/lib/subscriptionDuration";
+import {
+  addMonths,
+  getNextPaymentDate,
+  parseDateOnly,
+  toDateOnly,
+} from "@/lib/subscriptionDuration";
 import DateField from "@/components/DateField";
+import InfoLabel from "@/components/InfoLabel";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -38,9 +44,10 @@ type Draft = {
   amount: string;
   currency: string;
   cycle: "monthly" | "yearly";
-  /** Aylık planda ayın günü (boşsa bugün) */
-  day: string;
-  /** Yıllık planda sonraki ödeme tarihi 'YYYY-MM-DD' */
+  /**
+   * Sonraki ödeme 'YYYY-MM-DD' (varsayılan: bir ay sonrası). Tekli eklemedeki gibi
+   * son ödeme de girilebilir; takvimin çapası olarak saklanır.
+   */
   date: string;
 };
 
@@ -53,19 +60,18 @@ const sanitizeAmountInput = (value: string) => {
   return decimalParts.length > 0 ? `${digitsOnly}.${decimal}` : digitsOnly;
 };
 
-// Plan değişince kullanıcının girdiği gün/tarih korunur
+// Plan değişince kullanıcının girdiği tarih korunur
 const draftFromPlan = (plan: ServicePlan | undefined, prev?: Draft): Draft => ({
   planKey: plan ? planKey(plan) : "",
   amount: plan?.price ?? "",
   currency: plan?.forceCurrency ?? "₺",
   cycle: plan ? planCycle(plan) : "monthly",
-  day: prev?.day ?? "",
-  date: prev?.date ?? toDateOnly(new Date()),
+  date: prev?.date ?? toDateOnly(addMonths(new Date(), 1)),
 });
 
 export default function BulkAddScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, darkMode, blurTint } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, darkMode), [colors, darkMode]);
@@ -121,38 +127,27 @@ export default function BulkAddScreen() {
         Alert.alert(t("common.error"), t("bulk.err_amount", { name: service.name }));
         return;
       }
-      if (draft.cycle === "monthly" && draft.day) {
-        const day = parseInt(draft.day, 10);
-        if (day < 1 || day > 31) {
-          Alert.alert(t("common.error"), t("bulk.err_day", { name: service.name }));
-          return;
-        }
-      }
     }
 
-    const today = new Date().getDate();
     try {
       await addSubscriptions(
         selectedServices.map((service) => {
           const draft = drafts[service.name];
-          const nextDate =
-            draft.cycle === "yearly"
-              ? draft.date
-              : getNextBillingDateForDay(draft.day ? parseInt(draft.day, 10) : today);
+          // Girilen tarih takvimin çapası; sonraki ödeme ondan hesaplanır
+          const nextPayment = getNextPaymentDate(schedulePreviewOf(draft));
           return {
             name: service.name,
             amount: parseFloat(draft.amount),
             currency: draft.currency,
             billing_cycle: draft.cycle,
             category: service.category,
-            next_billing_date: nextDate,
+            next_billing_date: toDateOnly(nextPayment ?? parseDateOnly(draft.date)),
             emoji: service.icon,
             color: service.color,
             is_active: true,
             duration_months: null,
             is_installment: false,
-            // Hızlı girişte başlangıç bilinmiyor; sonraki ödeme de takvimin geçerli bir çapası
-            first_billing_date: nextDate,
+            first_billing_date: draft.date,
           };
         }),
       );
@@ -160,6 +155,38 @@ export default function BulkAddScreen() {
     } catch (error: any) {
       Alert.alert(t("common.error"), error.message);
     }
+  };
+
+  const schedulePreviewOf = (draft: Draft) => ({
+    is_active: true,
+    next_billing_date: draft.date,
+    first_billing_date: draft.date,
+    billing_cycle: draft.cycle,
+    duration_months: null,
+  });
+
+  // Tekli eklemedeki ipucu: geçmiş bir tarih (son ödeme) girildiyse hesaplanan
+  // sonraki ödeme, yıllıkta aylık karşılığı
+  const hintOf = (draft: Draft) => {
+    const nextPayment = getNextPaymentDate(schedulePreviewOf(draft));
+    const scheduleHint =
+      nextPayment && toDateOnly(nextPayment) !== draft.date
+        ? t("new_sub.next_payment_preview", {
+            date: nextPayment.toLocaleDateString(i18n.language, {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            }),
+          })
+        : null;
+    const parsedAmount = parseFloat(draft.amount);
+    const yearlyHint =
+      draft.cycle === "yearly" && parsedAmount > 0
+        ? t("new_sub.yearly_monthly_equivalent", {
+            amount: `${draft.currency}${(parsedAmount / 12).toFixed(2)}`,
+          })
+        : null;
+    return [scheduleHint, yearlyHint].filter(Boolean).join("\n");
   };
 
   const renderSelectStep = () => (
@@ -221,6 +248,7 @@ export default function BulkAddScreen() {
 
       {selectedServices.map((service) => {
         const draft = drafts[service.name];
+        const hintText = hintOf(draft);
         return (
           <View key={service.name} style={styles.reviewCard}>
             <View style={styles.reviewHeader}>
@@ -277,10 +305,10 @@ export default function BulkAddScreen() {
             )}
 
             <View style={styles.row}>
-              <View style={{ flex: 3 }}>
-                <Text style={styles.label}>
-                  {draft.cycle === "yearly" ? t("bulk.amount_yearly") : t("bulk.amount")}
-                </Text>
+              <View style={{ flex: 1 }}>
+                <InfoLabel
+                  label={draft.cycle === "yearly" ? t("bulk.amount_yearly") : t("bulk.amount")}
+                />
                 <View style={styles.amountContainer}>
                   <Text style={styles.currencySymbol}>{draft.currency}</Text>
                   <TextInput
@@ -296,33 +324,19 @@ export default function BulkAddScreen() {
                   />
                 </View>
               </View>
-              {draft.cycle === "yearly" ? (
-              <View style={{ flex: 2 }}>
-                <Text style={styles.label}>{t("new_sub.next_payment")}</Text>
+              <View style={{ flex: 1 }}>
+                <InfoLabel
+                  label={t("new_sub.next_payment")}
+                  infoTitle={t("new_sub.next_payment_info_title")}
+                  infoMessage={t("new_sub.next_payment_info")}
+                />
                 <DateField
                   value={draft.date}
                   onChange={(date) => updateDraft(service.name, { date })}
-                  minimumDate={new Date(new Date().setHours(0, 0, 0, 0))}
                 />
               </View>
-              ) : (
-              <View style={{ flex: 2 }}>
-                <Text style={styles.label}>{t("bulk.billing_day")}</Text>
-                <TextInput
-                  inputAccessoryViewID={KEYBOARD_DONE_ID}
-                  style={styles.input}
-                  value={draft.day}
-                  onChangeText={(text) =>
-                    updateDraft(service.name, { day: text.replace(/[^0-9]/g, "") })
-                  }
-                  placeholder={t("bulk.day_placeholder")}
-                  placeholderTextColor={colors.onSurfaceVariant + "80"}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                />
-              </View>
-              )}
             </View>
+            {hintText !== "" && <Text style={styles.hint}>{hintText}</Text>}
           </View>
         );
       })}
@@ -578,8 +592,16 @@ const createStyles = (colors: AppColors, darkMode: boolean) =>
       flexDirection: "row",
       gap: Spacing.md,
     },
+    hint: {
+      ...Typography.labelMd,
+      color: colors.onSurfaceVariant,
+      marginTop: Spacing.sm,
+      marginLeft: 4,
+    },
     label: {
       fontSize: 10,
+      // ⓘ ikonlu etiketle (InfoLabel) aynı yükseklik; yan yana kutular hizalı kalsın
+      lineHeight: 14,
       fontWeight: "800",
       textTransform: "uppercase",
       letterSpacing: 1.5,
@@ -591,11 +613,12 @@ const createStyles = (colors: AppColors, darkMode: boolean) =>
       backgroundColor: colors.surfaceContainerHighest,
       borderRadius: BorderRadius.xl,
       paddingHorizontal: Spacing.lg,
-      paddingVertical: Platform.OS === "ios" ? 14 : 12,
+      paddingVertical: Platform.OS === "ios" ? 16 : 14,
       fontFamily: "Inter",
       fontSize: 16,
       fontWeight: "700",
       color: colors.onSurface,
+      textAlignVertical: "center",
     },
     amountContainer: {
       flexDirection: "row",
@@ -612,7 +635,10 @@ const createStyles = (colors: AppColors, darkMode: boolean) =>
     },
     amountInput: {
       flex: 1,
-      paddingLeft: 38,
+      paddingLeft: 42,
+      // Yanındaki tarih alanıyla aynı boy
+      height: FIELD_HEIGHT,
+      paddingVertical: 0,
     },
 
     // ── Alt buton ──

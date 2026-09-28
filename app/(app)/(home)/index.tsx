@@ -79,8 +79,11 @@ export default function DashboardScreen() {
     return { monthPayments: current, calendarPayments: [...current, ...nextMonthHead] };
   }, [subscriptions]);
 
-  // YENİ: Listeyi ters çevirip sadece en son eklenen 3 aboneliği alıyoruz
-  const recentSubs = [...subscriptions].reverse().slice(0, 3);
+  // Liste ödeme tarihine göre sıralı; son eklenenler created_at'ten bulunur.
+  // Tarihi olmayan eski yerel kayıtlar en eskiler sayılır.
+  const recentSubs = [...subscriptions]
+    .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))
+    .slice(0, 3);
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(

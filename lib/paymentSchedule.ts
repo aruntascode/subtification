@@ -62,8 +62,9 @@ const cycleDatesInMonth = (
 
 /**
  * Verilen aydaki tüm ödemeler, tarihe göre sıralı. Duraklatılmış abonelikler
- * dahil edilmez; süreli/taksitli kayıtlar yalnızca kendi süreleri içinde görünür
- * (bu ay biten bir taksitin ay başındaki ödemesi hâlâ sayılır).
+ * dahil edilmez; kayıtlar takvim çapasından önce görünmez, süreli/taksitli
+ * kayıtlar yalnızca kendi süreleri içinde görünür (bu ay biten bir taksitin ay
+ * başındaki ödemesi hâlâ sayılır).
  */
 export const getPaymentsInMonth = (
   subscriptions: Subscription[],
@@ -78,9 +79,9 @@ export const getPaymentsInMonth = (
     const lastPayment = getLastPaymentDate(sub);
 
     for (const date of cycleDatesInMonth(sub.billing_cycle, anchor, year, month)) {
-      if (sub.duration_months && (date < anchor || (lastPayment && date > lastPayment))) {
-        continue;
-      }
+      // Çapadan önceki tarihler takvimde yok: yeni eklenen abonelik geçmişte
+      // ödenmiş gibi görünmesin
+      if (date < anchor || (lastPayment && date > lastPayment)) continue;
       payments.push({ sub, date });
     }
   }

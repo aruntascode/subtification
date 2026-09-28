@@ -20,13 +20,16 @@ export interface Subscription {
   emoji: string;
   color: string;
   is_active: boolean;
-  notes?: string;
+  /** null: not temizlendi (Supabase'de undefined alan güncellenmez) */
+  notes?: string | null;
   /** Kaç ay sürecek; null/undefined = süresiz */
   duration_months?: number | null;
   /** Taksitli alım mı (süreli olmak zorunda) */
   is_installment?: boolean;
   /** Süreli kayıtlarda ilk ödemenin tarihi; kalan ay bu tarihten hesaplanır */
   first_billing_date?: string | null;
+  /** "Son eklenenler" sıralaması için; Supabase'de varsayılan now() */
+  created_at?: string;
 }
 
 interface SubscriptionState {
@@ -127,7 +130,8 @@ const uploadLocalSubscriptions = async (userId: string) => {
     emoji: subscription.emoji,
     color: subscription.color,
     is_active: subscription.is_active,
-    notes: subscription.notes,
+    notes: subscription.notes ?? null,
+    created_at: subscription.created_at,
     duration_months: subscription.duration_months ?? null,
     is_installment: subscription.is_installment ?? false,
     first_billing_date: subscription.first_billing_date ?? null,
@@ -181,6 +185,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         const nextSubscription: Subscription = {
           ...sub,
           id: createLocalId(),
+          created_at: new Date().toISOString(),
         };
         let nextSubscriptions: Subscription[] = [];
         set((state) => {
@@ -203,7 +208,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
       if (error) throw error;
       let nextSubscriptions: Subscription[] = [];
       set((state) => {
-        nextSubscriptions = [...state.subscriptions, data];
+        nextSubscriptions = sortByNextBillingDate([...state.subscriptions, data]);
         return { subscriptions: nextSubscriptions };
       });
       await syncSubscriptionNotifications(nextSubscriptions);
@@ -219,9 +224,11 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
       const user = await getCurrentUser();
 
       if (!user) {
+        const createdAt = new Date().toISOString();
         const created: Subscription[] = subs.map((sub) => ({
           ...sub,
           id: createLocalId(),
+          created_at: createdAt,
         }));
         let nextSubscriptions: Subscription[] = [];
         set((state) => {
@@ -284,8 +291,8 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
       if (error) throw error;
       let nextSubscriptions: Subscription[] = [];
       set((state) => {
-        nextSubscriptions = state.subscriptions.map((s) =>
-          s.id === id ? data : s,
+        nextSubscriptions = sortByNextBillingDate(
+          state.subscriptions.map((s) => (s.id === id ? data : s)),
         );
         return { subscriptions: nextSubscriptions };
       });

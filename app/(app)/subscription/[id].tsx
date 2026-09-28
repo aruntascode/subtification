@@ -18,7 +18,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AppTabBar } from "@/components/AppTabBar";
 import { isLightColor } from "@/lib/colorContrast";
 import {
   getDaysUntilNextPayment,
@@ -326,7 +325,6 @@ export default function SubscriptionDetailScreen() {
       </ScrollView>
 
       {/* ── Tab Bar ── */}
-      <AppTabBar />
 
       {/* ── Detail view header ── */}
       <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>

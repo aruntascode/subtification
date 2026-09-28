@@ -9,7 +9,7 @@ import {
 import DateField from "@/components/DateField";
 import InfoLabel from "@/components/InfoLabel";
 import type { AppColors } from "@/constants/colors";
-import { BorderRadius, Spacing, Typography } from "@/constants/typography";
+import { BorderRadius, FIELD_HEIGHT, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -31,7 +31,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AppTabBar } from "@/components/AppTabBar";
 import DurationPicker from "@/components/DurationPicker";
 import {
   addMonths,
@@ -113,7 +112,7 @@ export default function NewSubscriptionScreen() {
   // Abonelikte "sonraki ödeme" (varsayılan: bir ay sonrası), taksitte ilk taksit.
   // Hangisi olursa olsun takvimin çapası olarak saklanır.
   const [billingDate, setBillingDate] = useState(() => toDateOnly(addMonths(new Date(), 1)));
-  // Döngü seçilen plandan gelir: yıllık plan çipi → yıllık, diğer her şey aylık
+  // Döngü seçilen plandan gelir (yıllık plan çipi → yıllık); plan yoksa kullanıcı seçer
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [category, setCategory] = useState<Category>("entertainment");
   const [activeColor, setActiveColor] = useState(AVAILABLE_COLORS[4]);
@@ -208,6 +207,12 @@ export default function NewSubscriptionScreen() {
     } catch (error: any) {
       Alert.alert(t("common.error"), error.message);
     }
+  };
+
+  const handleSelectCycle = (cycle: "monthly" | "yearly") => {
+    setBillingCycle(cycle);
+    // Yıllık abonelikte süre (ay) kullanılmaz
+    if (cycle === "yearly") setDurationMonths(null);
   };
 
   const handleSelectType = (installment: boolean) => {
@@ -546,15 +551,45 @@ export default function NewSubscriptionScreen() {
               </View>
             )}
 
+            {/* Plan yoksa (özel abonelik) döngü elle seçilir; taksit her zaman aylık */}
+            {availablePlans.length === 0 && !isInstallment && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{t("subscription_detail.billing_cycle")}</Text>
+                <View style={styles.currencyRow}>
+                  {(["monthly", "yearly"] as const).map((cycle) => (
+                    <TouchableOpacity
+                      key={cycle}
+                      style={[
+                        styles.currencyBtn,
+                        billingCycle === cycle && styles.currencyBtnActive,
+                      ]}
+                      onPress={() => handleSelectCycle(cycle)}
+                    >
+                      <Text
+                        style={[
+                          styles.typeBtnText,
+                          billingCycle === cycle && styles.currencyBtnTextActive,
+                        ]}
+                      >
+                        {t(`cycles.${cycle}`)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>
-                  {isInstallment
-                    ? t("duration.installment_amount")
-                    : billingCycle === "yearly"
-                      ? t("new_sub.yearly_cost")
-                      : t("new_sub.monthly_cost")}
-                </Text>
+                <InfoLabel
+                  label={
+                    isInstallment
+                      ? t("duration.installment_amount")
+                      : billingCycle === "yearly"
+                        ? t("new_sub.yearly_cost")
+                        : t("new_sub.monthly_cost")
+                  }
+                />
                 <View style={styles.amountContainer}>
                   <Text style={styles.currencySymbol}>{currency}</Text>
                   <TextInput
@@ -571,7 +606,7 @@ export default function NewSubscriptionScreen() {
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 {isInstallment ? (
-                  <Text style={styles.label}>{t("duration.first_installment")}</Text>
+                  <InfoLabel label={t("duration.first_installment")} />
                 ) : (
                   <InfoLabel
                     label={t("new_sub.next_payment")}
@@ -671,7 +706,6 @@ export default function NewSubscriptionScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-      <AppTabBar />
     </View>
   );
 }
@@ -819,6 +853,8 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
   },
   label: {
     fontSize: 10,
+    // ⓘ ikonlu etiketle (InfoLabel) aynı yükseklik; yan yana kutular hizalı kalsın
+    lineHeight: 14,
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: 1.5,
@@ -925,6 +961,9 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
   amountInput: {
     flex: 1,
     paddingLeft: 42,
+    // Yanındaki tarih alanıyla aynı boy
+    height: FIELD_HEIGHT,
+    paddingVertical: 0,
   },
   planScroll: {
     marginHorizontal: -4,
