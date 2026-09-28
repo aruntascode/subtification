@@ -72,7 +72,6 @@ export default function RegisterScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.brandName}>Subtification</Text>
-          <Text style={styles.tagline}>{t("auth.tagline_register")}</Text>
         </View>
 
         <View style={styles.card}>
@@ -158,11 +157,6 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   header: { alignItems: "center", marginBottom: Spacing.xxxl },
   brandName: { ...Typography.displayMd, color: colors.primary },
-  tagline: {
-    ...Typography.bodyLg,
-    color: colors.onSurfaceVariant,
-    marginTop: Spacing.sm,
-  },
   card: {
     backgroundColor: colors.surfaceContainerLowest,
     borderRadius: BorderRadius.xxxl,

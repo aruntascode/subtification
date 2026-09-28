@@ -283,7 +283,6 @@
     "send_reset": "Sıfırlama Bağlantısı Gönder",
     "reset_sent": "Sıfırlama bağlantısı gönderildi. E-postanı kontrol et.",
     "back_to_login": "Girişe Dön",
-    "tagline_register": "Aboneliklerini takip etmeye başla",
     "email_placeholder": "ornek@eposta.com",
     "password_placeholder": "Şifreni gir",
     "password_min_placeholder": "En az 6 karakter",

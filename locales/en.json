@@ -283,7 +283,6 @@
     "send_reset": "Send Reset Link",
     "reset_sent": "Reset link sent. Check your email.",
     "back_to_login": "Back to Login",
-    "tagline_register": "Start tracking your subscriptions",
     "email_placeholder": "your@email.com",
     "password_placeholder": "Enter your password",
     "password_min_placeholder": "At least 6 characters",
