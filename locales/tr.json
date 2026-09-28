@@ -23,10 +23,12 @@
     "all_active": "Tüm Aktif Abonelikler",
     "no_subs_title": "Henüz abonelik yok",
     "no_subs_desc": "İlk aboneliğini ekleyerek başla. Tüm ödemelerini tek yerden takip et.",
-    "budget_warning": "⚠️ Bütçe limitini aştın!",
+    "budget_warning": "Bütçe limitini aştın",
     "feature_track": "Tüm aboneliklerini tek yerden takip et",
     "feature_visualize": "Aylık harcamalarını görselleştir",
-    "feature_notify": "Ödeme tarihlerini hiç kaçırma"
+    "feature_notify": "Ödeme tarihlerini hiç kaçırma",
+    "budget_over_by": "Bu ay {{amount}} fazla harcıyorsun (limit {{limit}}).",
+    "budget_edit": "Değiştir"
   },
   "guest_notice": {
     "title": "Misafir modunda kullanıyorsun",
@@ -48,7 +50,13 @@
     "delete_confirm_title": "Aboneliği Sil",
     "delete_confirm_message": "\"{{name}}\" silinsin mi?",
     "delete_cancel": "İptal",
-    "delete_confirm": "Sil"
+    "delete_confirm": "Sil",
+    "select_done": "Bitti",
+    "select_all": "Tümünü seç",
+    "deselect_all": "Seçimi kaldır",
+    "selected_count": "{{count}} seçildi",
+    "bulk_delete_title": "{{count}} abonelik silinsin mi?",
+    "bulk_delete_message": "Seçtiğin abonelikler kalıcı olarak silinecek."
   },
   "subscription_detail": {
     "monthly_cost": "Aylık Maliyet",
@@ -65,7 +73,8 @@
     "delete_confirm_title": "Emin misin?",
     "delete_confirm_message": "Bu abonelik kalıcı olarak silinecek.",
     "delete_cancel": "İptal",
-    "delete_confirm": "Sil"
+    "delete_confirm": "Sil",
+    "yearly_cost": "Yıllık Maliyet"
   },
   "analytics": {
     "title": "Trendler",
@@ -90,7 +99,7 @@
     "cycle_yearly": "Yıllık",
     "savings_tip": "Tasarruf İpucu",
     "savings_tip_desc": "{{count}} aylık aboneliğinizi yıllık plana geçirerek tahminen {{savings}} tasarruf edebilirsiniz.",
-    "smart_savings_title": "Gerçekçi Tasarruf İpuçları",
+    "smart_savings_title": "Tasarruf İpuçları",
     "smart_tip_overlap_title": "Kategori Çakışması",
     "smart_tip_overlap_desc": "{{category}} kategorisinde birden fazla servis var. En az kullandığını düşündüğünüz \"{{name}}\" aboneliğini duraklatırsanız yıllık yaklaşık {{savings}} cepte kalabilir.",
     "smart_tip_downgrade_title": "Plan Düşürme Potansiyeli",
@@ -110,7 +119,45 @@
     "active": "Aktif",
     "paused": "Duraklatılmış",
     "no_data": "Henüz veri yok",
-    "no_data_desc": "Harcama analizini görmek için abonelik ekle."
+    "no_data_desc": "Harcama analizini görmek için abonelik ekle.",
+    "budget_disabled": "Kapalı. Açınca aylık harcaman limite göre takip edilir.",
+    "general_tips": {
+      "yearly_plan": {
+        "title": "Yıllık plan 2 ay kazandırır",
+        "desc": "Disney+, HBO Max ve PlayStation Plus gibi servislerde yıllık ödeme aylıktan belirgin şekilde ucuz. Örneğin Disney+ reklamsız aylık ₺449,90 iken yıllık ₺4.499, yani yaklaşık 2 ay bedava. Uzun süre kullanacağın servisi yıllığa geçir."
+      },
+      "share_plan": {
+        "title": "Aile ya da Duo planını paylaş",
+        "desc": "Spotify Duo ₺135, yani iki kişi paylaşınca kişi başı ₺67,50 ediyor. Bireysel ₺99'dan yaklaşık %30 daha ucuz. YouTube Premium, Apple Music ve iCloud+ aile planlarında da aynı mantık geçerli."
+      },
+      "student": {
+        "title": "Öğrenci indirimini kontrol et",
+        "desc": "Öğrenciysen Spotify Öğrenci ₺55, bireysel plandan neredeyse yarı fiyatına. YouTube Premium ve Apple Music'te de öğrenci planları var. Öğrenci belgeni doğrulaman yeterli."
+      },
+      "store_vs_web": {
+        "title": "App Store ile web fiyatını karşılaştır",
+        "desc": "Aynı abonelik App Store'dan alındığında web sitesinden farklı fiyatlı olabilir. Özellikle ChatGPT, Claude ve YouTube Premium'da aradaki farka bakmadan ödeme yöntemini değiştirme."
+      },
+      "carrier_bundle": {
+        "title": "Operatör ve kart kampanyalarına bak",
+        "desc": "Mobil hat tarifelerinde ve bazı kredi kartı programlarında dijital abonelikler hediye ya da indirimli gelebiliyor. Tarifeni ve kart kampanyalarını kontrol edip zaten ödediğin bir aboneliği bedavaya getirebilirsin."
+      },
+      "rotate_streaming": {
+        "title": "Dizi platformlarını dönüşümlü kullan",
+        "desc": "Birden fazla dizi platformuna aynı anda ödemek yerine izlemek istediğin sezon hangisindeyse sadece onu aç, bitince iptal edip diğerine geç. Çoğu platform istediğin zaman iptal etmene izin veriyor."
+      },
+      "free_trial": {
+        "title": "Ücretsiz denemeleri hemen ekle",
+        "desc": "Bir ücretsiz denemeye başladığında onu hemen buraya ekle ve ödeme gününü deneme bitişine ayarla. Hatırlatma sayesinde istemediğin bir ücretli döneme geçmeden iptal edebilirsin."
+      },
+      "annual_review": {
+        "title": "Ayda bir listeni gözden geçir",
+        "desc": "Son bir ayda hiç açmadığın bir abonelik varsa duraklat. Gerçekten ihtiyaç duyduğunda tekrar açmak birkaç saniye sürer, kullanmadığın her ay ise doğrudan tasarruf."
+      }
+    },
+    "smart_tip_yearly_title": "Yıllık plana geç",
+    "smart_tip_yearly_desc": "\"{{name}}\" için aylık ödüyorsun. {{plan}} paketini yıllık {{yearlyPrice}} ödeyerek alırsan yılda {{savings}} tasarruf edersin.",
+    "smart_tip_yearly_action": "Yıllığa geç"
   },
   "cycles": {
     "weekly": "Haftalık",
@@ -195,7 +242,14 @@
     "err_name": "Lütfen bir servis adı girin.",
     "err_amount": "Lütfen geçerli bir tutar girin.",
     "err_day": "Lütfen ödeme gününü girin.",
-    "err_day_range": "Gün 1-31 arasında olmalıdır."
+    "err_day_range": "Gün 1-31 arasında olmalıdır.",
+    "billing_cycle": "Ödeme döngüsü",
+    "cycle_monthly": "Aylık",
+    "cycle_yearly": "Yıllık",
+    "yearly_cost": "Yıllık tutar",
+    "next_payment": "Sonraki ödeme",
+    "first_payment": "İlk ödeme",
+    "yearly_monthly_equivalent": "Aylık {{amount}} tutarına denk geliyor."
   },
   "auth": {
     "login_title": "Tekrar hoş geldin",
@@ -277,7 +331,8 @@
     "remaining_title": "Kalan Ödeme",
     "remaining_value": "{{remaining}} / {{total}} ay",
     "last_payment": "Son ödeme: {{date}}",
-    "remaining_total": "Kalan tutar: {{amount}}"
+    "remaining_total": "Kalan tutar: {{amount}}",
+    "first_installment": "İlk taksit"
   },
   "bulk": {
     "title": "Toplu Ekle",
@@ -296,7 +351,9 @@
     "err_day": "{{name}} için ödeme günü 1 ile 31 arasında olmalı.",
     "empty_cta": "Kullandığın servisleri seç",
     "empty_single": "Tek tek eklemek istiyorum",
-    "continue_empty": "Devam et"
+    "continue_empty": "Devam et",
+    "plan_yearly": "{{label}} · Yıllık",
+    "amount_yearly": "Yıllık tutar"
   },
   "home_month": {
     "title": "{{month}} ayı",

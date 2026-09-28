@@ -173,7 +173,9 @@ export default function SubscriptionDetailScreen() {
         <View style={styles.bentoGrid}>
           <View style={styles.bentoCardLight}>
             <Text style={styles.bentoLabel}>
-              {t("subscription_detail.monthly_cost")}
+              {subscription.billing_cycle === "yearly"
+                      ? t("subscription_detail.yearly_cost")
+                      : t("subscription_detail.monthly_cost")}
             </Text>
             <View style={styles.bentoAmountRow}>
               <Text

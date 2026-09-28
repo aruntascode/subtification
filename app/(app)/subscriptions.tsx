@@ -37,8 +37,8 @@ export default function SubscriptionsListScreen() {
     subscriptions,
     loading,
     fetchSubscriptions,
-    toggleActive,
-    deleteSubscription,
+    setActiveMany,
+    deleteMany,
   } = useSubscriptionStore();
   const router = useRouter();
   const { t } = useTranslation();
@@ -86,16 +86,62 @@ export default function SubscriptionsListScreen() {
     subscriptions.some((s) => s.category === cat.id),
   );
 
-  const handleDelete = (id: string, name: string) => {
+  // ── Toplu seçim ──
+  const [selecting, setSelecting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  // Filtre değişince görünmeyen seçimler işleme dahil edilmesin
+  const visibleSelectedIds = selectedIds.filter((id) =>
+    filtered.some((s) => s.id === id),
+  );
+  const selectedSubs = filtered.filter((s) => visibleSelectedIds.includes(s.id));
+  // Seçilenlerin hepsi duraklatılmışsa buton "Devam ettir" olur
+  const allSelectedPaused =
+    selectedSubs.length > 0 && selectedSubs.every((s) => !s.is_active);
+  const allVisibleSelected =
+    filtered.length > 0 && visibleSelectedIds.length === filtered.length;
+
+  const exitSelecting = () => {
+    setSelecting(false);
+    setSelectedIds([]);
+  };
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    setSelectedIds(allVisibleSelected ? [] : filtered.map((s) => s.id));
+  };
+
+  const handleBulkPause = async () => {
+    try {
+      await setActiveMany(visibleSelectedIds, allSelectedPaused);
+      exitSelecting();
+    } catch (error: any) {
+      Alert.alert(t("common.error"), error.message);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    const count = visibleSelectedIds.length;
     Alert.alert(
-      t("subscriptions.delete_confirm_title"),
-      t("subscriptions.delete_confirm_message", { name }),
+      t("subscriptions.bulk_delete_title", { count }),
+      t("subscriptions.bulk_delete_message"),
       [
         { text: t("subscriptions.delete_cancel"), style: "cancel" },
         {
           text: t("subscriptions.delete_confirm"),
           style: "destructive",
-          onPress: () => deleteSubscription(id),
+          onPress: async () => {
+            try {
+              await deleteMany(visibleSelectedIds);
+              exitSelecting();
+            } catch (error: any) {
+              Alert.alert(t("common.error"), error.message);
+            }
+          },
         },
       ],
     );
@@ -253,12 +299,34 @@ export default function SubscriptionsListScreen() {
 
         {/* Summary */}
         <View style={styles.summary}>
-          <Text style={styles.summaryText}>
-            {t("subscriptions.summary", {
-              count: filtered.length,
-              total: fmtDisplay(filteredTotal),
-            })}
-          </Text>
+          {selecting ? (
+            <TouchableOpacity onPress={handleToggleSelectAll} hitSlop={8}>
+              <Text style={styles.summaryLink}>
+                {allVisibleSelected
+                  ? t("subscriptions.deselect_all")
+                  : t("subscriptions.select_all")}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <Text style={styles.summaryText}>
+              {t("subscriptions.summary", {
+                count: filtered.length,
+                total: fmtDisplay(filteredTotal),
+              })}
+            </Text>
+          )}
+          {/* Seçim karta uzun basınca başlar; buton yalnızca modu kapatmak için */}
+          {selecting && (
+            <TouchableOpacity
+              onPress={exitSelecting}
+              style={[styles.selectBtn, styles.selectBtnActive]}
+              hitSlop={8}
+            >
+              <Text style={[styles.selectBtnText, styles.selectBtnTextActive]}>
+                {t("subscriptions.select_done")}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Subscription Cards */}
@@ -274,12 +342,23 @@ export default function SubscriptionsListScreen() {
           const durationProgress = formatDurationProgress(sub, t);
           const categoryLabel = t(`categories.${sub.category}`);
           const cycleLabel = t(`common.${sub.billing_cycle}`) || sub.billing_cycle;
+          const isSelected = selecting && visibleSelectedIds.includes(sub.id);
 
           return (
               <TouchableOpacity
                 key={sub.id}
-                style={styles.subCard}
-                onPress={() => router.push(`/(app)/subscription/${sub.id}`)}
+                style={[styles.subCard, isSelected && styles.subCardSelected]}
+                onPress={() =>
+                  selecting
+                    ? toggleSelected(sub.id)
+                    : router.push(`/(app)/subscription/${sub.id}`)
+                }
+                // Uzun basınca seçim modu başlasın (iOS listelerindeki gibi)
+                onLongPress={() => {
+                  if (selecting) return;
+                  setSelecting(true);
+                  setSelectedIds([sub.id]);
+                }}
                 activeOpacity={0.85}
               >
                 {/* ── Top Row: icon + status badge ── */}
@@ -291,6 +370,13 @@ export default function SubscriptionsListScreen() {
                     containerSize={56}
                     radius={16}
                   />
+                  {selecting ? (
+                    <Ionicons
+                      name={isSelected ? "checkmark-circle" : "ellipse-outline"}
+                      size={28}
+                      color={isSelected ? colors.primary : colors.outline}
+                    />
+                  ) : (
                   <View style={styles.statusBlock}>
                     <Text style={styles.statusLabel}>STATUS</Text>
                     <View
@@ -315,6 +401,7 @@ export default function SubscriptionsListScreen() {
                       </Text>
                     </View>
                   </View>
+                  )}
                 </View>
 
                 {/* ── Name + subtitle ── */}
@@ -331,7 +418,9 @@ export default function SubscriptionsListScreen() {
                 <View style={styles.cardBottomRow}>
                   <View>
                     <Text style={styles.cardBottomLabel}>
-                      {t("subscription_detail.monthly_cost")}
+                      {sub.billing_cycle === "yearly"
+                      ? t("subscription_detail.yearly_cost")
+                      : t("subscription_detail.monthly_cost")}
                     </Text>
                     <Text
                       style={[
@@ -369,8 +458,55 @@ export default function SubscriptionsListScreen() {
           </View>
         )}
 
-        <View style={{ height: 100 }} />
+        {/* Seçim çubuğu listenin son kartını örtmesin */}
+        <View style={{ height: selecting ? 180 : 100 }} />
       </ScrollView>
+
+      {/* ── Toplu işlem çubuğu (sekme çubuğunun hemen üstünde) ── */}
+      {selecting && (
+        <View style={styles.bulkBar}>
+          <Text style={styles.bulkCount}>
+            {t("subscriptions.selected_count", { count: visibleSelectedIds.length })}
+          </Text>
+          <View style={styles.bulkActions}>
+            <TouchableOpacity
+              style={[
+                styles.bulkBtn,
+                visibleSelectedIds.length === 0 && styles.bulkBtnDisabled,
+              ]}
+              onPress={handleBulkPause}
+              disabled={visibleSelectedIds.length === 0 || loading}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={allSelectedPaused ? "play" : "pause"}
+                size={16}
+                color={colors.onSurface}
+              />
+              <Text style={styles.bulkBtnText}>
+                {allSelectedPaused
+                  ? t("subscription_detail.resume")
+                  : t("subscription_detail.pause")}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.bulkBtn,
+                styles.bulkBtnDanger,
+                visibleSelectedIds.length === 0 && styles.bulkBtnDisabled,
+              ]}
+              onPress={handleBulkDelete}
+              disabled={visibleSelectedIds.length === 0 || loading}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="trash-outline" size={16} color={colors.onError} />
+              <Text style={[styles.bulkBtnText, { color: colors.onError }]}>
+                {t("subscription_detail.delete")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -442,7 +578,58 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     alignItems: "center",
     marginVertical: Spacing.lg,
   },
-  summaryText: { ...Typography.bodyMd, color: colors.onSurfaceVariant },
+  summaryText: { ...Typography.bodyMd, color: colors.onSurfaceVariant, flex: 1 },
+  summaryLink: { ...Typography.labelLg, color: colors.primary, fontWeight: "700" },
+  selectBtn: {
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 6,
+    marginLeft: Spacing.md,
+  },
+  selectBtnActive: { backgroundColor: colors.primarySolid },
+  selectBtnText: { ...Typography.labelMd, color: colors.primary, fontWeight: "700" },
+  selectBtnTextActive: { color: "#ffffff" },
+  subCardSelected: {
+    borderWidth: 2,
+    borderColor: colors.primary,
+    padding: Spacing.xl - 2,
+  },
+  // Sekme çubuğunun dokunma alanı ~91px; onun üstünde yüzen çubuk
+  bulkBar: {
+    position: "absolute",
+    left: Spacing.lg,
+    right: Spacing.lg,
+    bottom: 104,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing.md,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: 20,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    shadowColor: colors.onSurface,
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+    zIndex: 150,
+  },
+  bulkCount: { ...Typography.labelLg, color: colors.onSurface, fontWeight: "800" },
+  bulkActions: { flexDirection: "row", gap: Spacing.sm },
+  bulkBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 10,
+  },
+  bulkBtnDanger: { backgroundColor: colors.error },
+  bulkBtnDisabled: { opacity: 0.4 },
+  bulkBtnText: { ...Typography.labelMd, color: colors.onSurface, fontWeight: "800" },
   summaryAmount: { ...Typography.labelLg, color: colors.primary },
   // ── New Card Styles ──
   subCard: {

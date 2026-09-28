@@ -1,9 +1,12 @@
 import type { Category } from "@/constants/categories";
 
 export type ServicePlan = {
+  /** Paket adı; aynı paketin aylık ve yıllık hâli aynı label'ı paylaşır */
   label: string;
-  /** Aylık fiyat, form input'una doğrudan yazıldığı için string */
+  /** Döngü başına fiyat, form input'una doğrudan yazıldığı için string */
   price: string;
+  /** Verilmezse aylık */
+  cycle?: "monthly" | "yearly";
   /** TL dışı fiyatlanan planlar için para birimi sembolü */
   forceCurrency?: string;
 };
@@ -17,7 +20,7 @@ export type PopularService = {
   plans: ServicePlan[];
 };
 
-/** Hızlı ekleme ve toplu ekleme ekranlarındaki popüler servisler (TL, aylık) */
+/** Hızlı ekleme ve toplu ekleme ekranlarındaki popüler servisler (TL) */
 export const TR_SERVICES: PopularService[] = [
   {
     name: "Netflix",
@@ -67,6 +70,8 @@ export const TR_SERVICES: PopularService[] = [
     plans: [
       { label: "Reklamlı", price: "249.90" },
       { label: "Reklamsız", price: "449.90" },
+      { label: "Reklamlı", price: "2499.00", cycle: "yearly" },
+      { label: "Reklamsız", price: "4499.00", cycle: "yearly" },
     ],
   },
   {
@@ -77,6 +82,8 @@ export const TR_SERVICES: PopularService[] = [
     plans: [
       { label: "Standart", price: "229.90" },
       { label: "Özel", price: "299.90" },
+      { label: "Standart", price: "2299.00", cycle: "yearly" },
+      { label: "Özel", price: "2999.00", cycle: "yearly" },
     ],
   },
   {
@@ -140,6 +147,9 @@ export const TR_SERVICES: PopularService[] = [
       { label: "Essential", price: "400.00" },
       { label: "Extra", price: "600.00" },
       { label: "Deluxe", price: "710.00" },
+      { label: "Essential", price: "2890.00", cycle: "yearly" },
+      { label: "Extra", price: "4810.00", cycle: "yearly" },
+      { label: "Deluxe", price: "5560.00", cycle: "yearly" },
     ],
   },
   {
@@ -147,7 +157,10 @@ export const TR_SERVICES: PopularService[] = [
     icon: "sports",
     color: "#E30613",
     category: "entertainment",
-    plans: [{ label: "Standart", price: "399.00" }],
+    plans: [
+      { label: "Standart", price: "399.00" },
+      { label: "Standart", price: "2799.00", cycle: "yearly" },
+    ],
   },
   {
     name: "ChatGPT",
@@ -166,6 +179,7 @@ export const TR_SERVICES: PopularService[] = [
     category: "productivity",
     plans: [
       { label: "Pro", price: "999.99" },
+      { label: "Pro", price: "11999.99", cycle: "yearly" },
       { label: "Max 5x", price: "6999.99" },
       { label: "Max 20x", price: "12999.99" },
     ],
@@ -185,3 +199,32 @@ export const TR_SERVICES: PopularService[] = [
     plans: [],
   },
 ];
+
+/** Aynı paketin aylık/yıllık hâlini ayırt eden anahtar (plan çipleri ve seçim için) */
+export const planKey = (plan: ServicePlan) => `${plan.label}|${plan.cycle ?? "monthly"}`;
+
+export const planCycle = (plan: ServicePlan) => plan.cycle ?? "monthly";
+
+/**
+ * Aylık ödenen bir abonelik için aynı paketin yıllık hâli ve yıllık tasarruf.
+ * Paket, kayıtlı tutarın servis listesindeki aylık fiyatla eşleşmesinden bulunur.
+ */
+export const findYearlyAlternative = (
+  name: string,
+  monthlyAmount: number,
+): { plan: ServicePlan; yearlySavings: number } | null => {
+  const service = TR_SERVICES.find(
+    (s) => s.name.toLocaleLowerCase("tr") === name.trim().toLocaleLowerCase("tr"),
+  );
+  if (!service) return null;
+  const monthlyPlan = service.plans.find(
+    (p) => planCycle(p) === "monthly" && Math.abs(parseFloat(p.price) - monthlyAmount) < 0.01,
+  );
+  if (!monthlyPlan) return null;
+  const yearlyPlan = service.plans.find(
+    (p) => planCycle(p) === "yearly" && p.label === monthlyPlan.label,
+  );
+  if (!yearlyPlan) return null;
+  const yearlySavings = monthlyAmount * 12 - parseFloat(yearlyPlan.price);
+  return yearlySavings > 0 ? { plan: yearlyPlan, yearlySavings } : null;
+};

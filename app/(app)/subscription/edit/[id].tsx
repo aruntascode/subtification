@@ -1,4 +1,5 @@
-import { CATEGORIES, Category } from "@/constants/categories";
+import { BillingCycle, CATEGORIES, Category } from "@/constants/categories";
+import DateField from "@/components/DateField";
 import type { AppColors } from "@/constants/colors";
 import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
@@ -24,7 +25,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DurationPicker from "@/components/DurationPicker";
 import { getIconColorOn, isLightColor } from "@/lib/colorContrast";
-import { parseDateOnly, toDateOnly } from "@/lib/subscriptionDuration";
+import { toDateOnly } from "@/lib/subscriptionDuration";
 import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
 
 const AVAILABLE_ICONS = [
@@ -64,7 +65,12 @@ const AVAILABLE_COLORS = [
 ];
 
 export default function EditSubscriptionScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // cycle/amount: Analizlerdeki "Yıllığa geç" ipucundan ön doldurma
+  const { id, cycle: cycleParam, amount: amountParam } = useLocalSearchParams<{
+    id: string;
+    cycle?: string;
+    amount?: string;
+  }>();
   const router = useRouter();
   const { subscriptions, updateSubscription, loading } = useSubscriptionStore();
 
@@ -74,16 +80,21 @@ export default function EditSubscriptionScreen() {
   const { colors, darkMode, blurTint } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, darkMode), [colors, darkMode]);
 
-  const initialDay = subscription
-    ? new Date(subscription.next_billing_date).getDate().toString()
-    : "";
+  // Süreli kayıtta tarih alanı ilk ödemeyi, değilse sonraki ödemeyi düzenler
+  const initialDate = subscription
+    ? (subscription.first_billing_date ?? subscription.next_billing_date).slice(0, 10)
+    : toDateOnly(new Date());
 
   // Edit states
   const [editName, setEditName] = useState(subscription?.name ?? "");
   const [editAmount, setEditAmount] = useState(
-    subscription?.amount.toString() ?? "",
+    amountParam ?? subscription?.amount.toString() ?? "",
   );
-  const [editBillingDay, setEditBillingDay] = useState(initialDay);
+  const [editDate, setEditDate] = useState(initialDate);
+  // Eski haftalık/3 aylık kayıtlar, kullanıcı değiştirmedikçe kendi döngüsünde kalır
+  const [editCycle, setEditCycle] = useState<BillingCycle>(
+    cycleParam === "yearly" ? "yearly" : (subscription?.billing_cycle ?? "monthly"),
+  );
   const [editCategory, setEditCategory] = useState<Category>(
     subscription?.category ?? "other",
   );
@@ -93,7 +104,7 @@ export default function EditSubscriptionScreen() {
   );
   const [editNotes, setEditNotes] = useState(subscription?.notes ?? "");
   const [editDuration, setEditDuration] = useState<number | null>(
-    subscription?.duration_months ?? null,
+    cycleParam === "yearly" ? null : (subscription?.duration_months ?? null),
   );
 
   if (!subscription) {
@@ -109,30 +120,6 @@ export default function EditSubscriptionScreen() {
     );
   }
 
-  const calculateNextBillingDate = (dayStr: string) => {
-    if (!dayStr) return new Date().toISOString().split("T")[0];
-
-    const day = parseInt(dayStr, 10);
-    const today = new Date();
-    let targetMonth = today.getMonth();
-    let targetYear = today.getFullYear();
-
-    if (day <= today.getDate()) {
-      targetMonth++;
-      if (targetMonth > 11) {
-        targetMonth = 0;
-        targetYear++;
-      }
-    }
-
-    const nextDate = new Date(targetYear, targetMonth, day);
-    const yyyy = nextDate.getFullYear();
-    const mm = String(nextDate.getMonth() + 1).padStart(2, "0");
-    const dd = String(nextDate.getDate()).padStart(2, "0");
-
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
   const handleSaveEdit = async () => {
     if (!editName.trim()) {
       Alert.alert(t("common.error"), t("new_sub.err_name"));
@@ -142,39 +129,14 @@ export default function EditSubscriptionScreen() {
       Alert.alert(t("common.error"), t("new_sub.err_amount"));
       return;
     }
-    if (!editBillingDay) {
-      Alert.alert(t("common.error"), t("new_sub.err_day"));
-      return;
-    }
-    if (parseInt(editBillingDay, 10) < 1 || parseInt(editBillingDay, 10) > 31) {
-      Alert.alert(t("common.error"), t("new_sub.err_day_range"));
-      return;
-    }
-
     if (subscription.is_installment && !editDuration) {
       Alert.alert(t("common.error"), t("duration.err_installment_months"));
       return;
     }
 
-    const finalBillingDate = calculateNextBillingDate(editBillingDay);
-
-    // Süreli kayıtta takvimin başlangıcını koru; sadece ödeme günü değiştiyse günü kaydır
-    let firstBillingDate: string | null = null;
-    if (editDuration) {
-      if (subscription.first_billing_date) {
-        const first = parseDateOnly(subscription.first_billing_date);
-        const monthEnd = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
-        firstBillingDate = toDateOnly(
-          new Date(
-            first.getFullYear(),
-            first.getMonth(),
-            Math.min(parseInt(editBillingDay, 10), monthEnd),
-          ),
-        );
-      } else {
-        firstBillingDate = finalBillingDate;
-      }
-    }
+    // Yıllık abonelikte süre (ay) kullanılmaz; taksit her zaman aylık
+    const cycle: BillingCycle = subscription.is_installment ? "monthly" : editCycle;
+    const duration = cycle === "yearly" ? null : editDuration;
 
     try {
       await updateSubscription(subscription.id, {
@@ -183,11 +145,12 @@ export default function EditSubscriptionScreen() {
         category: editCategory,
         emoji: editEmoji,
         color: editColor,
-        next_billing_date: finalBillingDate,
-        billing_cycle: "monthly",
+        next_billing_date: editDate,
+        billing_cycle: cycle,
         notes: editNotes.trim() || undefined,
-        duration_months: editDuration,
-        first_billing_date: firstBillingDate,
+        duration_months: duration,
+        // Süreli kayıtta takvim bu tarihten başlar
+        first_billing_date: duration ? editDate : null,
       });
       router.back();
     } catch (error: any) {
@@ -293,10 +256,41 @@ export default function EditSubscriptionScreen() {
             </ScrollView>
           </View>
 
-          {/* Aylık Maliyet ve Ödeme Günü */}
+          {/* Ödeme döngüsü (taksit her zaman aylık) */}
+          {!subscription.is_installment && (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t("new_sub.billing_cycle")}</Text>
+              <View style={styles.cycleRow}>
+                {(["monthly", "yearly"] as const).map((cycle) => (
+                  <TouchableOpacity
+                    key={cycle}
+                    style={[styles.cycleBtn, editCycle === cycle && styles.cycleBtnActive]}
+                    onPress={() => setEditCycle(cycle)}
+                  >
+                    <Text
+                      style={[
+                        styles.cycleBtnText,
+                        editCycle === cycle && styles.cycleBtnTextActive,
+                      ]}
+                    >
+                      {t(`new_sub.cycle_${cycle}`)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Tutar ve ödeme tarihi */}
           <View style={styles.row}>
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>{t("new_sub.monthly_cost")}</Text>
+              <Text style={styles.label}>
+                {subscription.is_installment
+                  ? t("duration.installment_amount")
+                  : editCycle === "yearly"
+                    ? t("new_sub.yearly_cost")
+                    : t("new_sub.monthly_cost")}
+              </Text>
               <View style={styles.amountContainer}>
                 <Text style={styles.currencySymbol}>
                   {subscription.currency ?? "₺"}
@@ -311,24 +305,19 @@ export default function EditSubscriptionScreen() {
               </View>
             </View>
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>{t("new_sub.billing_day")}</Text>
-              <TextInput
-                inputAccessoryViewID={KEYBOARD_DONE_ID}
-                style={styles.input}
-                value={editBillingDay}
-                onChangeText={(text) => {
-                  const numericValue = text.replace(/[^0-9]/g, "");
-                  setEditBillingDay(numericValue);
-                }}
-                placeholder="Örn: 15"
-                placeholderTextColor={colors.onSurfaceVariant + "80"}
-                keyboardType="number-pad"
-                maxLength={2}
-              />
+              <Text style={styles.label}>
+                {subscription.is_installment
+                  ? t("duration.first_installment")
+                  : editDuration && editCycle !== "yearly"
+                    ? t("new_sub.first_payment")
+                    : t("new_sub.next_payment")}
+              </Text>
+              <DateField value={editDate} onChange={setEditDate} />
             </View>
           </View>
 
-          {/* Süre / Taksit sayısı */}
+          {/* Süre / Taksit sayısı (yıllıkta gizli) */}
+          {editCycle !== "yearly" && (
           <View style={styles.inputGroup}>
             <Text style={styles.label}>
               {subscription.is_installment
@@ -341,6 +330,7 @@ export default function EditSubscriptionScreen() {
               allowUnlimited={!subscription.is_installment}
             />
           </View>
+          )}
 
           {/* Kategori */}
           <View style={styles.inputGroup}>
@@ -514,6 +504,19 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     color: colors.onSurfaceVariant,
   },
   amountInput: { flex: 1, paddingLeft: 42 },
+  cycleRow: { flexDirection: "row", gap: Spacing.sm },
+  cycleBtn: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: colors.surfaceContainerHighest,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  cycleBtnActive: { backgroundColor: colors.primaryFixed, borderColor: colors.primary },
+  cycleBtnText: { ...Typography.labelMd, fontWeight: "700", color: colors.onSurfaceVariant },
+  cycleBtnTextActive: { color: colors.primary, fontWeight: "800" },
   categoryScroll: { marginHorizontal: -4 },
   categoryChip: {
     backgroundColor: colors.surfaceContainerHighest,

@@ -7,9 +7,11 @@ import { useAppTheme } from "@/hooks/useAppTheme";
 import { useSubscriptionStore, Subscription } from "@/stores/subscriptionStore";
 import SubscriptionIcon from "@/components/SubscriptionIcon";
 import { Ionicons } from "@expo/vector-icons";
-import { useBudgetStore } from "@/stores/budgetStore";
+import { isOverBudget, useBudgetStore } from "@/stores/budgetStore";
+import { pickGeneralTips } from "@/constants/savingsTips";
+import { findYearlyAlternative } from "@/constants/services";
 import { BlurView } from "expo-blur";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,6 +20,7 @@ import {
   Keyboard,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -67,8 +70,11 @@ type SavingsTip = {
   icon: string;
   title: string;
   description: string;
-  monthlySavings: number;
-  yearlySavings: number;
+  /** Genel ipuçlarında tutar yok; satır gizlenir */
+  monthlySavings?: number;
+  yearlySavings?: number;
+  /** İpucunu tek dokunuşla uygulamak için (örn. "Yıllığa geç") */
+  action?: { label: string; onPress: () => void };
 };
 const ANALYTICS_TAB_PRESS_EVENT = "analyticsTabPress";
 
@@ -145,11 +151,30 @@ export default function AnalyticsScreen() {
   const [budgetSaved, setBudgetSaved] = useState(false);
   const budgetInputRef = useRef<TextInput>(null);
 
+  const budgetEnabled = useBudgetStore((state) => state.enabled);
+  const setBudgetEnabled = useBudgetStore((state) => state.setEnabled);
+  const { focus } = useLocalSearchParams<{ focus?: string }>();
+
   const budgetLimit = parseFloat(budgetLimitInput) || 0;
   const budgetUsagePct =
     budgetLimit > 0 ? Math.min((monthly / budgetLimit) * 100, 100) : 0;
   const budgetRemaining = Math.max(budgetLimit - monthly, 0);
-  const isOverBudget = budgetLimit > 0 && monthly > budgetLimit;
+  const overBudget = isOverBudget(monthly, budgetLimit, budgetEnabled);
+
+  // Ana sayfadaki "Değiştir"den gelindiyse limit alanını odakla
+  useEffect(() => {
+    if (focus !== "budget") return;
+    const timer = setTimeout(() => budgetInputRef.current?.focus(), 350);
+    return () => clearTimeout(timer);
+  }, [focus]);
+
+  const handleToggleBudget = (enabled: boolean) => {
+    setBudgetEnabled(enabled);
+    if (!enabled) {
+      budgetInputRef.current?.blur();
+      Keyboard.dismiss();
+    }
+  };
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
@@ -274,10 +299,59 @@ export default function AnalyticsScreen() {
     });
   }
 
-  const prioritizedTips = savingsTips
-    .filter((tip) => tip.yearlySavings > 0)
-    .sort((a, b) => b.yearlySavings - a.yearlySavings)
-    .slice(0, 3);
+  // 4) Aylık ödenen bir paketin yıllık hâli daha ucuzsa: gerçek tutarla "Yıllığa geç"
+  const yearlySwitch = activeWithMonthly
+    .filter(
+      (s) =>
+        s.billing_cycle === "monthly" &&
+        !s.is_installment &&
+        !s.duration_months &&
+        (s.currency ?? "₺") === "₺",
+    )
+    .map((s) => ({ sub: s, alternative: findYearlyAlternative(s.name, s.amount) }))
+    .filter((x) => x.alternative !== null)
+    .sort((a, b) => b.alternative!.yearlySavings - a.alternative!.yearlySavings)[0];
+  if (yearlySwitch?.alternative) {
+    const { sub, alternative } = yearlySwitch;
+    const yearlySavings = convert(alternative.yearlySavings, "₺");
+    savingsTips.push({
+      id: `yearly-${sub.id}`,
+      icon: "calendar-outline",
+      title: t("analytics.smart_tip_yearly_title"),
+      description: t("analytics.smart_tip_yearly_desc", {
+        name: sub.name,
+        plan: alternative.plan.label,
+        yearlyPrice: fmtDisplay(convert(parseFloat(alternative.plan.price), "₺")),
+        savings: fmtDisplay(yearlySavings),
+      }),
+      monthlySavings: yearlySavings / 12,
+      yearlySavings,
+      action: {
+        label: t("analytics.smart_tip_yearly_action"),
+        onPress: () =>
+          router.push({
+            pathname: "/(app)/subscription/edit/[id]",
+            params: { id: sub.id, cycle: "yearly", amount: alternative.plan.price },
+          }),
+      },
+    });
+  }
+
+  // Veriden çıkan en güçlü ipucu (varsa 1 tane) + günlük değişen genel ipuçları; toplam 2
+  const dataTips = savingsTips
+    .filter((tip) => (tip.yearlySavings ?? 0) > 0)
+    .sort((a, b) => (b.yearlySavings ?? 0) - (a.yearlySavings ?? 0))
+    .slice(0, 1);
+  const generalTips: SavingsTip[] = pickGeneralTips(
+    activeSubs.map((s) => s.name),
+    2 - dataTips.length,
+  ).map((tip) => ({
+    id: `general-${tip.id}`,
+    icon: tip.icon,
+    title: t(`analytics.general_tips.${tip.id}.title`),
+    description: t(`analytics.general_tips.${tip.id}.desc`),
+  }));
+  const prioritizedTips = [...dataTips, ...generalTips];
 
   if (activeSubs.length === 0 && pausedSubs.length === 0) {
     return (
@@ -350,74 +424,90 @@ export default function AnalyticsScreen() {
         </View>
 
         <View style={styles.budgetCard}>
-          <View style={styles.budgetHeader}>
+          <View
+            style={[styles.budgetHeader, !budgetEnabled && styles.budgetHeaderCollapsed]}
+          >
             <View style={styles.budgetTitleRow}>
               <View
                 style={[
                   styles.budgetIcon,
                   {
-                    backgroundColor: isOverBudget
+                    backgroundColor: overBudget
                       ? colors.errorContainer + "55"
                       : colors.primary + "16",
                   },
                 ]}
               >
                 <Ionicons
-                  name={isOverBudget ? "warning-outline" : "wallet-outline"}
+                  name={overBudget ? "warning-outline" : "wallet-outline"}
                   size={18}
-                  color={isOverBudget ? colors.error : colors.primary}
+                  color={overBudget ? colors.error : colors.primary}
                 />
               </View>
-              <View>
+              <View style={styles.budgetTitleText}>
                 <Text style={styles.budgetTitle}>{t("analytics.budget_limit")}</Text>
                 <Text style={styles.budgetSubtitle}>
-                  {budgetLimit > 0
-                    ? isOverBudget
-                      ? t("analytics.budget_over", {
-                          amount: fmtDisplay(monthly - budgetLimit),
-                        })
-                      : t("analytics.budget_remaining", {
-                          amount: fmtDisplay(budgetRemaining),
-                        })
-                    : t("analytics.budget_empty")}
+                  {!budgetEnabled
+                    ? t("analytics.budget_disabled")
+                    : budgetLimit > 0
+                      ? overBudget
+                        ? t("analytics.budget_over", {
+                            amount: fmtDisplay(monthly - budgetLimit),
+                          })
+                        : t("analytics.budget_remaining", {
+                            amount: fmtDisplay(budgetRemaining),
+                          })
+                      : t("analytics.budget_empty")}
                 </Text>
               </View>
             </View>
+            <Switch
+              value={budgetEnabled}
+              onValueChange={handleToggleBudget}
+              trackColor={{
+                false: colors.surfaceContainerHighest,
+                true: colors.primary,
+              }}
+              thumbColor="#fff"
+            />
           </View>
 
-          {budgetLimit > 0 && (
+          {/* Kapalıyken limit saklanır ama çubuk ve alan gizlenir */}
+          {budgetEnabled && budgetLimit > 0 && (
             <View style={styles.budgetProgressTrack}>
               <View
                 style={[
                   styles.budgetProgressFill,
                   {
                     width: `${budgetUsagePct}%`,
-                    backgroundColor: isOverBudget ? colors.error : colors.primary,
+                    backgroundColor: overBudget ? colors.error : colors.primary,
                   },
                 ]}
               />
             </View>
           )}
 
-          <View style={styles.budgetInputRow}>
-            <TextInput
-              inputAccessoryViewID={KEYBOARD_DONE_ID}
-              ref={budgetInputRef}
-              style={styles.budgetInput}
-              value={budgetLimitInput}
-              onChangeText={(value) => setBudgetLimitInput(sanitizeAmountInput(value))}
-              placeholder={t("analytics.budget_placeholder")}
-              placeholderTextColor={colors.outline}
-              keyboardType="decimal-pad"
-              returnKeyType="done"
-              onSubmitEditing={handleSaveBudget}
-            />
-            <TouchableOpacity style={styles.budgetSaveBtn} onPress={handleSaveBudget}>
-              <Text style={styles.budgetSaveBtnText}>
-                {budgetSaved ? t("analytics.budget_saved") : t("analytics.budget_save")}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {budgetEnabled && (
+            <View style={styles.budgetInputRow}>
+              <TextInput
+                inputAccessoryViewID={KEYBOARD_DONE_ID}
+                ref={budgetInputRef}
+                style={styles.budgetInput}
+                value={budgetLimitInput}
+                onChangeText={(value) => setBudgetLimitInput(sanitizeAmountInput(value))}
+                placeholder={t("analytics.budget_placeholder")}
+                placeholderTextColor={colors.outline}
+                keyboardType="decimal-pad"
+                returnKeyType="done"
+                onSubmitEditing={handleSaveBudget}
+              />
+              <TouchableOpacity style={styles.budgetSaveBtn} onPress={handleSaveBudget}>
+                <Text style={styles.budgetSaveBtnText}>
+                  {budgetSaved ? t("analytics.budget_saved") : t("analytics.budget_save")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* ═══ Donut Chart — Abonelik / Kategori ═══ */}
@@ -649,7 +739,7 @@ export default function AnalyticsScreen() {
           </View>
         )}
 
-        {/* ═══ Smart Savings Tips ═══ */}
+        {/* ═══ Tasarruf İpuçları (her zaman 2 ipucu) ═══ */}
         {prioritizedTips.length > 0 && (
           <View style={styles.tipCard}>
             <View style={styles.tipHeader}>
@@ -671,18 +761,30 @@ export default function AnalyticsScreen() {
                       <Text style={styles.tipDesc}>{tip.description}</Text>
                     </View>
                   </View>
-                  <View style={styles.tipSavingsRow}>
-                    <Text style={styles.tipSavingsMonthly}>
-                      {t("analytics.tip_save_monthly", {
-                        amount: fmtDisplay(tip.monthlySavings),
-                      })}
-                    </Text>
-                    <Text style={styles.tipSavingsYearly}>
-                      {t("analytics.tip_save_yearly", {
-                        amount: fmtDisplay(tip.yearlySavings),
-                      })}
-                    </Text>
-                  </View>
+                  {tip.monthlySavings !== undefined && tip.yearlySavings !== undefined && (
+                    <View style={styles.tipSavingsRow}>
+                      <Text style={styles.tipSavingsMonthly}>
+                        {t("analytics.tip_save_monthly", {
+                          amount: fmtDisplay(tip.monthlySavings),
+                        })}
+                      </Text>
+                      <Text style={styles.tipSavingsYearly}>
+                        {t("analytics.tip_save_yearly", {
+                          amount: fmtDisplay(tip.yearlySavings),
+                        })}
+                      </Text>
+                    </View>
+                  )}
+                  {tip.action && (
+                    <TouchableOpacity
+                      style={styles.tipActionBtn}
+                      onPress={tip.action.onPress}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.tipActionText}>{tip.action.label}</Text>
+                      <Ionicons name="arrow-forward" size={14} color={colors.onPrimary} />
+                    </TouchableOpacity>
+                  )}
                 </View>
               ))}
             </View>
@@ -791,12 +893,24 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     elevation: 2,
   },
   budgetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing.md,
     marginBottom: Spacing.lg,
   },
+  // Kapalıyken kartta yalnızca başlık satırı kalır
+  budgetHeaderCollapsed: {
+    marginBottom: 0,
+  },
   budgetTitleRow: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.md,
+  },
+  budgetTitleText: {
+    flex: 1,
   },
   budgetIcon: {
     width: 40,
@@ -1103,6 +1217,23 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     ...Typography.labelLg,
     color: colors.onSurface,
     fontWeight: "700",
+  },
+  tipActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    marginTop: Spacing.md,
+    marginLeft: 42,
+    backgroundColor: colors.primarySolid,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 8,
+  },
+  tipActionText: {
+    ...Typography.labelMd,
+    color: colors.onPrimary,
+    fontWeight: "800",
   },
   tipSavingsRow: {
     flexDirection: "row",

@@ -42,6 +42,10 @@ interface SubscriptionState {
     updates: Partial<Subscription>,
   ) => Promise<void>;
   deleteSubscription: (id: string) => Promise<void>;
+  /** Toplu seçim: birden fazla aboneliği tek istekte duraklatır / devam ettirir */
+  setActiveMany: (ids: string[], isActive: boolean) => Promise<void>;
+  /** Toplu seçim: birden fazla aboneliği tek istekte siler */
+  deleteMany: (ids: string[]) => Promise<void>;
   toggleActive: (id: string) => Promise<void>;
   totalMonthly: () => number;
   upcomingPayments: () => Subscription[];
@@ -312,6 +316,62 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         nextSubscriptions = state.subscriptions.filter((s) => s.id !== id);
         return { subscriptions: nextSubscriptions };
       });
+      await syncSubscriptionNotifications(nextSubscriptions);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  setActiveMany: async (ids, isActive) => {
+    if (ids.length === 0) return;
+    set({ loading: true });
+    try {
+      const user = await getCurrentUser();
+      const idSet = new Set(ids);
+
+      if (user) {
+        const { error } = await supabase
+          .from("subscriptions")
+          .update({ is_active: isActive })
+          .in("id", ids);
+        if (error) throw error;
+      }
+
+      let nextSubscriptions: Subscription[] = [];
+      set((state) => {
+        nextSubscriptions = state.subscriptions.map((s) =>
+          idSet.has(s.id) ? { ...s, is_active: isActive } : s,
+        );
+        return { subscriptions: nextSubscriptions };
+      });
+      if (!user) await writeLocalSubscriptions(nextSubscriptions);
+      await syncSubscriptionNotifications(nextSubscriptions);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  deleteMany: async (ids) => {
+    if (ids.length === 0) return;
+    set({ loading: true });
+    try {
+      const user = await getCurrentUser();
+      const idSet = new Set(ids);
+
+      if (user) {
+        const { error } = await supabase
+          .from("subscriptions")
+          .delete()
+          .in("id", ids);
+        if (error) throw error;
+      }
+
+      let nextSubscriptions: Subscription[] = [];
+      set((state) => {
+        nextSubscriptions = state.subscriptions.filter((s) => !idSet.has(s.id));
+        return { subscriptions: nextSubscriptions };
+      });
+      if (!user) await writeLocalSubscriptions(nextSubscriptions);
       await syncSubscriptionNotifications(nextSubscriptions);
     } finally {
       set({ loading: false });

@@ -1,5 +1,12 @@
 import { CATEGORIES, Category } from "@/constants/categories";
-import { TR_SERVICES } from "@/constants/services";
+import {
+  TR_SERVICES,
+  planCycle,
+  planKey,
+  type PopularService,
+  type ServicePlan,
+} from "@/constants/services";
+import DateField from "@/components/DateField";
 import type { AppColors } from "@/constants/colors";
 import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
@@ -25,7 +32,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppTabBar } from "@/components/AppTabBar";
 import DurationPicker from "@/components/DurationPicker";
-import { addMonths, parseDateOnly } from "@/lib/subscriptionDuration";
+import { addMonths, parseDateOnly, toDateOnly } from "@/lib/subscriptionDuration";
 import { getIconColorOn, isLightColor } from "@/lib/colorContrast";
 import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
 
@@ -73,6 +80,9 @@ const AVAILABLE_COLORS = [
   "#FFFFFF", // beyaz
 ];
 
+const startOfDay = (date: Date) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
 const sanitizeAmountInput = (value: string) => {
   const normalized = value.replace(",", ".");
   const [whole = "", ...decimalParts] = normalized.split(".");
@@ -96,7 +106,9 @@ export default function NewSubscriptionScreen() {
 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
-  const [billingDay, setBillingDay] = useState("");
+  // 'YYYY-MM-DD'; aylıkta ayın günü, yıllıkta gün+ay bu tarihten alınır
+  const [billingDate, setBillingDate] = useState(() => toDateOnly(new Date()));
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [category, setCategory] = useState<Category>("entertainment");
   const [activeColor, setActiveColor] = useState(AVAILABLE_COLORS[4]);
   const [activeIcon, setActiveIcon] = useState(AVAILABLE_ICONS[0]);
@@ -108,8 +120,10 @@ export default function NewSubscriptionScreen() {
   // YENİ: Notlar State'i
   const [notes, setNotes] = useState("");
 
-  const [availablePlans, setAvailablePlans] = useState<any[]>([]);
-  const [activePlanLabel, setActivePlanLabel] = useState("");
+  const [availablePlans, setAvailablePlans] = useState<ServicePlan[]>([]);
+  const [activePlanKey, setActivePlanKey] = useState("");
+  // Döngü seçimine göre yalnızca o döngünün planları gösterilir
+  const cyclePlans = availablePlans.filter((p) => planCycle(p) === billingCycle);
 
   const scrollToSubscriptionForm = () => {
     requestAnimationFrame(() => {
@@ -120,64 +134,53 @@ export default function NewSubscriptionScreen() {
     });
   };
 
-  const handleSelectService = (service: any) => {
+  const handleSelectService = (service: PopularService) => {
     // Popüler servisler abonelik; taksit modundaysa geri dön
     setIsInstallment(false);
     setName(service.name);
-    setCategory(service.category as Category);
+    setCategory(service.category);
     setActiveColor(service.color);
     setActiveIcon(service.icon);
+    setAvailablePlans(service.plans);
 
-    if (service.plans && service.plans.length > 0) {
-      setAvailablePlans(service.plans);
-      setActivePlanLabel(service.plans[0].label);
-      setAmount(service.plans[0].price);
-
-      if (service.plans[0].forceCurrency) {
-        setCurrency(service.plans[0].forceCurrency);
-      } else {
-        setCurrency("₺");
-      }
+    // Varsayılan olarak ilk aylık plan
+    const firstPlan =
+      service.plans.find((p) => planCycle(p) === "monthly") ?? service.plans[0];
+    if (firstPlan) {
+      handleSelectPlan(firstPlan);
     } else {
-      setAvailablePlans([]);
-      setActivePlanLabel("");
+      setActivePlanKey("");
       setAmount("");
       setCurrency("₺");
+      setBillingCycle("monthly");
     }
 
     scrollToSubscriptionForm();
   };
 
-  const handleSelectPlan = (plan: any) => {
-    setActivePlanLabel(plan.label);
+  const handleSelectPlan = (plan: ServicePlan) => {
+    setActivePlanKey(planKey(plan));
     setAmount(plan.price);
-    if (plan.forceCurrency) {
-      setCurrency(plan.forceCurrency);
-    }
+    setCurrency(plan.forceCurrency ?? "₺");
+    setBillingCycle(planCycle(plan));
+    if (planCycle(plan) === "yearly") setDurationMonths(null);
   };
 
-  const calculateNextBillingDate = (dayStr: string) => {
-    if (!dayStr) return new Date().toISOString().split("T")[0];
-
-    const day = parseInt(dayStr, 10);
-    const today = new Date();
-    let targetMonth = today.getMonth();
-    let targetYear = today.getFullYear();
-
-    if (day <= today.getDate()) {
-      targetMonth++;
-      if (targetMonth > 11) {
-        targetMonth = 0;
-        targetYear++;
-      }
+  const handleSelectCycle = (cycle: "monthly" | "yearly") => {
+    if (cycle === billingCycle) return;
+    setBillingCycle(cycle);
+    // Yıllık abonelikte süre (ay) seçimi anlamsız
+    if (cycle === "yearly") setDurationMonths(null);
+    // Seçili paketin diğer döngüdeki karşılığı varsa ona geç (Reklamsız aylık → Reklamsız yıllık)
+    const currentLabel = activePlanKey.split("|")[0];
+    const counterpart =
+      availablePlans.find((p) => planCycle(p) === cycle && p.label === currentLabel) ??
+      availablePlans.find((p) => planCycle(p) === cycle);
+    if (counterpart) {
+      handleSelectPlan(counterpart);
+    } else {
+      setActivePlanKey("");
     }
-
-    const nextDate = new Date(targetYear, targetMonth, day);
-    const yyyy = nextDate.getFullYear();
-    const mm = String(nextDate.getMonth() + 1).padStart(2, "0");
-    const dd = String(nextDate.getDate()).padStart(2, "0");
-
-    return `${yyyy}-${mm}-${dd}`;
   };
 
   const handleSave = async () => {
@@ -189,28 +192,19 @@ export default function NewSubscriptionScreen() {
       Alert.alert(t("common.error"), t("new_sub.err_amount"));
       return;
     }
-    if (!billingDay) {
-      Alert.alert(t("common.error"), t("new_sub.err_day"));
-      return;
-    }
-    if (parseInt(billingDay, 10) < 1 || parseInt(billingDay, 10) > 31) {
-      Alert.alert(t("common.error"), t("new_sub.err_day_range"));
-      return;
-    }
-
     if (isInstallment && !durationMonths) {
       Alert.alert(t("common.error"), t("duration.err_installment_months"));
       return;
     }
 
-    const finalBillingDate = calculateNextBillingDate(billingDay);
+    const finalBillingDate = billingDate;
 
     try {
       await addSubscription({
         name: name.trim(),
         amount: parseFloat(amount),
         currency: currency,
-        billing_cycle: "monthly",
+        billing_cycle: isInstallment ? "monthly" : billingCycle,
         category: category,
         next_billing_date: finalBillingDate,
         emoji: activeIcon,
@@ -231,9 +225,10 @@ export default function NewSubscriptionScreen() {
     if (installment === isInstallment) return;
     setIsInstallment(installment);
     if (installment) {
-      // Taksit süresiz olamaz; plan listesi taksite uymaz
+      // Taksit süresiz ve aylık olmak zorunda; plan listesi taksite uymaz
       setAvailablePlans([]);
-      setActivePlanLabel("");
+      setActivePlanKey("");
+      setBillingCycle("monthly");
       if (durationMonths === null) setDurationMonths(12);
       if (!name.trim()) {
         setCategory("shopping");
@@ -243,13 +238,8 @@ export default function NewSubscriptionScreen() {
   };
 
   const durationSummary = (() => {
-    if (!durationMonths || !billingDay) return null;
-    const day = parseInt(billingDay, 10);
-    if (day < 1 || day > 31) return null;
-    const last = addMonths(
-      parseDateOnly(calculateNextBillingDate(billingDay)),
-      durationMonths - 1,
-    );
+    if (!durationMonths) return null;
+    const last = addMonths(parseDateOnly(billingDate), durationMonths - 1);
     const lastLabel = last.toLocaleDateString(i18n.language, {
       month: "long",
       year: "numeric",
@@ -263,6 +253,14 @@ export default function NewSubscriptionScreen() {
     }
     return t("duration.summary", { date: lastLabel });
   })();
+
+  const parsedAmount = parseFloat(amount);
+  const yearlyHint =
+    !isInstallment && billingCycle === "yearly" && parsedAmount > 0
+      ? t("new_sub.yearly_monthly_equivalent", {
+          amount: `${currency}${(parsedAmount / 12).toFixed(2)}`,
+        })
+      : null;
 
   const displayedServices = showAllServices
     ? TR_SERVICES
@@ -486,12 +484,42 @@ export default function NewSubscriptionScreen() {
               </View>
             </View>
 
+            {/* Ödeme döngüsü (taksit her zaman aylık) */}
+            {!isInstallment && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{t("new_sub.billing_cycle")}</Text>
+                <View style={styles.currencyRow}>
+                  {(["monthly", "yearly"] as const).map((cycle) => (
+                    <TouchableOpacity
+                      key={cycle}
+                      style={[
+                        styles.currencyBtn,
+                        billingCycle === cycle && styles.currencyBtnActive,
+                      ]}
+                      onPress={() => handleSelectCycle(cycle)}
+                    >
+                      <Text
+                        style={[
+                          styles.typeBtnText,
+                          billingCycle === cycle && styles.currencyBtnTextActive,
+                        ]}
+                      >
+                        {t(`new_sub.cycle_${cycle}`)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={styles.label}>
                   {isInstallment
                     ? t("duration.installment_amount")
-                    : t("new_sub.monthly_cost")}
+                    : billingCycle === "yearly"
+                      ? t("new_sub.yearly_cost")
+                      : t("new_sub.monthly_cost")}
                 </Text>
                 <View style={styles.amountContainer}>
                   <Text style={styles.currencySymbol}>{currency}</Text>
@@ -508,23 +536,22 @@ export default function NewSubscriptionScreen() {
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>{t("new_sub.billing_day")}</Text>
-                <TextInput
-                  inputAccessoryViewID={KEYBOARD_DONE_ID}
-                  style={styles.input}
-                  placeholder="Örn: 15"
-                  placeholderTextColor={colors.onSurfaceVariant + "80"}
-                  value={billingDay}
-                  onChangeText={(text) => {
-                    const numericValue = text.replace(/[^0-9]/g, "");
-                    setBillingDay(numericValue);
-                  }}
-                  keyboardType="number-pad"
-                  maxLength={2}
+                <Text style={styles.label}>
+                  {isInstallment
+                    ? t("duration.first_installment")
+                    : t("new_sub.next_payment")}
+                </Text>
+                <DateField
+                  value={billingDate}
+                  onChange={setBillingDate}
+                  // Taksit geçmişte başlamış olabilir; abonelikte sonraki ödeme bugünden önce olamaz
+                  minimumDate={isInstallment ? undefined : startOfDay(new Date())}
                 />
               </View>
             </View>
+            {yearlyHint && <Text style={styles.cycleHint}>{yearlyHint}</Text>}
 
+            {billingCycle === "monthly" && (
             <View style={styles.inputGroup}>
               <Text style={styles.label}>
                 {isInstallment
@@ -540,8 +567,9 @@ export default function NewSubscriptionScreen() {
                 <Text style={styles.durationSummary}>{durationSummary}</Text>
               )}
             </View>
+            )}
 
-            {availablePlans.length > 0 && (
+            {cyclePlans.length > 0 && (
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>{t("new_sub.plan_selection")}</Text>
                 <ScrollView
@@ -549,19 +577,19 @@ export default function NewSubscriptionScreen() {
                   showsHorizontalScrollIndicator={false}
                   style={styles.planScroll}
                 >
-                  {availablePlans.map((plan) => (
+                  {cyclePlans.map((plan) => (
                     <TouchableOpacity
-                      key={plan.label}
+                      key={planKey(plan)}
                       style={[
                         styles.planChip,
-                        activePlanLabel === plan.label && styles.planChipActive,
+                        activePlanKey === planKey(plan) && styles.planChipActive,
                       ]}
                       onPress={() => handleSelectPlan(plan)}
                     >
                       <Text
                         style={[
                           styles.planChipText,
-                          activePlanLabel === plan.label &&
+                          activePlanKey === planKey(plan) &&
                             styles.planChipTextActive,
                         ]}
                       >
@@ -570,7 +598,7 @@ export default function NewSubscriptionScreen() {
                       <Text
                         style={[
                           styles.planChipPrice,
-                          activePlanLabel === plan.label &&
+                          activePlanKey === planKey(plan) &&
                             styles.planChipTextActive,
                         ]}
                       >
@@ -871,6 +899,13 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     ...Typography.labelMd,
     fontWeight: "700",
     color: colors.onSurfaceVariant,
+  },
+  cycleHint: {
+    ...Typography.labelMd,
+    color: colors.onSurfaceVariant,
+    marginTop: -Spacing.md,
+    marginBottom: Spacing.xl,
+    marginLeft: 4,
   },
   durationSummary: {
     ...Typography.labelMd,

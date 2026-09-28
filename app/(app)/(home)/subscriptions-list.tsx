@@ -309,7 +309,9 @@ export default function SubscriptionsListStackScreen() {
               <View style={styles.cardBottomRow}>
                 <View>
                   <Text style={styles.cardBottomLabel}>
-                    {t("subscription_detail.monthly_cost")}
+                    {sub.billing_cycle === "yearly"
+                      ? t("subscription_detail.yearly_cost")
+                      : t("subscription_detail.monthly_cost")}
                   </Text>
                   <Text
                     style={[

@@ -10,7 +10,7 @@ import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useCurrency, useTotalMonthly } from "@/hooks/useCurrency";
 import { useAuthStore } from "@/stores/authStore";
-import { useBudgetStore } from "@/stores/budgetStore";
+import { isOverBudget, useBudgetStore } from "@/stores/budgetStore";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -50,6 +50,7 @@ export default function DashboardScreen() {
   );
 
   const budgetLimit = useBudgetStore((state) => state.limit);
+  const budgetEnabled = useBudgetStore((state) => state.enabled);
 
   const onRefresh = useCallback(() => {
     fetchSubscriptions();
@@ -92,11 +93,17 @@ export default function DashboardScreen() {
     return () => subscription.remove();
   }, []);
 
-  const isOverBudget = budgetLimit > 0 && monthlyConverted > budgetLimit;
+  const overBudget = isOverBudget(monthlyConverted, budgetLimit, budgetEnabled);
 
-  const heroGradientColors: [string, string] = isOverBudget
-    ? ["#c0392b", "#e74c3c"]
-    : [colors.heroGradientStart, colors.heroGradientEnd];
+  const heroGradientColors: [string, string] = [
+    colors.heroGradientStart,
+    colors.heroGradientEnd,
+  ];
+
+  // Analizlerdeki bütçe kartına git ve limit alanını odakla
+  const handleEditBudget = () => {
+    router.replace({ pathname: "/(app)/analytics", params: { focus: "budget" } });
+  };
 
   const getUpcomingBadgeLabel = () => {
     if (upcoming.length === 0) return "";
@@ -184,11 +191,6 @@ export default function DashboardScreen() {
             <Text style={styles.heroAmount}>
               {fmtDisplay(monthlyConverted)}
             </Text>
-            {isOverBudget && (
-              <Text style={styles.budgetWarning}>
-                {t("dashboard.budget_warning")}
-              </Text>
-            )}
             {upcoming.length > 0 && (
               <View style={styles.heroBadge}>
                 <Text style={styles.heroBadgeText}>
@@ -197,6 +199,35 @@ export default function DashboardScreen() {
               </View>
             )}
           </LinearGradient>
+
+          {/* Bütçe aşıldıysa aylık harcamanın altında ayrı uyarı */}
+          {overBudget && (
+            <View style={styles.budgetAlert}>
+              <View style={styles.budgetAlertIcon}>
+                <Ionicons name="warning-outline" size={18} color={colors.error} />
+              </View>
+              <View style={styles.budgetAlertText}>
+                <Text style={styles.budgetAlertTitle}>
+                  {t("dashboard.budget_warning")}
+                </Text>
+                <Text style={styles.budgetAlertBody}>
+                  {t("dashboard.budget_over_by", {
+                    amount: fmtDisplay(monthlyConverted - budgetLimit),
+                    limit: fmtDisplay(budgetLimit),
+                  })}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.budgetAlertButton}
+                onPress={handleEditBudget}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.budgetAlertButtonText}>
+                  {t("dashboard.budget_edit")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {!user && (
             <View style={styles.guestNotice}>
@@ -458,11 +489,47 @@ const createStyles = (colors: AppColors, darkMode: boolean) =>
       marginBottom: Spacing.sm,
     },
     heroAmount: { ...Typography.displayLg, color: "#ffffff" },
-    budgetWarning: {
+    budgetAlert: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.md,
+      backgroundColor: colors.errorContainer + (darkMode ? "40" : "80"),
+      borderRadius: 20,
+      padding: Spacing.lg,
+      marginTop: -Spacing.lg,
+      marginBottom: Spacing.xxxl,
+    },
+    budgetAlertIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.errorContainer,
+    },
+    budgetAlertText: {
+      flex: 1,
+    },
+    budgetAlertTitle: {
+      ...Typography.labelLg,
+      color: colors.onSurface,
+      fontWeight: "800",
+    },
+    budgetAlertBody: {
+      ...Typography.bodySm,
+      color: colors.onSurfaceVariant,
+      marginTop: 2,
+    },
+    budgetAlertButton: {
+      backgroundColor: colors.error,
+      borderRadius: BorderRadius.full,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: 8,
+    },
+    budgetAlertButtonText: {
       ...Typography.labelMd,
-      color: "#ffffff",
-      marginTop: Spacing.sm,
-      opacity: 0.9,
+      color: colors.onError,
+      fontWeight: "800",
     },
     heroBadge: {
       backgroundColor: "rgba(255,255,255,0.15)",

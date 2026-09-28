@@ -1,9 +1,16 @@
 import type { AppColors } from "@/constants/colors";
-import { TR_SERVICES, type PopularService, type ServicePlan } from "@/constants/services";
+import {
+  TR_SERVICES,
+  planCycle,
+  planKey,
+  type PopularService,
+  type ServicePlan,
+} from "@/constants/services";
 import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { getIconColorOn } from "@/lib/colorContrast";
-import { getNextBillingDateForDay } from "@/lib/subscriptionDuration";
+import { getNextBillingDateForDay, toDateOnly } from "@/lib/subscriptionDuration";
+import DateField from "@/components/DateField";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -27,10 +34,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
 
 type Draft = {
-  planLabel: string;
+  planKey: string;
   amount: string;
   currency: string;
+  cycle: "monthly" | "yearly";
+  /** Aylık planda ayın günü (boşsa bugün) */
   day: string;
+  /** Yıllık planda sonraki ödeme tarihi 'YYYY-MM-DD' */
+  date: string;
 };
 
 const sanitizeAmountInput = (value: string) => {
@@ -42,11 +53,14 @@ const sanitizeAmountInput = (value: string) => {
   return decimalParts.length > 0 ? `${digitsOnly}.${decimal}` : digitsOnly;
 };
 
-const draftFromPlan = (plan: ServicePlan | undefined, day = ""): Draft => ({
-  planLabel: plan?.label ?? "",
+// Plan değişince kullanıcının girdiği gün/tarih korunur
+const draftFromPlan = (plan: ServicePlan | undefined, prev?: Draft): Draft => ({
+  planKey: plan ? planKey(plan) : "",
   amount: plan?.price ?? "",
   currency: plan?.forceCurrency ?? "₺",
-  day,
+  cycle: plan ? planCycle(plan) : "monthly",
+  day: prev?.day ?? "",
+  date: prev?.date ?? toDateOnly(new Date()),
 });
 
 export default function BulkAddScreen() {
@@ -107,7 +121,7 @@ export default function BulkAddScreen() {
         Alert.alert(t("common.error"), t("bulk.err_amount", { name: service.name }));
         return;
       }
-      if (draft.day) {
+      if (draft.cycle === "monthly" && draft.day) {
         const day = parseInt(draft.day, 10);
         if (day < 1 || day > 31) {
           Alert.alert(t("common.error"), t("bulk.err_day", { name: service.name }));
@@ -125,11 +139,12 @@ export default function BulkAddScreen() {
             name: service.name,
             amount: parseFloat(draft.amount),
             currency: draft.currency,
-            billing_cycle: "monthly",
+            billing_cycle: draft.cycle,
             category: service.category,
-            next_billing_date: getNextBillingDateForDay(
-              draft.day ? parseInt(draft.day, 10) : today,
-            ),
+            next_billing_date:
+              draft.cycle === "yearly"
+                ? draft.date
+                : getNextBillingDateForDay(draft.day ? parseInt(draft.day, 10) : today),
             emoji: service.icon,
             color: service.color,
             is_active: true,
@@ -235,17 +250,19 @@ export default function BulkAddScreen() {
                 style={styles.planScroll}
               >
                 {service.plans.map((plan) => {
-                  const active = draft.planLabel === plan.label;
+                  const active = draft.planKey === planKey(plan);
                   return (
                     <TouchableOpacity
-                      key={plan.label}
+                      key={planKey(plan)}
                       style={[styles.planChip, active && styles.planChipActive]}
                       onPress={() =>
-                        updateDraft(service.name, draftFromPlan(plan, draft.day))
+                        updateDraft(service.name, draftFromPlan(plan, draft))
                       }
                     >
                       <Text style={[styles.planChipText, active && styles.planChipTextActive]}>
-                        {plan.label}
+                        {planCycle(plan) === "yearly"
+                          ? t("bulk.plan_yearly", { label: plan.label })
+                          : plan.label}
                       </Text>
                       <Text style={[styles.planChipPrice, active && styles.planChipTextActive]}>
                         {plan.forceCurrency ?? "₺"}
@@ -259,7 +276,9 @@ export default function BulkAddScreen() {
 
             <View style={styles.row}>
               <View style={{ flex: 3 }}>
-                <Text style={styles.label}>{t("bulk.amount")}</Text>
+                <Text style={styles.label}>
+                  {draft.cycle === "yearly" ? t("bulk.amount_yearly") : t("bulk.amount")}
+                </Text>
                 <View style={styles.amountContainer}>
                   <Text style={styles.currencySymbol}>{draft.currency}</Text>
                   <TextInput
@@ -275,6 +294,16 @@ export default function BulkAddScreen() {
                   />
                 </View>
               </View>
+              {draft.cycle === "yearly" ? (
+              <View style={{ flex: 2 }}>
+                <Text style={styles.label}>{t("new_sub.next_payment")}</Text>
+                <DateField
+                  value={draft.date}
+                  onChange={(date) => updateDraft(service.name, { date })}
+                  minimumDate={new Date(new Date().setHours(0, 0, 0, 0))}
+                />
+              </View>
+              ) : (
               <View style={{ flex: 2 }}>
                 <Text style={styles.label}>{t("bulk.billing_day")}</Text>
                 <TextInput
@@ -290,6 +319,7 @@ export default function BulkAddScreen() {
                   maxLength={2}
                 />
               </View>
+              )}
             </View>
           </View>
         );
