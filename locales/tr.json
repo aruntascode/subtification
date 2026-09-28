@@ -74,10 +74,7 @@
     "delete_confirm_message": "Bu abonelik kalıcı olarak silinecek.",
     "delete_cancel": "İptal",
     "delete_confirm": "Sil",
-    "yearly_cost": "Yıllık Maliyet",
-    "since_title": "Abonelik Geçmişi",
-    "since_value": "{{date}} tarihinden beri",
-    "since_total": "Şimdiye kadar {{count}} ödeme · yaklaşık {{amount}}"
+    "yearly_cost": "Yıllık Maliyet"
   },
   "analytics": {
     "title": "Trendler",
@@ -246,14 +243,13 @@
     "err_amount": "Lütfen geçerli bir tutar girin.",
     "err_day": "Lütfen ödeme gününü girin.",
     "err_day_range": "Gün 1-31 arasında olmalıdır.",
-    "billing_cycle": "Ödeme döngüsü",
-    "cycle_monthly": "Aylık",
-    "cycle_yearly": "Yıllık",
     "yearly_cost": "Yıllık tutar",
     "next_payment": "Sonraki ödeme",
     "yearly_monthly_equivalent": "Aylık {{amount}} tutarına denk geliyor.",
-    "start_date": "Ne zaman başladın?",
-    "next_payment_preview": "Sonraki ödeme: {{date}}"
+    "next_payment_preview": "Sonraki ödeme: {{date}}",
+    "first_payment": "İlk ödeme",
+    "next_payment_info_title": "Sonraki ödeme",
+    "next_payment_info": "Sonraki ödeme tarihini gir. Uygulama mağazasındaki Abonelikler ekranında \"yenileme tarihi\" olarak geçer.\n\nİstersen en son yapılan ödemenin tarihini de girebilirsin; uygulama sonraki ödemeleri buna göre kendisi hesaplar."
   },
   "auth": {
     "login_title": "Tekrar hoş geldin",

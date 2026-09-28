@@ -110,17 +110,6 @@ export const getDaysUntilNextPayment = (sub: DurationFields): number | null => {
   return Math.round((next.getTime() - startOfToday().getTime()) / dayMs);
 };
 
-/**
- * Başlangıçtan bugüne yaklaşık ödenen toplam (abonelik para biriminde).
- * Geçmiş fiyat değişikliklerini ve duraklatılan dönemleri bilmediğimiz için yaklaşık.
- */
-export const getEstimatedTotalPaid = (
-  sub: DurationFields & Pick<Subscription, "amount">,
-): { count: number; total: number } => {
-  const count = getPaidCount(sub);
-  return { count, total: count * sub.amount };
-};
-
 /** Liste kartları için kısa ilerleme metni: "3/12 taksit", "5 ay kaldı", "Tamamlandı" */
 export const formatDurationProgress = (
   sub: DurationFields & Pick<Subscription, "is_installment">,

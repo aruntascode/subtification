@@ -22,11 +22,9 @@ import { AppTabBar } from "@/components/AppTabBar";
 import { isLightColor } from "@/lib/colorContrast";
 import {
   getDaysUntilNextPayment,
-  getEstimatedTotalPaid,
   getLastPaymentDate,
   getNextPaymentDate,
   getPaidCount,
-  getScheduleAnchor,
   isFinished,
 } from "@/lib/subscriptionDuration";
 
@@ -68,8 +66,6 @@ export default function SubscriptionDetailScreen() {
   const getDaysUntil = () => getDaysUntilNextPayment(subscription) ?? 0;
 
   // Başlangıçtan bu yana (süresiz abonelikler için "şimdiye kadar" bilgisi)
-  const startDate = getScheduleAnchor(subscription);
-  const totalPaid = getEstimatedTotalPaid(subscription);
 
   const categoryLabel = t(`categories.${subscription.category}`);
   const daysUntil = getDaysUntil();
@@ -232,30 +228,6 @@ export default function SubscriptionDetailScreen() {
             )}
           </View>
         </View>
-
-        {/* Süresiz aboneliklerde başlangıçtan bu yana özet */}
-        {!totalMonths && totalPaid.count > 0 && (
-          <View style={styles.notesCard}>
-            <Text style={styles.notesSectionTitle}>
-              {t("subscription_detail.since_title")}
-            </Text>
-            <Text style={styles.durationValue}>
-              {t("subscription_detail.since_value", {
-                date: startDate.toLocaleDateString(i18n.language, {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                }),
-              })}
-            </Text>
-            <Text style={styles.durationMeta}>
-              {t("subscription_detail.since_total", {
-                count: totalPaid.count,
-                amount: fmtWithOriginal(totalPaid.total, subscription.currency ?? "₺"),
-              })}
-            </Text>
-          </View>
-        )}
 
         {totalMonths > 0 && lastPaymentDate && (
           <View style={styles.notesCard}>

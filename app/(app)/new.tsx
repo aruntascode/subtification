@@ -7,6 +7,7 @@ import {
   type ServicePlan,
 } from "@/constants/services";
 import DateField from "@/components/DateField";
+import InfoLabel from "@/components/InfoLabel";
 import type { AppColors } from "@/constants/colors";
 import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
@@ -109,7 +110,10 @@ export default function NewSubscriptionScreen() {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   // 'YYYY-MM-DD'; aylıkta ayın günü, yıllıkta gün+ay bu tarihten alınır
-  const [billingDate, setBillingDate] = useState(() => toDateOnly(new Date()));
+  // Abonelikte "sonraki ödeme" (varsayılan: bir ay sonrası), taksitte ilk taksit.
+  // Hangisi olursa olsun takvimin çapası olarak saklanır.
+  const [billingDate, setBillingDate] = useState(() => toDateOnly(addMonths(new Date(), 1)));
+  // Döngü seçilen plandan gelir: yıllık plan çipi → yıllık, diğer her şey aylık
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [category, setCategory] = useState<Category>("entertainment");
   const [activeColor, setActiveColor] = useState(AVAILABLE_COLORS[4]);
@@ -124,8 +128,7 @@ export default function NewSubscriptionScreen() {
 
   const [availablePlans, setAvailablePlans] = useState<ServicePlan[]>([]);
   const [activePlanKey, setActivePlanKey] = useState("");
-  // Döngü seçimine göre yalnızca o döngünün planları gösterilir
-  const cyclePlans = availablePlans.filter((p) => planCycle(p) === billingCycle);
+
 
   const scrollToSubscriptionForm = () => {
     requestAnimationFrame(() => {
@@ -166,23 +169,6 @@ export default function NewSubscriptionScreen() {
     setCurrency(plan.forceCurrency ?? "₺");
     setBillingCycle(planCycle(plan));
     if (planCycle(plan) === "yearly") setDurationMonths(null);
-  };
-
-  const handleSelectCycle = (cycle: "monthly" | "yearly") => {
-    if (cycle === billingCycle) return;
-    setBillingCycle(cycle);
-    // Yıllık abonelikte süre (ay) seçimi anlamsız
-    if (cycle === "yearly") setDurationMonths(null);
-    // Seçili paketin diğer döngüdeki karşılığı varsa ona geç (Reklamsız aylık → Reklamsız yıllık)
-    const currentLabel = activePlanKey.split("|")[0];
-    const counterpart =
-      availablePlans.find((p) => planCycle(p) === cycle && p.label === currentLabel) ??
-      availablePlans.find((p) => planCycle(p) === cycle);
-    if (counterpart) {
-      handleSelectPlan(counterpart);
-    } else {
-      setActivePlanKey("");
-    }
   };
 
   const handleSave = async () => {
@@ -266,6 +252,23 @@ export default function NewSubscriptionScreen() {
     duration_months: durationMonths,
   };
   const nextPaymentPreview = getNextPaymentDate(schedulePreview);
+  const previewText = nextPaymentPreview
+    ? t("new_sub.next_payment_preview", {
+        date: nextPaymentPreview.toLocaleDateString(i18n.language, {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+      })
+    : t("duration.finished");
+  // Girilen tarih zaten sonraki ödemeyse ek bilgiye gerek yok; geçmiş bir tarih
+  // (son ödeme) girildiyse hesaplanan sonraki ödemeyi göster
+  const scheduleHint =
+    !isInstallment &&
+    nextPaymentPreview &&
+    toDateOnly(nextPaymentPreview) === billingDate
+      ? null
+      : previewText;
 
   const parsedAmount = parseFloat(amount);
   const yearlyHint =
@@ -274,6 +277,8 @@ export default function NewSubscriptionScreen() {
           amount: `${currency}${(parsedAmount / 12).toFixed(2)}`,
         })
       : null;
+
+  const hintText = [scheduleHint, yearlyHint].filter(Boolean).join("\n");
 
   const displayedServices = showAllServices
     ? TR_SERVICES
@@ -497,31 +502,47 @@ export default function NewSubscriptionScreen() {
               </View>
             </View>
 
-            {/* Ödeme döngüsü (taksit her zaman aylık) */}
-            {!isInstallment && (
+            {availablePlans.length > 0 && (
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>{t("new_sub.billing_cycle")}</Text>
-                <View style={styles.currencyRow}>
-                  {(["monthly", "yearly"] as const).map((cycle) => (
+                <Text style={styles.label}>{t("new_sub.plan_selection")}</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.planScroll}
+                >
+                  {availablePlans.map((plan) => (
                     <TouchableOpacity
-                      key={cycle}
+                      key={planKey(plan)}
                       style={[
-                        styles.currencyBtn,
-                        billingCycle === cycle && styles.currencyBtnActive,
+                        styles.planChip,
+                        activePlanKey === planKey(plan) && styles.planChipActive,
                       ]}
-                      onPress={() => handleSelectCycle(cycle)}
+                      onPress={() => handleSelectPlan(plan)}
                     >
                       <Text
                         style={[
-                          styles.typeBtnText,
-                          billingCycle === cycle && styles.currencyBtnTextActive,
+                          styles.planChipText,
+                          activePlanKey === planKey(plan) &&
+                            styles.planChipTextActive,
                         ]}
                       >
-                        {t(`new_sub.cycle_${cycle}`)}
+                        {planCycle(plan) === "yearly"
+                          ? t("bulk.plan_yearly", { label: plan.label })
+                          : plan.label}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.planChipPrice,
+                          activePlanKey === planKey(plan) &&
+                            styles.planChipTextActive,
+                        ]}
+                      >
+                        {plan.forceCurrency || "₺"}
+                        {plan.price}
                       </Text>
                     </TouchableOpacity>
                   ))}
-                </View>
+                </ScrollView>
               </View>
             )}
 
@@ -549,27 +570,19 @@ export default function NewSubscriptionScreen() {
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>
-                  {isInstallment
-                    ? t("duration.first_installment")
-                    : t("new_sub.start_date")}
-                </Text>
-                {/* Başlangıç geçmişte olabilir; sonraki ödeme ondan hesaplanır */}
+                {isInstallment ? (
+                  <Text style={styles.label}>{t("duration.first_installment")}</Text>
+                ) : (
+                  <InfoLabel
+                    label={t("new_sub.next_payment")}
+                    infoTitle={t("new_sub.next_payment_info_title")}
+                    infoMessage={t("new_sub.next_payment_info")}
+                  />
+                )}
                 <DateField value={billingDate} onChange={setBillingDate} />
               </View>
             </View>
-            <Text style={styles.cycleHint}>
-              {nextPaymentPreview
-                ? t("new_sub.next_payment_preview", {
-                    date: nextPaymentPreview.toLocaleDateString(i18n.language, {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    }),
-                  })
-                : t("duration.finished")}
-              {yearlyHint ? `\n${yearlyHint}` : ""}
-            </Text>
+            {hintText !== "" && <Text style={styles.cycleHint}>{hintText}</Text>}
 
             {billingCycle === "monthly" && (
             <View style={styles.inputGroup}>
@@ -589,47 +602,6 @@ export default function NewSubscriptionScreen() {
             </View>
             )}
 
-            {cyclePlans.length > 0 && (
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>{t("new_sub.plan_selection")}</Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.planScroll}
-                >
-                  {cyclePlans.map((plan) => (
-                    <TouchableOpacity
-                      key={planKey(plan)}
-                      style={[
-                        styles.planChip,
-                        activePlanKey === planKey(plan) && styles.planChipActive,
-                      ]}
-                      onPress={() => handleSelectPlan(plan)}
-                    >
-                      <Text
-                        style={[
-                          styles.planChipText,
-                          activePlanKey === planKey(plan) &&
-                            styles.planChipTextActive,
-                        ]}
-                      >
-                        {plan.label}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.planChipPrice,
-                          activePlanKey === planKey(plan) &&
-                            styles.planChipTextActive,
-                        ]}
-                      >
-                        {plan.forceCurrency || "₺"}
-                        {plan.price}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>{t("new_sub.category")}</Text>

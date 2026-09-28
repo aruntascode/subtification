@@ -74,10 +74,7 @@
     "delete_confirm_message": "This subscription will be permanently deleted.",
     "delete_cancel": "Cancel",
     "delete_confirm": "Delete",
-    "yearly_cost": "Yearly Cost",
-    "since_title": "Subscription History",
-    "since_value": "Since {{date}}",
-    "since_total": "{{count}} payments so far · about {{amount}}"
+    "yearly_cost": "Yearly Cost"
   },
   "analytics": {
     "title": "Trends",
@@ -246,14 +243,13 @@
     "err_amount": "Please enter a valid amount.",
     "err_day": "Please enter a billing day.",
     "err_day_range": "Day must be between 1 and 31.",
-    "billing_cycle": "Billing cycle",
-    "cycle_monthly": "Monthly",
-    "cycle_yearly": "Yearly",
     "yearly_cost": "Yearly amount",
     "next_payment": "Next payment",
     "yearly_monthly_equivalent": "Works out to {{amount}} per month.",
-    "start_date": "When did you start?",
-    "next_payment_preview": "Next payment: {{date}}"
+    "next_payment_preview": "Next payment: {{date}}",
+    "first_payment": "First payment",
+    "next_payment_info_title": "Next payment",
+    "next_payment_info": "Enter the next payment date. It's shown as the \"renewal date\" on the Subscriptions screen in the app store.\n\nYou can also enter the date of the most recent payment; the app calculates upcoming payments from it."
   },
   "auth": {
     "login_title": "Welcome back",

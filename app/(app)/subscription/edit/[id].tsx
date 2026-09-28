@@ -1,5 +1,6 @@
 import { BillingCycle, CATEGORIES, Category } from "@/constants/categories";
 import DateField from "@/components/DateField";
+import InfoLabel from "@/components/InfoLabel";
 import type { AppColors } from "@/constants/colors";
 import { BorderRadius, Spacing, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
@@ -80,10 +81,15 @@ export default function EditSubscriptionScreen() {
   const { colors, darkMode, blurTint } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, darkMode), [colors, darkMode]);
 
-  // Tarih alanı takvimin çapasını (başlangıç) düzenler; eski kayıtlarda kayıtlı ödeme tarihi
-  const initialDate = subscription
-    ? (subscription.first_billing_date ?? subscription.next_billing_date).slice(0, 10)
-    : toDateOnly(new Date());
+  // Süreli kayıtta (taksit dahil) tarih alanı ilk ödemeyi düzenler: ödenen sayısı
+  // ondan hesaplanır. Süresizde takvimden hesaplanan sonraki ödemeyi gösterir;
+  // eski bir çapa tarihi "sonraki ödeme" diye görünmesin.
+  const isDurationBased = !!subscription?.duration_months;
+  const initialDate = !subscription
+    ? toDateOnly(new Date())
+    : isDurationBased
+      ? (subscription.first_billing_date ?? subscription.next_billing_date).slice(0, 10)
+      : toDateOnly(getNextPaymentDate(subscription) ?? parseDateOnly(subscription.next_billing_date));
 
   // Edit states
   const [editName, setEditName] = useState(subscription?.name ?? "");
@@ -91,8 +97,8 @@ export default function EditSubscriptionScreen() {
     amountParam ?? subscription?.amount.toString() ?? "",
   );
   const [editDate, setEditDate] = useState(initialDate);
-  // Eski haftalık/3 aylık kayıtlar, kullanıcı değiştirmedikçe kendi döngüsünde kalır
-  const [editCycle, setEditCycle] = useState<BillingCycle>(
+  // Döngü kayıttan gelir (seçici yok); "Yıllığa geç" ipucu yıllık olarak açar
+  const [editCycle] = useState<BillingCycle>(
     cycleParam === "yearly" ? "yearly" : (subscription?.billing_cycle ?? "monthly"),
   );
   const [editCategory, setEditCategory] = useState<Category>(
@@ -273,31 +279,6 @@ export default function EditSubscriptionScreen() {
             </ScrollView>
           </View>
 
-          {/* Ödeme döngüsü (taksit her zaman aylık) */}
-          {!subscription.is_installment && (
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t("new_sub.billing_cycle")}</Text>
-              <View style={styles.cycleRow}>
-                {(["monthly", "yearly"] as const).map((cycle) => (
-                  <TouchableOpacity
-                    key={cycle}
-                    style={[styles.cycleBtn, editCycle === cycle && styles.cycleBtnActive]}
-                    onPress={() => setEditCycle(cycle)}
-                  >
-                    <Text
-                      style={[
-                        styles.cycleBtnText,
-                        editCycle === cycle && styles.cycleBtnTextActive,
-                      ]}
-                    >
-                      {t(`new_sub.cycle_${cycle}`)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-
           {/* Tutar ve ödeme tarihi */}
           <View style={styles.row}>
             <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -322,25 +303,41 @@ export default function EditSubscriptionScreen() {
               </View>
             </View>
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>
-                {subscription.is_installment
-                  ? t("duration.first_installment")
-                  : t("new_sub.start_date")}
-              </Text>
+              {isDurationBased ? (
+                <Text style={styles.label}>
+                  {subscription.is_installment
+                    ? t("duration.first_installment")
+                    : t("new_sub.first_payment")}
+                </Text>
+              ) : (
+                <InfoLabel
+                  label={t("new_sub.next_payment")}
+                  infoTitle={t("new_sub.next_payment_info_title")}
+                  infoMessage={t("new_sub.next_payment_info")}
+                />
+              )}
               <DateField value={editDate} onChange={setEditDate} />
             </View>
           </View>
-          <Text style={styles.previewText}>
-            {nextPaymentPreview
-              ? t("new_sub.next_payment_preview", {
-                  date: nextPaymentPreview.toLocaleDateString(i18n.language, {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  }),
-                })
-              : t("duration.finished")}
-          </Text>
+          {/* Girilen tarih zaten sonraki ödemeyse ek bilgi yok; son ödeme ya da ilk
+              ödeme girildiyse hesaplanan sonraki ödemeyi göster */}
+          {!(
+            !isDurationBased &&
+            nextPaymentPreview &&
+            toDateOnly(nextPaymentPreview) === editDate
+          ) && (
+            <Text style={styles.previewText}>
+              {nextPaymentPreview
+                ? t("new_sub.next_payment_preview", {
+                    date: nextPaymentPreview.toLocaleDateString(i18n.language, {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    }),
+                  })
+                : t("duration.finished")}
+            </Text>
+          )}
 
           {/* Süre / Taksit sayısı (yıllıkta gizli) */}
           {editCycle !== "yearly" && (
@@ -530,7 +527,6 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     color: colors.onSurfaceVariant,
   },
   amountInput: { flex: 1, paddingLeft: 42 },
-  cycleRow: { flexDirection: "row", gap: Spacing.sm },
   previewText: {
     ...Typography.labelMd,
     color: colors.onSurfaceVariant,
@@ -538,18 +534,6 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     marginBottom: Spacing.xl,
     marginLeft: 4,
   },
-  cycleBtn: {
-    flex: 1,
-    alignItems: "center",
-    backgroundColor: colors.surfaceContainerHighest,
-    borderRadius: BorderRadius.lg,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  cycleBtnActive: { backgroundColor: colors.primaryFixed, borderColor: colors.primary },
-  cycleBtnText: { ...Typography.labelMd, fontWeight: "700", color: colors.onSurfaceVariant },
-  cycleBtnTextActive: { color: colors.primary, fontWeight: "800" },
   categoryScroll: { marginHorizontal: -4 },
   categoryChip: {
     backgroundColor: colors.surfaceContainerHighest,
