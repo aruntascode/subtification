@@ -37,7 +37,7 @@ export default function SubscriptionsListStackScreen() {
     deleteSubscription,
   } = useSubscriptionStore();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { fmtDisplay, fmtWithOriginal, convert } = useCurrency();
   const { colors, darkMode, blurTint } = useAppTheme();
@@ -273,7 +273,7 @@ export default function SubscriptionsListStackScreen() {
                   radius={16}
                 />
                 <View style={styles.statusBlock}>
-                  <Text style={styles.statusLabel}>STATUS</Text>
+                  <Text style={styles.statusLabel}>{t("subscriptions.status").toLocaleUpperCase(i18n.language)}</Text>
                   <View
                     style={[
                       styles.statusBadge,

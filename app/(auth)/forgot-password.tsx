@@ -24,20 +24,20 @@ export default function ForgotPasswordScreen() {
   const [sent, setSent] = useState(false);
   const { resetPassword, loading } = useAuthStore();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleReset = async () => {
     if (!email) {
-      Alert.alert('Error', 'Please enter your email');
+      Alert.alert(t('common.error'), t('auth.err_email'));
       return;
     }
     try {
       await resetPassword(email);
       setSent(true);
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert(t('common.error'), error.message);
     }
   };
 
@@ -78,10 +78,10 @@ export default function ForgotPasswordScreen() {
               </Text>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>EMAIL</Text>
+                <Text style={styles.label}>{t('auth.email').toLocaleUpperCase(i18n.language)}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="your@email.com"
+                  placeholder={t('auth.email_placeholder')}
                   placeholderTextColor={colors.outline}
                   value={email}
                   onChangeText={setEmail}

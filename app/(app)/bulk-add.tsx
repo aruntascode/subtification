@@ -308,6 +308,16 @@ export default function BulkAddScreen() {
               <View style={{ flex: 1 }}>
                 <InfoLabel
                   label={draft.cycle === "yearly" ? t("bulk.amount_yearly") : t("bulk.amount")}
+                  infoTitle={
+                    draft.cycle === "yearly"
+                      ? t("subscription_detail.yearly_cost")
+                      : t("subscription_detail.monthly_cost")
+                  }
+                  infoMessage={
+                    draft.cycle === "yearly"
+                      ? t("new_sub.yearly_cost_info")
+                      : t("new_sub.monthly_cost_info")
+                  }
                 />
                 <View style={styles.amountContainer}>
                   <Text style={styles.currencySymbol}>{draft.currency}</Text>

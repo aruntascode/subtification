@@ -56,7 +56,8 @@
     "deselect_all": "Seçimi kaldır",
     "selected_count": "{{count}} seçildi",
     "bulk_delete_title": "{{count}} abonelik silinsin mi?",
-    "bulk_delete_message": "Seçtiğin abonelikler kalıcı olarak silinecek."
+    "bulk_delete_message": "Seçtiğin abonelikler kalıcı olarak silinecek.",
+    "status": "Durum"
   },
   "subscription_detail": {
     "monthly_cost": "Aylık Maliyet",
@@ -74,7 +75,10 @@
     "delete_confirm_message": "Bu abonelik kalıcı olarak silinecek.",
     "delete_cancel": "İptal",
     "delete_confirm": "Sil",
-    "yearly_cost": "Yıllık Maliyet"
+    "yearly_cost": "Yıllık Maliyet",
+    "title": "Abonelik Detayı",
+    "not_found": "Abonelik bulunamadı",
+    "go_back": "Geri dön"
   },
   "analytics": {
     "title": "Trendler",
@@ -221,7 +225,8 @@
     "theme_system": "Sistem",
     "theme_light": "Aydınlık",
     "theme_dark": "Karanlık",
-    "choose_theme": "Görünümü seç"
+    "choose_theme": "Görünümü seç",
+    "choose_language": "Dili seç"
   },
   "new_sub": {
     "title": "Abonelik Ekle",
@@ -243,13 +248,18 @@
     "err_amount": "Lütfen geçerli bir tutar girin.",
     "err_day": "Lütfen ödeme gününü girin.",
     "err_day_range": "Gün 1-31 arasında olmalıdır.",
-    "yearly_cost": "Yıllık tutar",
+    "yearly_cost": "Yıllık maliyet",
+    "monthly_cost_info": "Her ay ödediğin tutarı gir.\n\nSüre seçersen (örneğin 6 ay) bu tutar o süre boyunca her ay ödenir; toplam tutar aylara bölünmez.",
+    "yearly_cost_info": "Yılda bir kez ödediğin tutarı gir.\n\nAylık toplamlarda ve analizlerde bu tutarın aylık karşılığı (tutar ÷ 12) kullanılır.",
     "next_payment": "Sonraki ödeme",
     "yearly_monthly_equivalent": "Aylık {{amount}} tutarına denk geliyor.",
     "next_payment_preview": "Sonraki ödeme: {{date}}",
     "first_payment": "İlk ödeme",
     "next_payment_info_title": "Sonraki ödeme",
-    "next_payment_info": "Sonraki ödeme tarihini gir. Uygulama mağazasındaki Abonelikler ekranında \"yenileme tarihi\" olarak geçer.\n\nİstersen en son yapılan ödemenin tarihini de girebilirsin; uygulama sonraki ödemeleri buna göre kendisi hesaplar."
+    "next_payment_info": "Sonraki ödeme tarihini gir. Uygulama mağazasındaki Abonelikler ekranında \"yenileme tarihi\" olarak geçer.\n\nİstersen en son yapılan ödemenin tarihini de girebilirsin; uygulama sonraki ödemeleri buna göre kendisi hesaplar.",
+    "icon": "İkon",
+    "color": "Renk",
+    "name_placeholder": "Örn: Ev Kirası"
   },
   "auth": {
     "login_title": "Tekrar hoş geldin",
@@ -259,7 +269,7 @@
     "sign_in": "Giriş Yap",
     "continue_as_guest": "Giriş yapmadan devam et",
     "login_guest_hint": "İstersen giriş yapmadan kullanabilirsin. Bu modda verilerin sadece cihazda kalır; e-posta ile giriş yaparsan hesabına bağlanır.",
-    "forgot_password": "Şifremi Unuttum",
+    "forgot_password": "Şifremi unuttum?",
     "no_account": "Hesabın yok mu?",
     "sign_up_link": "Kayıt Ol",
     "register_title": "Hesap Oluştur",
@@ -272,7 +282,20 @@
     "forgot_subtitle": "E-posta adresinize sıfırlama bağlantısı göndereceğiz.",
     "send_reset": "Sıfırlama Bağlantısı Gönder",
     "reset_sent": "Sıfırlama bağlantısı gönderildi. E-postanı kontrol et.",
-    "back_to_login": "Girişe Dön"
+    "back_to_login": "Girişe Dön",
+    "tagline_register": "Aboneliklerini takip etmeye başla",
+    "email_placeholder": "ornek@eposta.com",
+    "password_placeholder": "Şifreni gir",
+    "password_min_placeholder": "En az 6 karakter",
+    "password_repeat_placeholder": "Şifreni tekrar gir",
+    "err_fill_all": "Lütfen tüm alanları doldur.",
+    "err_email": "Lütfen e-posta adresini gir.",
+    "err_password_mismatch": "Şifreler eşleşmiyor.",
+    "err_password_short": "Şifre en az 6 karakter olmalı.",
+    "login_failed": "Giriş yapılamadı",
+    "register_failed": "Kayıt olunamadı",
+    "check_email_title": "E-postanı kontrol et",
+    "check_email_message": "Sana bir doğrulama bağlantısı gönderdik. Giriş yapmadan önce e-posta adresini doğrula."
   },
   "categories": {
     "entertainment": "Eğlence",
@@ -307,7 +330,8 @@
     "weekly": "haftalık",
     "quarterly": "3 aylık",
     "days": "gün",
-    "done": "Bitti"
+    "done": "Bitti",
+    "ok": "Tamam"
   },
   "duration": {
     "label": "Süre",
@@ -320,6 +344,7 @@
     "custom_placeholder": "Kaç ay? (örn: 15)",
     "installment_months": "Taksit Sayısı",
     "installment_amount": "Aylık Taksit",
+    "installment_amount_info": "Her ay ödediğin taksit tutarını gir.\n\nToplam tutar, taksit tutarı ile taksit sayısının çarpımıdır; toplamı girip aylara bölmen gerekmez.",
     "installment_name_placeholder": "Örn: iPhone 16",
     "summary": "Son ödeme: {{date}}",
     "installment_summary": "Toplam {{total}} · Son taksit: {{date}}",
@@ -342,7 +367,7 @@
     "already_added": "Zaten ekli",
     "review_title": "Planları kontrol et",
     "review_subtitle": "Fiyatlar seçtiğin plana göre doldu. Sonraki ödeme tarihini kontrol et; istersen son ödeme tarihini de girebilirsin.",
-    "amount": "Aylık tutar",
+    "amount": "Aylık maliyet",
     "save": "{{count}} aboneliği kaydet",
     "remove": "Kaldır",
     "err_amount": "{{name}} için geçerli bir tutar gir.",
@@ -350,7 +375,7 @@
     "empty_single": "Tek tek eklemek istiyorum",
     "continue_empty": "Devam et",
     "plan_yearly": "{{label}} · Yıllık",
-    "amount_yearly": "Yıllık tutar"
+    "amount_yearly": "Yıllık maliyet"
   },
   "home_month": {
     "title": "{{month}} ayı",

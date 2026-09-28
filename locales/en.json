@@ -56,7 +56,8 @@
     "deselect_all": "Deselect all",
     "selected_count": "{{count}} selected",
     "bulk_delete_title": "Delete {{count}} subscriptions?",
-    "bulk_delete_message": "The selected subscriptions will be permanently deleted."
+    "bulk_delete_message": "The selected subscriptions will be permanently deleted.",
+    "status": "Status"
   },
   "subscription_detail": {
     "monthly_cost": "Monthly Cost",
@@ -74,7 +75,10 @@
     "delete_confirm_message": "This subscription will be permanently deleted.",
     "delete_cancel": "Cancel",
     "delete_confirm": "Delete",
-    "yearly_cost": "Yearly Cost"
+    "yearly_cost": "Yearly Cost",
+    "title": "Subscription Details",
+    "not_found": "Subscription not found",
+    "go_back": "Go back"
   },
   "analytics": {
     "title": "Trends",
@@ -221,7 +225,8 @@
     "theme_system": "System",
     "theme_light": "Light",
     "theme_dark": "Dark",
-    "choose_theme": "Choose appearance"
+    "choose_theme": "Choose appearance",
+    "choose_language": "Choose language"
   },
   "new_sub": {
     "title": "Add Subscription",
@@ -243,13 +248,18 @@
     "err_amount": "Please enter a valid amount.",
     "err_day": "Please enter a billing day.",
     "err_day_range": "Day must be between 1 and 31.",
-    "yearly_cost": "Yearly amount",
+    "yearly_cost": "Yearly cost",
+    "monthly_cost_info": "Enter the amount you pay each month.\n\nIf you pick a duration (e.g. 6 months), this amount is paid every month for that period; the total isn't split across months.",
+    "yearly_cost_info": "Enter the amount you pay once a year.\n\nMonthly totals and analytics use its monthly equivalent (amount ÷ 12).",
     "next_payment": "Next payment",
     "yearly_monthly_equivalent": "Works out to {{amount}} per month.",
     "next_payment_preview": "Next payment: {{date}}",
     "first_payment": "First payment",
     "next_payment_info_title": "Next payment",
-    "next_payment_info": "Enter the next payment date. It's shown as the \"renewal date\" on the Subscriptions screen in the app store.\n\nYou can also enter the date of the most recent payment; the app calculates upcoming payments from it."
+    "next_payment_info": "Enter the next payment date. It's shown as the \"renewal date\" on the Subscriptions screen in the app store.\n\nYou can also enter the date of the most recent payment; the app calculates upcoming payments from it.",
+    "icon": "Icon",
+    "color": "Color",
+    "name_placeholder": "e.g. Rent"
   },
   "auth": {
     "login_title": "Welcome back",
@@ -259,7 +269,7 @@
     "sign_in": "Sign In",
     "continue_as_guest": "Continue without signing in",
     "login_guest_hint": "You can use the app without signing in. In guest mode, data stays only on this device; email sign-in links it to your account.",
-    "forgot_password": "Forgot Password",
+    "forgot_password": "Forgot password?",
     "no_account": "Don't have an account?",
     "sign_up_link": "Sign Up",
     "register_title": "Create Account",
@@ -272,7 +282,20 @@
     "forgot_subtitle": "We'll send a reset link to your email address.",
     "send_reset": "Send Reset Link",
     "reset_sent": "Reset link sent. Check your email.",
-    "back_to_login": "Back to Login"
+    "back_to_login": "Back to Login",
+    "tagline_register": "Start tracking your subscriptions",
+    "email_placeholder": "your@email.com",
+    "password_placeholder": "Enter your password",
+    "password_min_placeholder": "At least 6 characters",
+    "password_repeat_placeholder": "Repeat your password",
+    "err_fill_all": "Please fill in all fields.",
+    "err_email": "Please enter your email.",
+    "err_password_mismatch": "Passwords do not match.",
+    "err_password_short": "Password must be at least 6 characters.",
+    "login_failed": "Login failed",
+    "register_failed": "Registration failed",
+    "check_email_title": "Check your email",
+    "check_email_message": "We sent you a confirmation link. Please verify your email before signing in."
   },
   "categories": {
     "entertainment": "Entertainment",
@@ -307,7 +330,8 @@
     "weekly": "weekly",
     "quarterly": "quarterly",
     "days": "days",
-    "done": "Done"
+    "done": "Done",
+    "ok": "OK"
   },
   "duration": {
     "label": "Duration",
@@ -320,6 +344,7 @@
     "custom_placeholder": "How many months? (e.g. 15)",
     "installment_months": "Number of Installments",
     "installment_amount": "Monthly Installment",
+    "installment_amount_info": "Enter the installment you pay each month.\n\nThe total is the installment amount times the number of installments; you don't need to enter the total and split it.",
     "installment_name_placeholder": "e.g. iPhone 16",
     "summary": "Last payment: {{date}}",
     "installment_summary": "Total {{total}} · Last installment: {{date}}",
@@ -342,7 +367,7 @@
     "already_added": "Already added",
     "review_title": "Check your plans",
     "review_subtitle": "Prices are filled from the selected plan. Check the next payment date; you can also enter the last payment date instead.",
-    "amount": "Monthly amount",
+    "amount": "Monthly cost",
     "save": "Save {{count}} subscriptions",
     "remove": "Remove",
     "err_amount": "Enter a valid amount for {{name}}.",
@@ -350,7 +375,7 @@
     "empty_single": "I'd rather add one by one",
     "continue_empty": "Continue",
     "plan_yearly": "{{label}} · Yearly",
-    "amount_yearly": "Yearly amount"
+    "amount_yearly": "Yearly cost"
   },
   "home_month": {
     "title": "{{month}}",

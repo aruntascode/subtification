@@ -311,7 +311,7 @@ export function AppTabBar() {
               <View style={styles.sheetHandleArea}>
                 <View style={styles.sheetHandle} />
               </View>
-              <Text style={styles.sheetTitle}>Abonelik Ekle</Text>
+              <Text style={styles.sheetTitle}>{t("new_sub.title")}</Text>
               {menuItems.map((item, i) => (
                 <TouchableOpacity
                   key={i}

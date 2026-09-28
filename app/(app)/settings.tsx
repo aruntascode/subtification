@@ -793,9 +793,7 @@ export default function SettingsScreen() {
                 sectionLabel={
                   preferenceKind === "theme"
                     ? t("settings.choose_theme")
-                    : isTurkish
-                      ? "Dili seç"
-                      : "Choose language"
+                    : t("settings.choose_language")
                 }
                 options={preferenceKind === "theme" ? themeOptions : languageOptions}
               />

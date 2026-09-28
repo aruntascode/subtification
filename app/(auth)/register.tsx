@@ -27,32 +27,32 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const { signUpWithEmail, loading } = useAuthStore();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleRegister = async () => {
     if (!email || !password || !confirmPassword) {
-      Alert.alert("Error", "Please fill in all fields");
+      Alert.alert(t("common.error"), t("auth.err_fill_all"));
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      Alert.alert(t("common.error"), t("auth.err_password_mismatch"));
       return;
     }
     if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters");
+      Alert.alert(t("common.error"), t("auth.err_password_short"));
       return;
     }
     try {
       await signUpWithEmail(email, password);
       Alert.alert(
-        "Check your email",
-        "We sent you a confirmation link. Please verify your email before signing in.",
-        [{ text: "OK", onPress: () => router.replace("/(auth)/login") }],
+        t("auth.check_email_title"),
+        t("auth.check_email_message"),
+        [{ text: t("common.ok"), onPress: () => router.replace("/(auth)/login") }],
       );
     } catch (error: any) {
-      Alert.alert("Registration Failed", error.message);
+      Alert.alert(t("auth.register_failed"), error.message);
     }
   };
 
@@ -72,17 +72,17 @@ export default function RegisterScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.brandName}>Subtification</Text>
-          <Text style={styles.tagline}>Start tracking your subscriptions</Text>
+          <Text style={styles.tagline}>{t("auth.tagline_register")}</Text>
         </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t("auth.register_title")}</Text>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>EMAIL</Text>
+            <Text style={styles.label}>{t("auth.email").toLocaleUpperCase(i18n.language)}</Text>
             <TextInput
               style={styles.input}
-              placeholder="your@email.com"
+              placeholder={t("auth.email_placeholder")}
               placeholderTextColor={colors.outline}
               value={email}
               onChangeText={setEmail}
@@ -92,10 +92,10 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>PASSWORD</Text>
+            <Text style={styles.label}>{t("auth.password").toLocaleUpperCase(i18n.language)}</Text>
             <TextInput
               style={styles.input}
-              placeholder="At least 6 characters"
+              placeholder={t("auth.password_min_placeholder")}
               placeholderTextColor={colors.outline}
               value={password}
               onChangeText={setPassword}
@@ -104,10 +104,10 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>CONFIRM PASSWORD</Text>
+            <Text style={styles.label}>{t("auth.confirm_password").toLocaleUpperCase(i18n.language)}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Repeat your password"
+              placeholder={t("auth.password_repeat_placeholder")}
               placeholderTextColor={colors.outline}
               value={confirmPassword}
               onChangeText={setConfirmPassword}

@@ -46,9 +46,9 @@ export default function SubscriptionDetailScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.notFound}>
-          <Text style={styles.notFoundText}>Subscription not found</Text>
+          <Text style={styles.notFoundText}>{t("subscription_detail.not_found")}</Text>
           <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.backLink}>Go back</Text>
+            <Text style={styles.backLink}>{t("subscription_detail.go_back")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -335,7 +335,7 @@ export default function SubscriptionDetailScreen() {
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Abonelik Detayı</Text>
+          <Text style={styles.headerTitle}>{t("subscription_detail.title")}</Text>
           <TouchableOpacity
             onPress={() => router.push(`/(app)/subscription/edit/${subscription.id}`)}
             style={styles.editBtn}

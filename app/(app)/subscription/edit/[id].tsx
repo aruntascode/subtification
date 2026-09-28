@@ -126,9 +126,9 @@ export default function EditSubscriptionScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.notFound}>
-          <Text style={styles.notFoundText}>Subscription not found</Text>
+          <Text style={styles.notFoundText}>{t("subscription_detail.not_found")}</Text>
           <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.backLink}>Go back</Text>
+            <Text style={styles.backLink}>{t("subscription_detail.go_back")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -139,6 +139,22 @@ export default function EditSubscriptionScreen() {
   const cycleOptions: BillingCycle[] = ["monthly", "yearly"].includes(subscription.billing_cycle)
     ? ["monthly", "yearly"]
     : ["monthly", "yearly", subscription.billing_cycle];
+
+  // Tutar etiketindeki ⓘ: girilen tutarın neyi ifade ettiğini açıklar
+  const amountInfo = subscription.is_installment
+    ? {
+        infoTitle: t("duration.installment_amount"),
+        infoMessage: t("duration.installment_amount_info"),
+      }
+    : editCycle === "yearly"
+      ? {
+          infoTitle: t("subscription_detail.yearly_cost"),
+          infoMessage: t("new_sub.yearly_cost_info"),
+        }
+      : {
+          infoTitle: t("subscription_detail.monthly_cost"),
+          infoMessage: t("new_sub.monthly_cost_info"),
+        };
 
   // Formdaki değerlerle takvim önizlemesi
   const nextPaymentPreview = getNextPaymentDate({
@@ -244,7 +260,7 @@ export default function EditSubscriptionScreen() {
 
           {/* İkon Seçici */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>İKON</Text>
+            <Text style={styles.label}>{t("new_sub.icon")}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -275,7 +291,7 @@ export default function EditSubscriptionScreen() {
 
           {/* Renk Seçici */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>RENK</Text>
+            <Text style={styles.label}>{t("new_sub.color")}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -310,6 +326,7 @@ export default function EditSubscriptionScreen() {
                       ? t("new_sub.yearly_cost")
                       : t("new_sub.monthly_cost")
                 }
+                {...amountInfo}
               />
               <View style={styles.amountContainer}>
                 <Text style={styles.currencySymbol}>

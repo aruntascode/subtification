@@ -25,19 +25,19 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { signInWithEmail, loading } = useAuthStore();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      Alert.alert(t("common.error"), t("auth.err_fill_all"));
       return;
     }
     try {
       await signInWithEmail(email, password);
     } catch (error: any) {
-      Alert.alert("Login Failed", error.message);
+      Alert.alert(t("auth.login_failed"), error.message);
     }
   };
 
@@ -58,7 +58,6 @@ export default function LoginScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.brandName}>Subtification</Text>
-          <Text style={styles.tagline}>Your digital subscription curator</Text>
         </View>
 
         <View style={styles.card}>
@@ -66,10 +65,10 @@ export default function LoginScreen() {
           <Text style={styles.cardSubtitle}>{t("auth.login_guest_hint")}</Text>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>EMAIL</Text>
+            <Text style={styles.label}>{t("auth.email").toLocaleUpperCase(i18n.language)}</Text>
             <TextInput
               style={styles.input}
-              placeholder="your@email.com"
+              placeholder={t("auth.email_placeholder")}
               placeholderTextColor={colors.outline}
               value={email}
               onChangeText={setEmail}
@@ -79,10 +78,10 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>PASSWORD</Text>
+            <Text style={styles.label}>{t("auth.password").toLocaleUpperCase(i18n.language)}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your password"
+              placeholder={t("auth.password_placeholder")}
               placeholderTextColor={colors.outline}
               value={password}
               onChangeText={setPassword}
@@ -92,7 +91,7 @@ export default function LoginScreen() {
 
           <Link href="/(auth)/forgot-password" asChild>
             <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+              <Text style={styles.forgotPasswordText}>{t("auth.forgot_password")}</Text>
             </TouchableOpacity>
           </Link>
 
@@ -157,11 +156,6 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   brandName: {
     ...Typography.displayMd,
     color: colors.primary,
-  },
-  tagline: {
-    ...Typography.bodyLg,
-    color: colors.onSurfaceVariant,
-    marginTop: Spacing.sm,
   },
   card: {
     backgroundColor: colors.surfaceContainerLowest,

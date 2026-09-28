@@ -285,6 +285,22 @@ export default function NewSubscriptionScreen() {
 
   const hintText = [scheduleHint, yearlyHint].filter(Boolean).join("\n");
 
+  // Tutar etiketindeki ⓘ: girilen tutarın neyi ifade ettiğini açıklar
+  const amountInfo = isInstallment
+    ? {
+        infoTitle: t("duration.installment_amount"),
+        infoMessage: t("duration.installment_amount_info"),
+      }
+    : billingCycle === "yearly"
+      ? {
+          infoTitle: t("subscription_detail.yearly_cost"),
+          infoMessage: t("new_sub.yearly_cost_info"),
+        }
+      : {
+          infoTitle: t("subscription_detail.monthly_cost"),
+          infoMessage: t("new_sub.monthly_cost_info"),
+        };
+
   const displayedServices = showAllServices
     ? TR_SERVICES
     : TR_SERVICES.slice(0, 6);
@@ -419,7 +435,7 @@ export default function NewSubscriptionScreen() {
                 placeholder={
                   isInstallment
                     ? t("duration.installment_name_placeholder")
-                    : "Örn: Ev Kirası"
+                    : t("new_sub.name_placeholder")
                 }
                 placeholderTextColor={colors.onSurfaceVariant + "80"}
                 value={name}
@@ -428,7 +444,7 @@ export default function NewSubscriptionScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>İKON</Text>
+              <Text style={styles.label}>{t("new_sub.icon")}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -458,7 +474,7 @@ export default function NewSubscriptionScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>RENK</Text>
+              <Text style={styles.label}>{t("new_sub.color")}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -589,6 +605,7 @@ export default function NewSubscriptionScreen() {
                         ? t("new_sub.yearly_cost")
                         : t("new_sub.monthly_cost")
                   }
+                  {...amountInfo}
                 />
                 <View style={styles.amountContainer}>
                   <Text style={styles.currencySymbol}>{currency}</Text>
