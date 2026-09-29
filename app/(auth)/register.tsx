@@ -1,5 +1,5 @@
 import type { AppColors } from "@/constants/colors";
-import { BorderRadius, Spacing, Typography } from "@/constants/typography";
+import { BorderRadius, Spacing, FIELD_HEIGHT, InputTypography, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { useAuthStore } from "@/stores/authStore";
 import { Ionicons } from "@expo/vector-icons";
@@ -184,8 +184,10 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     backgroundColor: colors.surfaceContainerLow,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: 14,
-    ...Typography.bodyLg,
+    // lineHeight'sız yazı + sabit yükseklik: metin ortalanır, harf altları kesilmez
+    height: FIELD_HEIGHT,
+    paddingVertical: 0,
+    ...InputTypography.bodyLg,
     color: colors.onSurface,
   },
   registerButton: {

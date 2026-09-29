@@ -120,3 +120,14 @@ export const Spacing = {
  * (iOS'ta TextInput ile Text aynı yazı boyutunda farklı yükseklik alabiliyor).
  */
 export const FIELD_HEIGHT = 52;
+
+/**
+ * Tek satırlı TextInput için yazı stilleri: `lineHeight` yok. iOS'ta TextInput'a
+ * lineHeight verilince metin aşağı kayar ve g/y/q gibi harflerin altı kesilir.
+ * Yüksekliği `height` ile ver; iOS metni o yüksekliğin içinde dikeyde ortalar.
+ */
+const withoutLineHeight = <T extends { lineHeight?: number }>({ lineHeight: _lineHeight, ...rest }: T) => rest;
+
+export const InputTypography = {
+  bodyLg: withoutLineHeight(Typography.bodyLg),
+};

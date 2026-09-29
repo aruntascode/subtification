@@ -1,7 +1,7 @@
 import SubscriptionIcon from "@/components/SubscriptionIcon";
 import { CATEGORIES, Category } from "@/constants/categories";
 import type { AppColors } from "@/constants/colors";
-import { BorderRadius, Spacing, Typography } from "@/constants/typography";
+import { BorderRadius, Spacing, InputTypography, Typography } from "@/constants/typography";
 import { useCurrency } from "@/hooks/useCurrency";
 import {
   formatDurationProgress,
@@ -560,7 +560,14 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     marginBottom: Spacing.lg,
     gap: Spacing.sm,
   },
-  searchInput: { flex: 1, ...Typography.bodyLg, color: colors.onSurface },
+  // lineHeight'sız yazı + sabit yükseklik: metin ortalanır, harf altları kesilmez
+  searchInput: {
+    flex: 1,
+    height: 24,
+    paddingVertical: 0,
+    ...InputTypography.bodyLg,
+    color: colors.onSurface,
+  },
   filtersRow: { marginBottom: Spacing.md, flexGrow: 0 },
   chip: {
     backgroundColor: colors.surfaceContainerLow,

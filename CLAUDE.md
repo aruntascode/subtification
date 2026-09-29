@@ -39,7 +39,8 @@ components/   AppTabBar (FAB + alt menü), DateField, DurationPicker, Subscripti
 constants/    colors (açık+koyu palet), typography, categories (19 kategori),
               services (popüler servisler + planlar/fiyatlar), currencies, savingsTips
 hooks/        useAppTheme, useCurrency (useTotalMonthly, useCategoryTotals)
-lib/          supabase, subscriptionDuration, paymentSchedule, notifications, colorContrast
+lib/          supabase, subscriptionDuration, paymentSchedule, notifications, colorContrast,
+              pendingOps (çevrimdışı değişiklik kuyruğu), amountInput
 stores/       authStore, subscriptionStore, currencyStore, budgetStore, themeStore, onboardingStore
 scripts/      render-brand-assets.swift (logo/ikon/splash PNG'lerini Inter Black ile üretir)
 supabase/     rebuild_backend_safe.sql, delete_account.sql, migrations/
@@ -74,7 +75,21 @@ Ayarlar sekme değil; header'dan açılır.
 - **Çevrimdışı önbellek:** giriş yapmış kullanıcının listesi `cloud_subscriptions_cache_<userId>`
   anahtarında tutulur; her başarılı çekiş ve bulut mutasyonundan sonra yazılır, çekiş
   başarısızsa gösterilir, ilk açılışta ağ beklenmeden gösterilir. Çıkış ve hesap silmede
-  `clearCloudCache()` ile temizlenir. Çevrimdışı mutasyonlar kuyruğa alınmaz, hata verir.
+  `clearCloudCache()` ile temizlenir.
+- **Çevrimdışı değişiklikler (giriş yapmış kullanıcı):** her ekleme/düzenleme/silme önce
+  cihazda uygulanır (`commit`), `pending_ops_<userId>` kuyruğuna yazılır ve arkada
+  sırayla gönderilir (`flushPendingOps`). Ağ hatasında (postgrest `status: 0`, 408, 429,
+  5xx) durur, 30 sn sonra / uygulama öne gelince / liste yenilenince tekrar dener.
+  Kalıcı hata (doğrulama, yetki) atlanır; reddedilen ekleme listeden düşer.
+  - Mutasyonlar kullanıcıyı `getStoredSessionUser()` ile okur (sunucuya sormaz); yoksa
+    token dolmuşken çevrimdışı her işlem ~30 sn beklerdi. Ekranlar ağı beklemez.
+  - Çevrimdışı eklenen kayıt `local_…` geçici kimlik alır; sunucuya gidince gerçek kimlik
+    kuyruktaki sonraki işlemlere ve `idAliases`'a yazılır. Detay/düzenleme sayfaları kaydı
+    `idAliases[id] ?? id` ile bulur.
+  - Kuyrukta bekleyen varken `fetchSubscriptions` sunucu listesiyle yerel listenin üzerine
+    yazmaz. Ana sayfada `pendingCount > 0` iken bilgi kartı gösterilir.
+  - Hesap silinince `clearAllPendingOps()`; çıkışta kuyruk kullanıcıya özel anahtarda kalır.
+  - Misafir modunda kuyruk yok; veriler zaten yalnızca cihazda.
 - `authStore` da session null gelince kayıtlı oturumun kullanıcısını `user` olarak tutar
   (session null kalır). `(app)/_layout` session geri gelince listeyi yeniden çeker.
 - `lib/supabase.ts` içindeki `storageKey`, supabase-js varsayılanıyla aynı formülle
@@ -156,7 +171,6 @@ eas build --profile development-simulator --platform ios
 
 ## ⚠️ Bilinen Açık Konular
 
-- Çevrimdışı ekleme/düzenleme/silme kuyruğa alınmıyor, hata veriyor.
 - Web (`expo start --web`) hedef değil: `app.json` → `web.output: "static"` iken sunucu
   tarafı render supabase oturumunda çöker; web'de denemek için geçici olarak `"single"` yap.
 
@@ -190,3 +204,6 @@ eas build --profile development-simulator --platform ios
   kalınlığa göre seçer. Yeni kalınlık gerekirse dosyayı ekle, app.json'a yaz, yeniden build al.
   Font değişiklikleri ancak yeni native build'de görünür.
 - **Radius:** büyük kart 32, küçük kart/input 12–16, chip `BorderRadius.full`.
+- **Yazı kutuları (TextInput):** `Typography.*` stilini doğrudan verme; `lineHeight` iOS'ta
+  metni aşağı kaydırır ve g/y/q'nun altını keser. `InputTypography.bodyLg` kullan ve
+  yüksekliği `height` ile ver (`FIELD_HEIGHT` = 52, satır içinde 24), `paddingVertical: 0`.

@@ -1,5 +1,5 @@
 import type { AppColors } from "@/constants/colors";
-import { BorderRadius, Spacing, Typography } from "@/constants/typography";
+import { BorderRadius, Spacing, InputTypography, Typography } from "@/constants/typography";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import {
   cancelSubscriptionNotifications,
@@ -1444,7 +1444,10 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
   },
   passwordInput: {
     flex: 1,
-    ...Typography.bodyLg,
+    // lineHeight'sız yazı + sabit yükseklik: metin ortalanır, harf altları kesilmez
+    height: 24,
+    paddingVertical: 0,
+    ...InputTypography.bodyLg,
     color: colors.onSurface,
   },
   passwordSaveBtn: {

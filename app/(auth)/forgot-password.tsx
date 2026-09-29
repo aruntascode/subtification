@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { AppColors } from '@/constants/colors';
-import { Typography, BorderRadius, Spacing } from '@/constants/typography';
+import { FIELD_HEIGHT, InputTypography, Typography, BorderRadius, Spacing } from '@/constants/typography';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAuthStore } from '@/stores/authStore';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -166,8 +166,10 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     backgroundColor: colors.surfaceContainerLow,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: 14,
-    ...Typography.bodyLg,
+    // lineHeight'sız yazı + sabit yükseklik: metin ortalanır, harf altları kesilmez
+    height: FIELD_HEIGHT,
+    paddingVertical: 0,
+    ...InputTypography.bodyLg,
     color: colors.onSurface,
   },
   resetButton: {
