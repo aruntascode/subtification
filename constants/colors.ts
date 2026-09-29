@@ -5,6 +5,8 @@ export const LightColors = {
   primarySolidContainer: '#0e7490',
   onPrimary: '#ffffff',
   onPrimaryContainer: '#ffffff',
+  // Logo kartındaki "Sub." yazısı: kırık beyaz (render-brand-assets.swift ile aynı)
+  logoText: '#f4f1ea',
   primaryFixed: '#d9f4f5',
   primaryFixedDim: '#9ee1e5',
 
@@ -69,6 +71,8 @@ export const DarkColors: AppColors = {
   primarySolidContainer: '#0b5d6b',
   onPrimary: '#ffffff',
   onPrimaryContainer: '#ffffff',
+  // Logo kartındaki "Sub." yazısı: kırık beyaz (render-brand-assets.swift ile aynı)
+  logoText: '#f4f1ea',
   primaryFixed: '#143236',
   primaryFixedDim: '#5ddce1',
 
