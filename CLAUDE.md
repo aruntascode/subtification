@@ -137,8 +137,6 @@ eas build --profile development-simulator --platform ios
 
 - Lint: `AppTabBar.tsx`, `settings.tsx`, `analytics.tsx` içinde React Compiler kuralları
   (Reanimated shared value ataması, render'da ref okuma) — derleyici bu bileşenleri atlıyor.
-- Manrope/Inter font dosyaları `assets/` altında yok ve `useFonts`/`expo-font` config ile
-  yüklenmiyor; uygulama şu an sistem fontuyla çiziliyor.
 
 ---
 
@@ -151,7 +149,10 @@ eas build --profile development-simulator --platform ios
 - **Çizgi yok:** kartlar border yerine arkaplan tonu farkıyla ayrılır.
 - **Saf siyah yok:** metin `onSurface`.
 - **Gradient hero**, header'larda **blur** (`expo-blur`), yumuşak ambient gölge.
-- **Fontlar:** Manrope (başlık, büyük sayılar, CTA) + Inter (gövde, form) —
-  `constants/typography.ts` bu adları kullanıyor ama font dosyaları henüz eklenmedi
-  (bkz. Bilinen Açık Konular).
+- **Fontlar:** Manrope (başlık, büyük sayılar, CTA) + Inter (gövde, form).
+  `assets/fonts/` altında 400/600/700/800 kalınlıklar (OFL lisanslı, @expo-google-fonts
+  kaynaklı); `app.json` → `expo-font` eklentisiyle build'e gömülür (runtime `useFonts` yok).
+  Stilde aile adı (`"Manrope"`, `"Inter"`) + `fontWeight` kullan; iOS doğru dosyayı
+  kalınlığa göre seçer. Yeni kalınlık gerekirse dosyayı ekle, app.json'a yaz, yeniden build al.
+  Font değişiklikleri ancak yeni native build'de görünür.
 - **Radius:** büyük kart 32, küçük kart/input 12–16, chip `BorderRadius.full`.
