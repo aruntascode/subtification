@@ -7,7 +7,8 @@ const RATES_CACHE_KEY = 'subtification_rates_cache';
 const DISPLAY_CURRENCY_KEY = 'subtification_display_currency';
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 saat
 
-// Frankfurter API'sının döndüremeyeceği durumlarda kullanacağımız yedek kurlar (yaklaşık)
+// Hiç kur alınamamışsa (ilk açılış çevrimdışı) kullanılan yaklaşık kurlar.
+// Bir kez API'den kur alındıktan sonra, bağlantı olmadığında o son kurlar kullanılır.
 const FALLBACK_RATES: Record<string, number> = {
   USD: 1,
   TRY: 38.5,
@@ -54,6 +55,15 @@ function rateOf(rates: Record<string, number>, iso: string): number {
   return rates[iso] ?? FALLBACK_RATES[iso] ?? 1;
 }
 
+async function readRatesCache(): Promise<RatesCache | null> {
+  try {
+    const raw = await AsyncStorage.getItem(RATES_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 // ---------- store ----------
 export const useCurrencyStore = create<CurrencyState>((set, get) => ({
   displayCurrency: '₺',
@@ -66,17 +76,12 @@ export const useCurrencyStore = create<CurrencyState>((set, get) => ({
     set({ displayCurrency: '₺' });
     AsyncStorage.removeItem(DISPLAY_CURRENCY_KEY).catch(() => {});
 
-    // Önbellekten kurları yükle (veya API'yi çek)
-    try {
-      const raw = await AsyncStorage.getItem(RATES_CACHE_KEY);
-      if (raw) {
-        const cache: RatesCache = JSON.parse(raw);
-        if (Date.now() - cache.timestamp < CACHE_TTL_MS) {
-          set({ rates: cache.rates });
-          return; // önbellek taze, API'ye gitme
-        }
-      }
-    } catch {}
+    // Son alınan kurlar bayat olsa da hemen kullanılır; taze değilse arkadan güncellenir
+    const cache = await readRatesCache();
+    if (cache) {
+      set({ rates: cache.rates });
+      if (Date.now() - cache.timestamp < CACHE_TTL_MS) return; // önbellek taze, API'ye gitme
+    }
 
     // Önbellek yok ya da bayat → API'yi çek
     await get().fetchRates();
@@ -105,8 +110,13 @@ export const useCurrencyStore = create<CurrencyState>((set, get) => ({
       const cache: RatesCache = { rates, timestamp: Date.now() };
       await AsyncStorage.setItem(RATES_CACHE_KEY, JSON.stringify(cache));
     } catch {
-      // API başarısız → yedek kurları kullan, hata bayrağını set et
-      set({ rates: FALLBACK_RATES, ratesLoading: false, ratesError: true });
+      // API başarısız → en son alınan kurları kullan; hiç yoksa yaklaşık yedek kurlar
+      const cache = await readRatesCache();
+      set({
+        rates: cache?.rates ?? FALLBACK_RATES,
+        ratesLoading: false,
+        ratesError: true,
+      });
     }
   },
 
