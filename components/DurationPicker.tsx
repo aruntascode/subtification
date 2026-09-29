@@ -134,7 +134,6 @@ const createStyles = (colors: AppColors) =>
       borderRadius: BorderRadius.xl,
       paddingHorizontal: Spacing.lg,
       paddingVertical: Platform.OS === "ios" ? 16 : 14,
-      fontFamily: "Inter",
       fontSize: 16,
       fontWeight: "700",
       color: colors.onSurface,
