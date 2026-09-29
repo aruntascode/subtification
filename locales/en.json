@@ -2,7 +2,7 @@
   "tabs": {
     "home": "HOME",
     "subscriptions": "SUBS",
-    "analytics": "TRENDS",
+    "analytics": "ANALYTICS",
     "add": "ADD",
     "close": "CLOSE",
     "popular_title": "Pick a popular service",
@@ -81,7 +81,7 @@
     "go_back": "Go back"
   },
   "analytics": {
-    "title": "Trends",
+    "title": "Analytics",
     "monthly_spending": "Monthly Spending",
     "yearly_projection": "Yearly Projection",
     "active_subs_count": "{{count}} active subscriptions",
