@@ -228,6 +228,9 @@ export default function NewSubscriptionScreen() {
         setCategory("shopping");
         setActiveIcon("credit-card");
       }
+    } else {
+      // Taksit için seçilen süre aboneliğe taşınmasın; abonelik varsayılan olarak süresiz
+      setDurationMonths(null);
     }
   };
 
