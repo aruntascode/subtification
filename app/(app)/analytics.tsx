@@ -29,20 +29,12 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, G } from "react-native-svg";
 import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
+import { sanitizeAmountInput } from "@/lib/amountInput";
 
 // ---------- helpers ----------
 
 const getCategoryColor = (catId: string, colors: AppColors) =>
   CATEGORIES.find((c) => c.id === catId)?.color ?? colors.outline;
-
-const sanitizeAmountInput = (value: string) => {
-  const normalized = value.replace(",", ".");
-  const [whole = "", ...decimalParts] = normalized.split(".");
-  const digitsOnly = whole.replace(/\D/g, "");
-  const decimal = decimalParts.join("").replace(/\D/g, "");
-
-  return decimalParts.length > 0 ? `${digitsOnly}.${decimal}` : digitsOnly;
-};
 
 /** Normalize any cycle to monthly amount */
 function toMonthly(amount: number, cycle: string): number {

@@ -38,6 +38,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
+import { sanitizeAmountInput } from "@/lib/amountInput";
 
 type Draft = {
   planKey: string;
@@ -49,15 +50,6 @@ type Draft = {
    * son ödeme de girilebilir; takvimin çapası olarak saklanır.
    */
   date: string;
-};
-
-const sanitizeAmountInput = (value: string) => {
-  const normalized = value.replace(",", ".");
-  const [whole = "", ...decimalParts] = normalized.split(".");
-  const digitsOnly = whole.replace(/\D/g, "");
-  const decimal = decimalParts.join("").replace(/\D/g, "");
-
-  return decimalParts.length > 0 ? `${digitsOnly}.${decimal}` : digitsOnly;
 };
 
 // Plan değişince kullanıcının girdiği tarih korunur

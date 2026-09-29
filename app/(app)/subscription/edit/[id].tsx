@@ -28,6 +28,7 @@ import DurationPicker from "@/components/DurationPicker";
 import { getIconColorOn, isLightColor } from "@/lib/colorContrast";
 import { getNextPaymentDate, parseDateOnly, toDateOnly } from "@/lib/subscriptionDuration";
 import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
+import { sanitizeAmountInput } from "@/lib/amountInput";
 
 const AVAILABLE_ICONS = [
   "apps",
@@ -66,15 +67,6 @@ const AVAILABLE_COLORS = [
 ];
 
 const CURRENCY_OPTIONS = ["₺", "$", "€", "£"];
-
-const sanitizeAmountInput = (value: string) => {
-  const normalized = value.replace(",", ".");
-  const [whole = "", ...decimalParts] = normalized.split(".");
-  const digitsOnly = whole.replace(/\D/g, "");
-  const decimal = decimalParts.join("").replace(/\D/g, "");
-
-  return decimalParts.length > 0 ? `${digitsOnly}.${decimal}` : digitsOnly;
-};
 
 export default function EditSubscriptionScreen() {
   // cycle/amount: Analizlerdeki "Yıllığa geç" ipucundan ön doldurma
