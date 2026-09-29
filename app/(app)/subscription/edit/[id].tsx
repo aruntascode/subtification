@@ -213,10 +213,13 @@ export default function EditSubscriptionScreen() {
         notes: editNotes.trim() || null,
         duration_months: duration,
         // Takvim bu tarihten başlar; sonraki ödeme her yerde buradan hesaplanır.
-        // Tarih ve döngü değişmediyse eski çapa korunur; yoksa bu ay önceden
-        // yapılmış ödeme takvimden düşer.
+        // Tarih, döngü ve süre değişmediyse eski çapa korunur; yoksa bu ay önceden
+        // yapılmış ödeme takvimden düşer. Süre değiştiyse çapa formdaki tarih olur:
+        // süresize eklenen süre eski çapadan değil, önizlemedeki tarihten sayılır.
         first_billing_date:
-          editDate === initialDate && cycle === subscription.billing_cycle
+          editDate === initialDate &&
+          cycle === subscription.billing_cycle &&
+          duration === (subscription.duration_months ?? null)
             ? (subscription.first_billing_date ?? subscription.next_billing_date).slice(0, 10)
             : editDate,
       });
