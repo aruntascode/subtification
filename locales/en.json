@@ -393,5 +393,24 @@
     "monthly_total": "{{amount}}/mo",
     "summary": "{{count}} active installments · Ending soonest: {{name}}, {{remaining}} months left",
     "more": "+{{count}} more"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Continue",
+    "f1_title": "All your subscriptions in one place",
+    "f1_body": "Add every recurring payment, from Netflix to your phone installments, and see your monthly spend at a glance.",
+    "f2_title": "See where your money goes",
+    "f2_body": "Keep spending in check with category breakdowns, yearly projections and a budget limit.",
+    "f3_title": "Never miss a payment",
+    "f3_body": "Your payment calendar is always up to date. Know your next charge and how many installments are left.",
+    "notif_title": "Get a heads-up before you pay",
+    "notif_body": "We'll remind you at 9:00 AM the day before each payment. You can turn this off anytime in Settings.",
+    "notif_allow": "Allow notifications",
+    "notif_later": "Not now",
+    "auth_title": "Take your data with you",
+    "auth_body": "Create an account to back up your subscriptions and see them on all your devices. Or start without one; your entries move to your account when you sign in later.",
+    "auth_register": "Create account",
+    "auth_login": "Sign in",
+    "auth_guest": "Continue as guest"
   }
 }

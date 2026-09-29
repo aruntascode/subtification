@@ -1,43 +1,24 @@
-import { SubtificationSplash } from "@/components/SubtificationSplash";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { Stack } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 
 export default function AppLayout() {
   const fetchSubscriptions = useSubscriptionStore((s) => s.fetchSubscriptions);
-  const subscriptionsInitialized = useSubscriptionStore((s) => s.initialized);
   const userId = useAuthStore((s) => s.user?.id ?? null);
   // Çevrimdışı açılışta kullanıcı kayıtlı oturumdan gelir, session null kalır.
   // Bağlantı gelip token yenilenince session dolar; liste sunucudan tazelensin.
   const hasSession = useAuthStore((s) => s.session !== null);
   const { colors } = useAppTheme();
-  const [showSplash, setShowSplash] = useState(
-    () => !subscriptionsInitialized,
-  );
-
-  const handleSplashExit = useCallback(() => {
-    setShowSplash(false);
-  }, []);
-
   useEffect(() => {
     void fetchSubscriptions().catch((error) => {
       console.warn("Abonelikler yüklenemedi.", error);
     });
   }, [fetchSubscriptions, userId, hasSession]);
 
-  useEffect(() => {
-    if (!subscriptionsInitialized) {
-      setShowSplash(true);
-    }
-  }, [subscriptionsInitialized]);
-
-  if (!subscriptionsInitialized && showSplash) {
-    return <SubtificationSplash />;
-  }
-
+  // Açılış splash'i kök layout'ta; abonelikler yüklenene kadar ekranı o örter
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <Stack
@@ -70,13 +51,6 @@ export default function AppLayout() {
           options={{ animation: "slide_from_right", gestureEnabled: true }}
         />
       </Stack>
-      {showSplash && (
-        <SubtificationSplash
-          exiting={subscriptionsInitialized}
-          onExitComplete={handleSplashExit}
-          style={styles.splashOverlay}
-        />
-      )}
     </View>
   );
 }
@@ -84,10 +58,5 @@ export default function AppLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  splashOverlay: {
-    ...StyleSheet.absoluteFill,
-    zIndex: 20,
-    elevation: 20,
   },
 });

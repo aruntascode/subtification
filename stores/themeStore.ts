@@ -26,7 +26,8 @@ const isThemeMode = (value: unknown): value is ThemeMode =>
  * seçimi native tarafa da bildirir; "system"de zorlamayı kaldırır.
  */
 const applyToNative = (mode: ThemeMode) => {
-  Appearance.setColorScheme(mode === "system" ? "unspecified" : mode);
+  // Web'de (react-native-web) setColorScheme yok
+  Appearance.setColorScheme?.(mode === "system" ? "unspecified" : mode);
 };
 
 const resolveDark = (mode: ThemeMode) =>

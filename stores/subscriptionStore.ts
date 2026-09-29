@@ -77,7 +77,7 @@ const normalizeToMonthly = (amount: number, cycle: BillingCycle): number => {
   }
 };
 
-const LOCAL_SUBSCRIPTIONS_KEY = "guest_subscriptions";
+export const LOCAL_SUBSCRIPTIONS_KEY = "guest_subscriptions";
 
 // Kayıtlı tarih eskiyebilir; sıralama takvimden hesaplanan sonraki ödemeye göre.
 // Biten süreli kayıtlar sona gider.

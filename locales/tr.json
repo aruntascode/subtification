@@ -393,5 +393,24 @@
     "monthly_total": "aylık {{amount}}",
     "summary": "{{count}} aktif taksit · En yakın biten: {{name}}, {{remaining}} ay kaldı",
     "more": "+{{count}} taksit daha"
+  },
+  "onboarding": {
+    "skip": "Atla",
+    "next": "Devam",
+    "f1_title": "Tüm aboneliklerin tek yerde",
+    "f1_body": "Netflix'ten taksitli telefonuna kadar her düzenli ödemeyi ekle; ayda ne kadar harcadığını tek bakışta gör.",
+    "f2_title": "Paranın nereye gittiğini gör",
+    "f2_body": "Kategori dağılımı, yıllık projeksiyon ve bütçe limitiyle harcamanı kontrol altında tut.",
+    "f3_title": "Hiçbir ödemeyi kaçırma",
+    "f3_body": "Ödeme takvimin hep güncel; taksitlerinin kaç ay kaldığını ve sıradaki ödemeni her an bil.",
+    "notif_title": "Ödemeden önce haber verelim",
+    "notif_body": "Her ödemeden bir gün önce sabah 09:00'da hatırlatma gönderelim. Ayarlardan istediğin zaman kapatabilirsin.",
+    "notif_allow": "Bildirimlere izin ver",
+    "notif_later": "Şimdi değil",
+    "auth_title": "Verilerin seninle gelsin",
+    "auth_body": "Hesap oluşturursan aboneliklerin yedeklenir ve tüm cihazlarında görünür. İstersen hesapsız başla; sonra giriş yaptığında kayıtların hesabına taşınır.",
+    "auth_register": "Hesap oluştur",
+    "auth_login": "Giriş yap",
+    "auth_guest": "Misafir olarak devam et"
   }
 }

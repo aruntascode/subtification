@@ -19,10 +19,11 @@ dikkat edilmesi gereken kuralları özetler; yeni bir oturum buradan devam edebi
 
 ```
 app/
-├── _layout.tsx                  Root: tema/bütçe/auth hydrate, splash, AppTabBar, KeyboardDoneBar
+├── _layout.tsx                  Root: tema/bütçe/auth/onboarding hydrate, tek splash, AppTabBar
+├── onboarding.tsx               İlk açılış: 3 tanıtım + bildirim izni + giriş/misafir seçimi
 ├── (auth)/                      Modal olarak açılır (login, register, forgot-password)
 └── (app)/
-    ├── _layout.tsx              Stack; userId değişince fetchSubscriptions()
+    ├── _layout.tsx              Stack; userId/session değişince fetchSubscriptions()
     ├── (home)/index.tsx         Dashboard (aylık özet, takvim şeridi, taksit özeti, yaklaşanlar)
     ├── (home)/subscriptions-list.tsx  Dashboard'dan "tümü" listesi
     ├── subscriptions.tsx        Liste sekmesi: arama, filtre, kaydırma aksiyonları, toplu seçim
@@ -39,7 +40,8 @@ constants/    colors (açık+koyu palet), typography, categories (19 kategori),
               services (popüler servisler + planlar/fiyatlar), currencies, savingsTips
 hooks/        useAppTheme, useCurrency (useTotalMonthly, useCategoryTotals)
 lib/          supabase, subscriptionDuration, paymentSchedule, notifications, colorContrast
-stores/       authStore, subscriptionStore, currencyStore, budgetStore, themeStore
+stores/       authStore, subscriptionStore, currencyStore, budgetStore, themeStore, onboardingStore
+scripts/      render-brand-assets.swift (logo/ikon/splash PNG'lerini Inter Black ile üretir)
 supabase/     rebuild_backend_safe.sql, delete_account.sql, migrations/
 ```
 
@@ -94,6 +96,25 @@ Ayarlar sekme değil; header'dan açılır.
   Senkron ve iptal bir kuyrukta sırayla çalışır (eşzamanlı çağrı çift bildirim bırakıyordu);
   modül içinden `runSync`/`runCancel`'ı doğrudan çağır, kuyruğa tekrar sokma (kilitlenir).
 
+### Açılış: splash ve onboarding — `app/_layout.tsx`, `components/SubtificationSplash.tsx`
+- **Tek splash, her soğuk açılışta bir kez.** Kök layout'ta tek örnek; `(app)` layout'unda
+  splash yok. İlk ekran hazır olana kadar (abonelikler yüklendi ya da onboarding'e gidildi)
+  ve giriş animasyonu bitene kadar kalır; sonra kaybolur ve geri gelmez. zIndex 1000.
+- Native splash (`expo-splash-screen`, `preventAutoHideAsync`) JS splash'in ilk karesiyle
+  aynı: ortada "Sub." kartı. JS splash metinleri ölçünce native splash'i kapatır; nokta
+  kaybolur, kart sola kayar, "tification." belirir. Ölçüm 1,2 sn'de gelmezse son hâl gösterilir.
+- Kart ölçüleri (yükseklik 52, padding 12, radius 8, font 34) splash görseliyle birebir;
+  birini değiştirirsen `swift scripts/render-brand-assets.swift assets/images` ile
+  görselleri yeniden üret ve çıktıdaki genişliği `app.json` → `imageWidth`'e yaz.
+- **Logo yazısı Inter Black, kırık beyaz (`colors.logoText` = `#f4f1ea`):** splash ve
+  onboarding logosu `fontFamily: "Inter"`, `fontWeight: "900"`. SF Pro görseller içinde
+  lisans gereği kullanılmıyor; Manrope'a da çevirme, marka görünümü bu.
+- Animasyon bitişini Reanimated callback'ine (`runOnJS`) bağlama; web'de çağrılmıyor.
+  JS zamanlayıcısı kullan. Shared value'lara `.set()` ile yaz (`.value =` lint'e takılır).
+- **Onboarding** `onboarding_completed` bayrağıyla bir kez gösterilir. Güncellemeden önce
+  giriş yapmış ya da misafir verisi olan kullanıcılar için otomatik tamamlanmış sayılır.
+  Bildirim izni verilirse `push_alerts_enabled` da açılır.
+
 ### Tema ve bütçe
 - `themeStore`: `system | light | dark`; `useAppTheme()` renkleri verir. Ekranlar
   `createStyles(colors, darkMode)` + `useMemo` desenini kullanır.
@@ -144,13 +165,18 @@ eas build --profile development-simulator --platform ios
 
 "The Editorial Ledger" — premium dergi estetiği.
 
+- **Logo:** splash'teki kart: teal (`#0e7490`) zemin, turkuaz (`#5ddce1`) 1pt kenarlık ve
+  ışıma, kırık beyaz "Sub." (Inter Black). iOS ikonu telefonun görünümüne göre değişir
+  (`app.json` → `ios.icon`): açık modda kırık beyaz (`#f4f1ea`) zemin + açık tema kartı
+  (`icon.png`), koyu modda `#0f1113` zemin + ışıyan kart (`icon-dark.png`), bir de
+  `icon-tinted.png`. Android ve favicon açık mod görünümünü kullanır. Tüm PNG'ler `scripts/render-brand-assets.swift` ile üretilir.
 - **Renkler (açık):** `primary #0b7285`, `primaryContainer #0e7490`, `surface #fafcfc`,
   `surfaceContainerLowest #ffffff`, `onSurface #191b22`. Koyu palet `constants/colors.ts`'te.
 - **Çizgi yok:** kartlar border yerine arkaplan tonu farkıyla ayrılır.
 - **Saf siyah yok:** metin `onSurface`.
 - **Gradient hero**, header'larda **blur** (`expo-blur`), yumuşak ambient gölge.
 - **Fontlar:** Manrope (başlık, büyük sayılar, CTA) + Inter (gövde, form).
-  `assets/fonts/` altında 400/600/700/800 kalınlıklar (OFL lisanslı, @expo-google-fonts
+  `assets/fonts/` altında 400/600/700/800 kalınlıklar (+ logo için Inter Black 900) (OFL lisanslı, @expo-google-fonts
   kaynaklı); `app.json` → `expo-font` eklentisiyle build'e gömülür (runtime `useFonts` yok).
   Stilde aile adı (`"Manrope"`, `"Inter"`) + `fontWeight` kullan; iOS doğru dosyayı
   kalınlığa göre seçer. Yeni kalınlık gerekirse dosyayı ekle, app.json'a yaz, yeniden build al.
