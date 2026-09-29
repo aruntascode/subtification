@@ -108,11 +108,14 @@ const writeLocalSubscriptions = async (subscriptions: Subscription[]) => {
 const createLocalId = () =>
   `local_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
 
+// Oturum cihazdaki kayıttan okunur. getUser() sunucuya sorar ve çevrimdışıyken
+// null döner; bu durumda giriş yapmış kullanıcı misafir sanılır, bulut kayıtları
+// yerele yazılır ve bağlantı gelince bir kez daha yüklenirdi.
 const getCurrentUser = async () => {
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user;
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.user ?? null;
 };
 
 const uploadLocalSubscriptions = async (userId: string) => {
