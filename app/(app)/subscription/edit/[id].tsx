@@ -165,12 +165,17 @@ export default function EditSubscriptionScreen() {
         };
 
   // Formdaki değerlerle takvim önizlemesi
+  // Süre ay cinsinden; yalnızca aylık döngüde anlamlı. Eski haftalık/3 aylık
+  // kayıtta "12 ay" 12 hafta ya da 36 ay diye hesaplanırdı. Taksit her zaman aylık.
+  const scheduleCycle: BillingCycle = subscription.is_installment ? "monthly" : editCycle;
+  const durationAllowed = scheduleCycle === "monthly";
+
   const nextPaymentPreview = getNextPaymentDate({
     is_active: true,
     next_billing_date: editDate,
     first_billing_date: editDate,
-    billing_cycle: subscription.is_installment ? "monthly" : editCycle,
-    duration_months: editCycle === "yearly" ? null : editDuration,
+    billing_cycle: scheduleCycle,
+    duration_months: durationAllowed ? editDuration : null,
   });
 
   const handleSaveEdit = async () => {
@@ -187,9 +192,8 @@ export default function EditSubscriptionScreen() {
       return;
     }
 
-    // Yıllık abonelikte süre (ay) kullanılmaz; taksit her zaman aylık
-    const cycle: BillingCycle = subscription.is_installment ? "monthly" : editCycle;
-    const duration = cycle === "yearly" ? null : editDuration;
+    const cycle = scheduleCycle;
+    const duration = durationAllowed ? editDuration : null;
 
     try {
       await updateSubscription(subscription.id, {
@@ -438,8 +442,8 @@ export default function EditSubscriptionScreen() {
             </View>
           )}
 
-          {/* Süre / Taksit sayısı (yıllıkta gizli) */}
-          {editCycle !== "yearly" && (
+          {/* Süre / Taksit sayısı (yalnızca aylıkta) */}
+          {durationAllowed && (
           <View style={styles.inputGroup}>
             <Text style={styles.label}>
               {subscription.is_installment
