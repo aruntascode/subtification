@@ -16,7 +16,6 @@ import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Alert,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -34,7 +33,6 @@ export default function SubscriptionsListStackScreen() {
     subscriptions,
     loading,
     fetchSubscriptions,
-    deleteSubscription,
   } = useSubscriptionStore();
   const router = useRouter();
   const { t, i18n } = useTranslation();
@@ -68,21 +66,6 @@ export default function SubscriptionsListStackScreen() {
   const usedCategories = CATEGORIES.filter((cat) =>
     subscriptions.some((s) => s.category === cat.id),
   );
-
-  const handleDelete = (id: string, name: string) => {
-    Alert.alert(
-      t("subscriptions.delete_confirm_title"),
-      t("subscriptions.delete_confirm_message", { name }),
-      [
-        { text: t("subscriptions.delete_cancel"), style: "cancel" },
-        {
-          text: t("subscriptions.delete_confirm"),
-          style: "destructive",
-          onPress: () => deleteSubscription(id),
-        },
-      ],
-    );
-  };
 
   const isChipActive = (type: "tumu" | "aktif" | "durakslatilmis" | string) => {
     if (type === "tumu")
