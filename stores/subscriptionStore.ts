@@ -5,7 +5,8 @@ import {
   getNextPaymentDate,
   isBilling,
 } from "@/lib/subscriptionDuration";
-import { supabase } from "@/lib/supabase";
+import { getStoredSessionUser, supabase } from "@/lib/supabase";
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
@@ -105,17 +106,55 @@ const writeLocalSubscriptions = async (subscriptions: Subscription[]) => {
   );
 };
 
+// Giriş yapmış kullanıcının buluttan son alınan listesi; çevrimdışı açılışta
+// liste boş görünmesin diye. Kullanıcıya özel anahtar: hesap değişince başkasının
+// kayıtları görünmez.
+const CLOUD_CACHE_KEY_PREFIX = "cloud_subscriptions_cache_";
+
+const readCloudCache = async (userId: string): Promise<Subscription[] | null> => {
+  try {
+    const raw = await AsyncStorage.getItem(CLOUD_CACHE_KEY_PREFIX + userId);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+// Önbellek yazılamazsa asıl işlem (ekleme, silme…) başarısız sayılmasın
+const writeCloudCache = (userId: string, subscriptions: Subscription[]) =>
+  AsyncStorage.setItem(
+    CLOUD_CACHE_KEY_PREFIX + userId,
+    JSON.stringify(subscriptions),
+  ).catch(() => {});
+
+/** Çıkışta ve hesap silmede çağrılır; cihazda başka hesabın verisi kalmasın */
+export const clearCloudCache = async () => {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const cacheKeys = keys.filter((k) => k.startsWith(CLOUD_CACHE_KEY_PREFIX));
+    if (cacheKeys.length > 0) await AsyncStorage.multiRemove(cacheKeys);
+  } catch {
+    // Temizlenemezse bir sonraki başarılı çekişte zaten üzerine yazılır
+  }
+};
+
 const createLocalId = () =>
   `local_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
 
 // Oturum cihazdaki kayıttan okunur. getUser() sunucuya sorar ve çevrimdışıyken
 // null döner; bu durumda giriş yapmış kullanıcı misafir sanılır, bulut kayıtları
-// yerele yazılır ve bağlantı gelince bir kez daha yüklenirdi.
+// yerele yazılır ve bağlantı gelince bir kez daha yüklenirdi. Token dolmuşken
+// çevrimdışı getSession() da null döner; o zaman kayıtlı oturuma bakılır.
 const getCurrentUser = async () => {
   const {
     data: { session },
+    error,
   } = await supabase.auth.getSession();
-  return session?.user ?? null;
+  if (session) return session.user;
+  if (error && isAuthRetryableFetchError(error)) return getStoredSessionUser();
+  return null;
 };
 
 const uploadLocalSubscriptions = async (userId: string) => {
@@ -153,6 +192,17 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   fetchSubscriptions: async () => {
     set({ loading: true });
     try {
+      // İlk açılışta önbellek ağ beklenmeden gösterilir: token dolmuşken
+      // çevrimdışı oturum yenileme ~30 sn tekrar dener, splash o kadar kalmasın.
+      // Liste aşağıda sunucudan (ya da yine önbellekten) güncellenir.
+      if (!get().initialized) {
+        const storedUser = await getStoredSessionUser();
+        const cached = storedUser ? await readCloudCache(storedUser.id) : null;
+        if (cached) {
+          set({ subscriptions: sortByNextBillingDate(cached), initialized: true });
+        }
+      }
+
       const user = await getCurrentUser();
 
       if (!user) {
@@ -164,15 +214,29 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         return;
       }
 
-      await uploadLocalSubscriptions(user.id);
+      let data: Subscription[] | null;
+      try {
+        await uploadLocalSubscriptions(user.id);
 
-      const { data, error } = await supabase
-        .from("subscriptions")
-        .select("*")
-        .order("next_billing_date", { ascending: true });
-      if (error) throw error;
+        const result = await supabase
+          .from("subscriptions")
+          .select("*")
+          .order("next_billing_date", { ascending: true });
+        if (result.error) throw result.error;
+        data = result.data;
+      } catch (error) {
+        // Çevrimdışı ya da sunucu hatası: son alınan liste varsa onu göster
+        const cached = await readCloudCache(user.id);
+        if (!cached) throw error;
+        const subscriptions = sortByNextBillingDate(cached);
+        set({ subscriptions });
+        await syncSubscriptionNotifications(subscriptions);
+        return;
+      }
+
       const subscriptions = sortByNextBillingDate(data ?? []);
       set({ subscriptions });
+      await writeCloudCache(user.id, subscriptions);
       await syncSubscriptionNotifications(subscriptions);
     } finally {
       set({ loading: false, initialized: true });
@@ -214,6 +278,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         nextSubscriptions = sortByNextBillingDate([...state.subscriptions, data]);
         return { subscriptions: nextSubscriptions };
       });
+      await writeCloudCache(user.id, nextSubscriptions);
       await syncSubscriptionNotifications(nextSubscriptions);
     } finally {
       set({ loading: false });
@@ -259,6 +324,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         ]);
         return { subscriptions: nextSubscriptions };
       });
+      await writeCloudCache(user.id, nextSubscriptions);
       await syncSubscriptionNotifications(nextSubscriptions);
     } finally {
       set({ loading: false });
@@ -299,6 +365,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         );
         return { subscriptions: nextSubscriptions };
       });
+      await writeCloudCache(user.id, nextSubscriptions);
       await syncSubscriptionNotifications(nextSubscriptions);
     } finally {
       set({ loading: false });
@@ -331,6 +398,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         nextSubscriptions = state.subscriptions.filter((s) => s.id !== id);
         return { subscriptions: nextSubscriptions };
       });
+      await writeCloudCache(user.id, nextSubscriptions);
       await syncSubscriptionNotifications(nextSubscriptions);
     } finally {
       set({ loading: false });
@@ -359,7 +427,8 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         );
         return { subscriptions: nextSubscriptions };
       });
-      if (!user) await writeLocalSubscriptions(nextSubscriptions);
+      if (user) await writeCloudCache(user.id, nextSubscriptions);
+      else await writeLocalSubscriptions(nextSubscriptions);
       await syncSubscriptionNotifications(nextSubscriptions);
     } finally {
       set({ loading: false });
@@ -386,7 +455,8 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         nextSubscriptions = state.subscriptions.filter((s) => !idSet.has(s.id));
         return { subscriptions: nextSubscriptions };
       });
-      if (!user) await writeLocalSubscriptions(nextSubscriptions);
+      if (user) await writeCloudCache(user.id, nextSubscriptions);
+      else await writeLocalSubscriptions(nextSubscriptions);
       await syncSubscriptionNotifications(nextSubscriptions);
     } finally {
       set({ loading: false });

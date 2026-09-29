@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
+import { clearCloudCache } from '@/stores/subscriptionStore';
 import { Session, User } from '@supabase/supabase-js';
 
 // Supabase'in gönderdiği doğrulama ve şifre sıfırlama maillerindeki linkler buraya
@@ -73,6 +74,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ loading: true });
     try {
       const { error } = await supabase.auth.signOut();
+      // Cihazda önceki hesabın abonelik önbelleği kalmasın
+      await clearCloudCache();
       if (error) throw error;
     } finally {
       set({ loading: false });
@@ -86,6 +89,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Abonelik kayıtları user_id üzerindeki cascade ile birlikte gider.
       const { error } = await supabase.rpc('delete_own_account');
       if (error) throw error;
+      await clearCloudCache();
       await supabase.auth.signOut();
     } finally {
       set({ loading: false });
