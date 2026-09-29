@@ -73,6 +73,8 @@ Ayarlar sekme değil; header'dan açılır.
   anahtarında tutulur; her başarılı çekiş ve bulut mutasyonundan sonra yazılır, çekiş
   başarısızsa gösterilir, ilk açılışta ağ beklenmeden gösterilir. Çıkış ve hesap silmede
   `clearCloudCache()` ile temizlenir. Çevrimdışı mutasyonlar kuyruğa alınmaz, hata verir.
+- `authStore` da session null gelince kayıtlı oturumun kullanıcısını `user` olarak tutar
+  (session null kalır). `(app)/_layout` session geri gelince listeyi yeniden çeker.
 - `lib/supabase.ts` içindeki `storageKey`, supabase-js varsayılanıyla aynı formülle
   hesaplanır (`sb-<host ilk parça>-auth-token`); değiştirirsen herkes çıkış yapar.
 
@@ -80,6 +82,8 @@ Ayarlar sekme değil; header'dan açılır.
 - Her aboneliğin kendi `currency` sembolü var (₺ $ € £ ¥); **gösterim para birimi sabit ₺**.
 - Kurlar frankfurter.app'ten, 1 saat önbellek; çevrimdışıyken son alınan kurlar, hiç
   yoksa `FALLBACK_RATES`.
+- Tutar inputları `lib/amountInput.ts` → `sanitizeAmountInput` kullanır (en fazla 8 tam,
+  2 ondalık basamak; eski `numeric(10,2)` tablolara da sığar).
 - Toplamları `useTotalMonthly()` / `useCategoryTotals()` veya `convert()` ile hesapla.
   Store'daki `totalMonthly()` / `byCategory()` para birimi dönüştürmez.
 
@@ -87,6 +91,8 @@ Ayarlar sekme değil; header'dan açılır.
 - Ayarlardan açılır (`push_alerts_enabled`). Her abonelik için sıradaki 3 ödeme,
   ödemeden 1 gün önce 09:00'da (geçmişse aynı gün 09:00). iOS limiti yüzünden en yakın 60.
 - Store'daki her değişiklikten sonra `syncSubscriptionNotifications()` hepsini yeniden kurar.
+  Senkron ve iptal bir kuyrukta sırayla çalışır (eşzamanlı çağrı çift bildirim bırakıyordu);
+  modül içinden `runSync`/`runCancel`'ı doğrudan çağır, kuyruğa tekrar sokma (kilitlenir).
 
 ### Tema ve bütçe
 - `themeStore`: `system | light | dark`; `useAppTheme()` renkleri verir. Ekranlar
@@ -131,12 +137,6 @@ eas build --profile development-simulator --platform ios
 
 - Lint: `AppTabBar.tsx`, `settings.tsx`, `analytics.tsx` içinde React Compiler kuralları
   (Reanimated shared value ataması, render'da ref okuma) — derleyici bu bileşenleri atlıyor.
-- `syncSubscriptionNotifications()` eşzamanlı çağrılırsa aynı bildirim iki kez kurulabilir.
-- Tutar girişinde üst sınır yok; `numeric(12,2)` sınırını aşan tutar Supabase'de hata verir.
-- `app/(app)/(home)/subscriptions-list.tsx` içinde kullanılmayan `handleDelete`.
-- Çevrimdışıyken token dolmuşsa ayarlar ekranı kullanıcıyı misafir gibi gösterebilir
-  (`authStore` yedek oturumu okumuyor); liste yine doğru.
-- `supabase/.temp/` git'e eklenmiş (CLI geçici dosyaları).
 - Manrope/Inter font dosyaları `assets/` altında yok ve `useFonts`/`expo-font` config ile
   yüklenmiyor; uygulama şu an sistem fontuyla çiziliyor.
 
