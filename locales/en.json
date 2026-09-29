@@ -207,7 +207,7 @@
     "privacy_policy": "Privacy Policy",
     "sign_out": "Sign Out",
     "sign_in_register": "Sign In / Register",
-    "app_version": "Subtification v1.0.0",
+    "app_version": "Subtification v{{version}}",
     "sign_out_confirm_title": "Sign Out",
     "sign_out_confirm_message": "Are you sure you want to sign out?",
     "sign_out_cancel": "Cancel",

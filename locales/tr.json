@@ -207,7 +207,7 @@
     "privacy_policy": "Gizlilik Politikası",
     "sign_out": "Çıkış Yap",
     "sign_in_register": "Giriş Yap / Kayıt Ol",
-    "app_version": "Subtification v1.0.0",
+    "app_version": "Subtification v{{version}}",
     "sign_out_confirm_title": "Çıkış Yap",
     "sign_out_confirm_message": "Hesabından çıkmak istediğine emin misin?",
     "sign_out_cancel": "İptal",

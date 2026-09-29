@@ -116,13 +116,18 @@
     var btn = document.getElementById('langBtn');
     var sections = document.querySelectorAll('[data-lang]');
     var current = 'tr';
-    btn.addEventListener('click', function () {
-      current = current === 'tr' ? 'en' : 'tr';
+    function show(lang) {
+      current = lang;
       sections.forEach(function (s) {
         s.classList.toggle('active', s.dataset.lang === current);
       });
       document.documentElement.lang = current;
       btn.textContent = current === 'tr' ? 'English' : 'Türkçe';
+    }
+    // Uygulama sayfayı kullanıcının dilinde açar: ?lang=en
+    if (new URLSearchParams(location.search).get('lang') === 'en') show('en');
+    btn.addEventListener('click', function () {
+      show(current === 'tr' ? 'en' : 'tr');
       window.scrollTo(0, 0);
     });
   })();

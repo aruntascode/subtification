@@ -169,6 +169,16 @@ eas build --profile development-simulator --platform ios
 
 ---
 
+## 🍎 App Store
+
+- Yalnızca iPhone (`supportsTablet: false`); iPad desteği açılırsa iPad ekran görüntüsü ve test gerekir.
+- Ayarlar → Yardım Merkezi / Gizlilik Politikası `subtification.aruntas.com/support|privacy`
+  sayfalarını açar (İngilizce arayüzde `?lang=en`). Uygulamadaki veri akışı değişirse
+  `web/public/privacy.html`'i güncelle ve `cd web && npx wrangler deploy` ile yayına al.
+- Sürüm yazısı `app.json` → `version`'dan okunur (`expo-constants`).
+- App Store Connect: gizlilik bilgileri (E-posta + Kullanıcı içeriği, kullanıcıyla ilişkili,
+  izleme yok), inceleme notunda doğrulanmış deneme hesabı ve misafir modu.
+
 ## ⚠️ Bilinen Açık Konular
 
 - Web (`expo start --web`) hedef değil: `app.json` → `web.output: "static"` iken sunucu
@@ -197,12 +207,10 @@ eas build --profile development-simulator --platform ios
 - **Çizgi yok:** kartlar border yerine arkaplan tonu farkıyla ayrılır.
 - **Saf siyah yok:** metin `onSurface`.
 - **Gradient hero**, header'larda **blur** (`expo-blur`), yumuşak ambient gölge.
-- **Fontlar:** Manrope (başlık, büyük sayılar, CTA) + Inter (gövde, form).
-  `assets/fonts/` altında 400/600/700/800 kalınlıklar (+ logo için Inter Black 900) (OFL lisanslı, @expo-google-fonts
-  kaynaklı); `app.json` → `expo-font` eklentisiyle build'e gömülür (runtime `useFonts` yok).
-  Stilde aile adı (`"Manrope"`, `"Inter"`) + `fontWeight` kullan; iOS doğru dosyayı
-  kalınlığa göre seçer. Yeni kalınlık gerekirse dosyayı ekle, app.json'a yaz, yeniden build al.
-  Font değişiklikleri ancak yeni native build'de görünür.
+- **Fontlar:** uygulama yazıları **sistem fontu (iOS'ta SF Pro)**; stillerde `fontFamily`
+  verilmez, kalınlık `fontWeight` ile seçilir. Manrope/Inter denendi, beğenilmedi; geri
+  ekleme. Tek istisna logo: Inter Black (`assets/fonts/Inter-Black.ttf`, build'e gömülü;
+  `fontFamily: "Inter"`, `fontWeight: "900"`).
 - **Radius:** büyük kart 32, küçük kart/input 12–16, chip `BorderRadius.full`.
 - **Yazı kutuları (TextInput):** `Typography.*` stilini doğrudan verme; `lineHeight` iOS'ta
   metni aşağı kaydırır ve g/y/q'nun altını keser. `InputTypography.bodyLg` kullan ve

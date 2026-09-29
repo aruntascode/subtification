@@ -14,7 +14,9 @@ import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { useThemeStore, type ThemeMode } from "@/stores/themeStore";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
+import Constants from "expo-constants";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
@@ -54,6 +56,8 @@ type PickerOption = {
   selected: boolean;
   onPress: () => void;
 };
+
+const WEBSITE_URL = "https://subtification.aruntas.com";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -320,6 +324,12 @@ export default function SettingsScreen() {
   };
 
   const isTurkish = i18n.language.startsWith("tr");
+
+  // Destek ve gizlilik sayfaları web sitesinde; uygulama dilinde açılır
+  const openWebPage = (path: "support" | "privacy") => {
+    const lang = isTurkish ? "" : "?lang=en";
+    WebBrowser.openBrowserAsync(`${WEBSITE_URL}/${path}${lang}`).catch(() => {});
+  };
 
   const handleSelectLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
@@ -713,6 +723,7 @@ export default function SettingsScreen() {
               iconBg={colors.surfaceContainerHighest}
               iconColor={colors.onSurfaceVariant}
               label={t("settings.help_center")}
+              onPress={() => openWebPage("support")}
               trailing={
                 <Ionicons
                   name="open-outline"
@@ -729,6 +740,7 @@ export default function SettingsScreen() {
               iconBg={colors.surfaceContainerHighest}
               iconColor={colors.onSurfaceVariant}
               label={t("settings.privacy_policy")}
+              onPress={() => openWebPage("privacy")}
               trailing={
                 <Ionicons
                   name="chevron-forward"
@@ -740,7 +752,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <Text style={[styles.version, { color: colors.outlineVariant }]}>{t("settings.app_version")}</Text>
+        <Text style={[styles.version, { color: colors.outlineVariant }]}>{t("settings.app_version", { version: Constants.expoConfig?.version ?? "" })}</Text>
         <View style={{ height: 40 }} />
       </ScrollView>
 
@@ -938,6 +950,7 @@ function SettingsRow({
   iconColor,
   label,
   trailing,
+  onPress,
 }: {
   styles: ReturnType<typeof createStyles>;
   colors: AppColors;
@@ -946,9 +959,15 @@ function SettingsRow({
   iconColor: string;
   label: string;
   trailing: ReactNode;
+  onPress?: () => void;
 }) {
+  // Çoğu satır dışarıdaki bir dokunulabilir öğenin içinde; yalnızca onPress verilirse dokunulabilir
+  const Container = onPress ? TouchableOpacity : View;
   return (
-    <View style={styles.settingsRow}>
+    <Container
+      style={styles.settingsRow}
+      {...(onPress ? { onPress, activeOpacity: 0.6, accessibilityRole: "link" as const } : {})}
+    >
       <View style={styles.settingsRowLeft}>
         <View style={[styles.settingsIcon, { backgroundColor: iconBg }]}>
           <Ionicons name={icon as any} size={18} color={iconColor} />
@@ -956,7 +975,7 @@ function SettingsRow({
         <Text style={[styles.settingsLabel, { color: colors.onSurface }]}>{label}</Text>
       </View>
       {trailing}
-    </View>
+    </Container>
   );
 }
 
