@@ -113,7 +113,8 @@ export function AppTabBar() {
   );
 
   const [sheetOpen, setSheetOpen] = useState(false);
-  const rotateAnim = useRef(new Animated.Value(0)).current;
+  // Sabit Animated.Value; ref yerine state: render'da okunabilsin (React Compiler)
+  const [rotateAnim] = useState(() => new Animated.Value(0));
   const sheetY = useSharedValue(SHEET_HEIGHT);
   const gestureStartY = useSharedValue(0);
   const backdropProgress = useSharedValue(0);
@@ -134,17 +135,17 @@ export function AppTabBar() {
   }, [rotateAnim]);
 
   const openSheet = () => {
-    sheetY.value = SHEET_HEIGHT;
-    gestureStartY.value = 0;
-    backdropProgress.value = 0;
+    sheetY.set(SHEET_HEIGHT);
+    gestureStartY.set(0);
+    backdropProgress.set(0);
     setSheetOpen(true);
     requestAnimationFrame(() => {
-      sheetY.value = withSpring(0, {
+      sheetY.set(withSpring(0, {
         damping: 24,
         stiffness: 260,
         mass: 0.9,
-      });
-      backdropProgress.value = withTiming(1, { duration: 250 });
+      }));
+      backdropProgress.set(withTiming(1, { duration: 250 }));
       Animated.timing(rotateAnim, {
         toValue: 1,
         duration: 250,
@@ -155,12 +156,12 @@ export function AppTabBar() {
 
   const closeSheet = (callback?: () => void) => {
     pendingCloseCallback.current = callback;
-    backdropProgress.value = withTiming(0, { duration: 250 });
-    sheetY.value = withTiming(SHEET_HEIGHT, { duration: 280 }, (finished) => {
+    backdropProgress.set(withTiming(0, { duration: 250 }));
+    sheetY.set(withTiming(SHEET_HEIGHT, { duration: 280 }, (finished) => {
       if (finished) {
         runOnJS(finishCloseSheet)();
       }
-    });
+    }));
     Animated.timing(rotateAnim, {
       toValue: 0,
       duration: 220,
@@ -168,45 +169,45 @@ export function AppTabBar() {
     }).start();
   };
 
-  const sheetPanGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .activeOffsetY([-6, 6])
-        .onBegin(() => {
-          gestureStartY.value = sheetY.value;
-        })
-        .onUpdate((event) => {
-          const nextY = gestureStartY.value + event.translationY;
-          sheetY.value =
-            nextY < 0
-              ? -Math.min(Math.abs(nextY) * 0.45, SHEET_UPWARD_DRAG_LIMIT)
-              : nextY;
-        })
-        .onEnd((event) => {
-          const shouldDismiss =
-            sheetY.value > SHEET_DISMISS_DISTANCE ||
-            event.velocityY > SHEET_DISMISS_VELOCITY;
+  // React Compiler memoize eder; elle useMemo Reanimated değerleriyle korunamıyordu
+  const sheetPanGesture = Gesture.Pan()
+      .activeOffsetY([-6, 6])
+      .onBegin(() => {
+        gestureStartY.set(sheetY.value);
+      })
+      .onUpdate((event) => {
+        const nextY = gestureStartY.value + event.translationY;
+        sheetY.set(
+          nextY < 0
+            ? -Math.min(Math.abs(nextY) * 0.45, SHEET_UPWARD_DRAG_LIMIT)
+            : nextY,
+        );
+      })
+      .onEnd((event) => {
+        const shouldDismiss =
+          sheetY.value > SHEET_DISMISS_DISTANCE ||
+          event.velocityY > SHEET_DISMISS_VELOCITY;
 
-          if (shouldDismiss) {
-            backdropProgress.value = withTiming(0, { duration: 220 });
-            sheetY.value = withTiming(SHEET_HEIGHT, { duration: 230 }, (finished) => {
-              if (finished) {
-                runOnJS(finishCloseSheet)();
-              }
-            });
-            runOnJS(resetRotateIcon)();
-            return;
-          }
+        if (shouldDismiss) {
+          backdropProgress.set(withTiming(0, { duration: 220 }));
+          // Sürükleyerek kapatmada bekleyen yönlendirme yok; ref okuyan
+          // finishCloseSheet yerine doğrudan kapat (React Compiler ref kuralı)
+          sheetY.set(withTiming(SHEET_HEIGHT, { duration: 230 }, (finished) => {
+            if (finished) {
+              runOnJS(setSheetOpen)(false);
+            }
+          }));
+          runOnJS(resetRotateIcon)();
+          return;
+        }
 
-          sheetY.value = withSpring(0, {
-            damping: 22,
-            stiffness: 300,
-            mass: 0.9,
-            velocity: event.velocityY,
-          });
-        }),
-    [backdropProgress, finishCloseSheet, gestureStartY, resetRotateIcon, sheetY],
-  );
+        sheetY.set(withSpring(0, {
+          damping: 22,
+          stiffness: 300,
+          mass: 0.9,
+          velocity: event.velocityY,
+        }));
+      });
 
   const sheetAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: sheetY.value }],

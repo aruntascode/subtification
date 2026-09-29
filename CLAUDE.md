@@ -140,7 +140,7 @@ Ayarlar sekme değil; header'dan açılır.
 
 ```bash
 npx tsc --noEmit        # temiz olmalı
-npx expo lint           # bilinen React Compiler hataları var (aşağıda)
+npx expo lint           # hatasız olmalı
 npx expo start          # dev client ile
 eas build --profile development-simulator --platform ios
 ```
@@ -156,8 +156,16 @@ eas build --profile development-simulator --platform ios
 
 ## ⚠️ Bilinen Açık Konular
 
-- Lint: `AppTabBar.tsx`, `settings.tsx`, `analytics.tsx` içinde React Compiler kuralları
-  (Reanimated shared value ataması, render'da ref okuma) — derleyici bu bileşenleri atlıyor.
+- Çevrimdışı ekleme/düzenleme/silme kuyruğa alınmıyor, hata veriyor.
+- Web (`expo start --web`) hedef değil: `app.json` → `web.output: "static"` iken sunucu
+  tarafı render supabase oturumunda çöker; web'de denemek için geçici olarak `"single"` yap.
+
+## ✍️ React Compiler Kuralları
+
+- `npx expo lint` hatasız olmalı (yalnızca `i18n.use` stil uyarısı kalır).
+- Reanimated shared value'larına `.set(...)` ile yaz, `.value =` kullanma.
+- Jest (`Gesture.Pan()`) nesnelerini elle `useMemo`'ya sarma; derleyici memoize eder.
+- `Animated.Value` için `useRef(...).current` değil `useState(() => new Animated.Value(0))`.
 
 ---
 

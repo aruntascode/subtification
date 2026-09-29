@@ -29,7 +29,7 @@ export function useCurrency() {
   // İlk kullanımda kurları yükle (önbellekten veya API'den)
   useEffect(() => {
     initialize();
-  }, []);
+  }, [initialize]);
 
   /**
    * Aboneliğin tutarını gösterim para birimine çevirip formatla.

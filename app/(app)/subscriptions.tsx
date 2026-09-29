@@ -54,7 +54,7 @@ export default function SubscriptionsListScreen() {
 
   const onRefresh = useCallback(() => {
     fetchSubscriptions();
-  }, []);
+  }, [fetchSubscriptions]);
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(

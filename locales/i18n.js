@@ -13,7 +13,7 @@ const getDeviceLang = () => {
       const locale = locales[0].languageTag; // Örn: "tr-TR", "en-US"
       return locale.startsWith("tr") ? "tr" : "en";
     }
-  } catch (error) {
+  } catch {
     // Eğer dil bulunurken bir sorun çıkarsa sessizce yakala
     console.warn("Dil algılanamadı, varsayılan ayar (en) kullanılıyor.");
   }

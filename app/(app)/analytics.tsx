@@ -124,7 +124,8 @@ export default function AnalyticsScreen() {
 
   // Donut chart mode: "subscriptions" | "categories"
   const [donutMode, setDonutMode] = useState<"subscriptions" | "categories">("subscriptions");
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  // Sabit Animated.Value; ref yerine state: render'da okunabilsin (React Compiler)
+  const [slideAnim] = useState(() => new Animated.Value(0));
   const [btnWidth, setBtnWidth] = useState(0);
   const savedBudgetLimit = useBudgetStore((state) => state.limit);
   const setSavedBudgetLimit = useBudgetStore((state) => state.setLimit);

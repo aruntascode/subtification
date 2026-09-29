@@ -127,23 +127,23 @@ export default function SettingsScreen() {
 
   const openLanguageModal = (kind: "language" | "theme" = "language") => {
     setPreferenceKind(kind);
-    languageSheetY.value = CURRENCY_SHEET_CLOSED_Y;
-    languageGestureStartY.value = 0;
-    languageBackdropProgress.value = 0;
+    languageSheetY.set(CURRENCY_SHEET_CLOSED_Y);
+    languageGestureStartY.set(0);
+    languageBackdropProgress.set(0);
     setLanguageModalVisible(true);
     requestAnimationFrame(() => {
-      languageSheetY.value = withSpring(0, {
+      languageSheetY.set(withSpring(0, {
         damping: 26,
         stiffness: 280,
         mass: 0.9,
-      });
-      languageBackdropProgress.value = withTiming(1, { duration: 180 });
+      }));
+      languageBackdropProgress.set(withTiming(1, { duration: 180 }));
     });
   };
 
   const closeLanguageModal = () => {
-    languageBackdropProgress.value = withTiming(0, { duration: 160 });
-    languageSheetY.value = withTiming(
+    languageBackdropProgress.set(withTiming(0, { duration: 160 }));
+    languageSheetY.set(withTiming(
       CURRENCY_SHEET_CLOSED_Y,
       { duration: 190 },
       (finished) => {
@@ -151,49 +151,47 @@ export default function SettingsScreen() {
           runOnJS(finishLanguageDismiss)();
         }
       },
-    );
+    ));
   };
 
-  const languagePanGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .onBegin(() => {
-          languageGestureStartY.value = languageSheetY.value;
-        })
-        .onUpdate((event) => {
-          const nextY = languageGestureStartY.value + event.translationY;
-          languageSheetY.value =
-            nextY < 0
-              ? -Math.min(Math.abs(nextY) * 0.32, CURRENCY_SHEET_UPWARD_DRAG_LIMIT)
-              : nextY;
-        })
-        .onEnd((event) => {
-          const shouldDismiss =
-            languageSheetY.value > CURRENCY_SHEET_DISMISS_DISTANCE ||
-            event.velocityY > CURRENCY_SHEET_DISMISS_VELOCITY;
+  // React Compiler memoize eder; elle useMemo Reanimated değerleriyle korunamıyordu
+  const languagePanGesture = Gesture.Pan()
+      .onBegin(() => {
+        languageGestureStartY.set(languageSheetY.value);
+      })
+      .onUpdate((event) => {
+        const nextY = languageGestureStartY.value + event.translationY;
+        languageSheetY.set(
+          nextY < 0
+            ? -Math.min(Math.abs(nextY) * 0.32, CURRENCY_SHEET_UPWARD_DRAG_LIMIT)
+            : nextY,
+        );
+      })
+      .onEnd((event) => {
+        const shouldDismiss =
+          languageSheetY.value > CURRENCY_SHEET_DISMISS_DISTANCE ||
+          event.velocityY > CURRENCY_SHEET_DISMISS_VELOCITY;
 
-          if (shouldDismiss) {
-            languageBackdropProgress.value = withTiming(0, { duration: 160 });
-            languageSheetY.value = withTiming(
-              CURRENCY_SHEET_CLOSED_Y,
-              { duration: 190 },
-              (finished) => {
-                if (finished) {
-                  runOnJS(finishLanguageDismiss)();
-                }
-              },
-            );
-          } else {
-            languageSheetY.value = withSpring(0, {
-              damping: 24,
-              stiffness: 300,
-              mass: 0.9,
-              velocity: event.velocityY,
-            });
-          }
-        }),
-    [finishLanguageDismiss, languageBackdropProgress, languageGestureStartY, languageSheetY],
-  );
+        if (shouldDismiss) {
+          languageBackdropProgress.set(withTiming(0, { duration: 160 }));
+          languageSheetY.set(withTiming(
+            CURRENCY_SHEET_CLOSED_Y,
+            { duration: 190 },
+            (finished) => {
+              if (finished) {
+                runOnJS(finishLanguageDismiss)();
+              }
+            },
+          ));
+        } else {
+          languageSheetY.set(withSpring(0, {
+            damping: 24,
+            stiffness: 300,
+            mass: 0.9,
+            velocity: event.velocityY,
+          }));
+        }
+      });
 
   const languageSheetAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: languageSheetY.value }],
@@ -210,23 +208,23 @@ export default function SettingsScreen() {
     setShowCurrent(false);
     setShowNew(false);
     setShowConfirm(false);
-    passwordSheetY.value = CURRENCY_SHEET_CLOSED_Y;
-    passwordGestureStartY.value = 0;
-    passwordBackdropProgress.value = 0;
+    passwordSheetY.set(CURRENCY_SHEET_CLOSED_Y);
+    passwordGestureStartY.set(0);
+    passwordBackdropProgress.set(0);
     setChangePasswordVisible(true);
     requestAnimationFrame(() => {
-      passwordSheetY.value = withSpring(0, {
+      passwordSheetY.set(withSpring(0, {
         damping: 26,
         stiffness: 280,
         mass: 0.9,
-      });
-      passwordBackdropProgress.value = withTiming(1, { duration: 180 });
+      }));
+      passwordBackdropProgress.set(withTiming(1, { duration: 180 }));
     });
   };
 
   const closeChangePasswordModal = () => {
-    passwordBackdropProgress.value = withTiming(0, { duration: 160 });
-    passwordSheetY.value = withTiming(
+    passwordBackdropProgress.set(withTiming(0, { duration: 160 }));
+    passwordSheetY.set(withTiming(
       CURRENCY_SHEET_CLOSED_Y,
       { duration: 190 },
       (finished) => {
@@ -234,49 +232,47 @@ export default function SettingsScreen() {
           runOnJS(finishPasswordDismiss)();
         }
       },
-    );
+    ));
   };
 
-  const passwordPanGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .onBegin(() => {
-          passwordGestureStartY.value = passwordSheetY.value;
-        })
-        .onUpdate((event) => {
-          const nextY = passwordGestureStartY.value + event.translationY;
-          passwordSheetY.value =
-            nextY < 0
-              ? -Math.min(Math.abs(nextY) * 0.32, CURRENCY_SHEET_UPWARD_DRAG_LIMIT)
-              : nextY;
-        })
-        .onEnd((event) => {
-          const shouldDismiss =
-            passwordSheetY.value > CURRENCY_SHEET_DISMISS_DISTANCE ||
-            event.velocityY > CURRENCY_SHEET_DISMISS_VELOCITY;
+  // React Compiler memoize eder; elle useMemo Reanimated değerleriyle korunamıyordu
+  const passwordPanGesture = Gesture.Pan()
+      .onBegin(() => {
+        passwordGestureStartY.set(passwordSheetY.value);
+      })
+      .onUpdate((event) => {
+        const nextY = passwordGestureStartY.value + event.translationY;
+        passwordSheetY.set(
+          nextY < 0
+            ? -Math.min(Math.abs(nextY) * 0.32, CURRENCY_SHEET_UPWARD_DRAG_LIMIT)
+            : nextY,
+        );
+      })
+      .onEnd((event) => {
+        const shouldDismiss =
+          passwordSheetY.value > CURRENCY_SHEET_DISMISS_DISTANCE ||
+          event.velocityY > CURRENCY_SHEET_DISMISS_VELOCITY;
 
-          if (shouldDismiss) {
-            passwordBackdropProgress.value = withTiming(0, { duration: 160 });
-            passwordSheetY.value = withTiming(
-              CURRENCY_SHEET_CLOSED_Y,
-              { duration: 190 },
-              (finished) => {
-                if (finished) {
-                  runOnJS(finishPasswordDismiss)();
-                }
-              },
-            );
-          } else {
-            passwordSheetY.value = withSpring(0, {
-              damping: 24,
-              stiffness: 300,
-              mass: 0.9,
-              velocity: event.velocityY,
-            });
-          }
-        }),
-    [finishPasswordDismiss, passwordBackdropProgress, passwordGestureStartY, passwordSheetY],
-  );
+        if (shouldDismiss) {
+          passwordBackdropProgress.set(withTiming(0, { duration: 160 }));
+          passwordSheetY.set(withTiming(
+            CURRENCY_SHEET_CLOSED_Y,
+            { duration: 190 },
+            (finished) => {
+              if (finished) {
+                runOnJS(finishPasswordDismiss)();
+              }
+            },
+          ));
+        } else {
+          passwordSheetY.set(withSpring(0, {
+            damping: 24,
+            stiffness: 300,
+            mass: 0.9,
+            velocity: event.velocityY,
+          }));
+        }
+      });
 
   const passwordSheetAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: passwordSheetY.value }],

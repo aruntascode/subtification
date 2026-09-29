@@ -47,7 +47,7 @@ export default function SubscriptionsListStackScreen() {
 
   const onRefresh = useCallback(() => {
     fetchSubscriptions();
-  }, []);
+  }, [fetchSubscriptions]);
 
   const filtered = subscriptions.filter((sub) => {
     if (search && !sub.name.toLowerCase().includes(search.toLowerCase()))
