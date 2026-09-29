@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase } from '@/lib/supabase';
+import { getStoredSessionUser, supabase } from '@/lib/supabase';
 import { clearCloudCache } from '@/stores/subscriptionStore';
 import { Session, User } from '@supabase/supabase-js';
 
@@ -28,21 +28,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialized: false,
 
   initialize: () => {
-    supabase.auth.getSession().then(({ data }) => {
-      set({
-        session: data.session,
-        user: data.session?.user ?? null,
-        initialized: true,
+    // Token dolmuşken çevrimdışı açılışta session null gelir ama oturum cihazda
+    // durur; kullanıcı ayarlarda misafir görünmesin diye kayıtlı oturuma bakılır.
+    // Çıkışta ya da geçersiz oturumda supabase kaydı sildiği için yedek de null olur.
+    // Sıra numarası: kayıt okunurken yeni bir olay geldiyse eski sonuç yazılmaz.
+    let latest = 0;
+    const applySession = (session: Session | null) => {
+      const seq = ++latest;
+      if (session) {
+        set({ session, user: session.user, initialized: true });
+        return;
+      }
+      void getStoredSessionUser().then((user) => {
+        if (seq === latest) set({ session: null, user, initialized: true });
       });
-    });
+    };
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      set({
-        session,
-        user: session?.user ?? null,
-        initialized: true,
-      });
-    });
+    supabase.auth.getSession().then(({ data }) => applySession(data.session));
+    supabase.auth.onAuthStateChange((_event, session) => applySession(session));
   },
 
   signInWithEmail: async (email: string, password: string) => {

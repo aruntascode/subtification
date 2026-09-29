@@ -10,6 +10,9 @@ export default function AppLayout() {
   const fetchSubscriptions = useSubscriptionStore((s) => s.fetchSubscriptions);
   const subscriptionsInitialized = useSubscriptionStore((s) => s.initialized);
   const userId = useAuthStore((s) => s.user?.id ?? null);
+  // Çevrimdışı açılışta kullanıcı kayıtlı oturumdan gelir, session null kalır.
+  // Bağlantı gelip token yenilenince session dolar; liste sunucudan tazelensin.
+  const hasSession = useAuthStore((s) => s.session !== null);
   const { colors } = useAppTheme();
   const [showSplash, setShowSplash] = useState(
     () => !subscriptionsInitialized,
@@ -23,7 +26,7 @@ export default function AppLayout() {
     void fetchSubscriptions().catch((error) => {
       console.warn("Abonelikler yüklenemedi.", error);
     });
-  }, [fetchSubscriptions, userId]);
+  }, [fetchSubscriptions, userId, hasSession]);
 
   useEffect(() => {
     if (!subscriptionsInitialized) {
