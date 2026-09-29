@@ -1,418 +1,157 @@
 # Subtification — Proje Handoff Dosyası
 
-Bu dosya, "Subtification" abonelik takip uygulamasının mevcut durumunu, kararlarını ve eksik kısımlarını özetler. Başka bir Claude chatine bu dosyayı vererek kaldığın yerden devam edebilirsin.
+Abonelik ve taksit takip uygulaması. Bu dosya mevcut durumu, mimari kararları ve
+dikkat edilmesi gereken kuralları özetler; yeni bir oturum buradan devam edebilir.
 
 ---
 
-## 📌 Proje Özeti
+## 📌 Özet
 
-- **Uygulama adı:** Subtification
-- **Konsept:** "The Digital Curator" — premium, editorial-inspired abonelik takip uygulaması
-- **Stack:** Expo (Managed Workflow) + Expo Router + Zustand + Supabase
-
----
-
-## 🏗️ Mimari Kararlar
-
-| Konu           | Karar                                                              |
-| -------------- | ------------------------------------------------------------------ |
-| Framework      | Expo Managed Workflow (bitişte `expo prebuild` ile iOS'a alınacak) |
-| Navigasyon     | **Expo Router** (dosya tabanlı, `app/` klasörü)                    |
-| State Yönetimi | **Zustand** (Redux yerine, çok daha sade)                          |
-| Backend        | **Supabase** (auth + veritabanı)                                   |
-| Auth           | Supabase Auth — email/şifre + Google OAuth                         |
-| Fontlar        | Manrope (headlines) + Inter (body/label)                           |
+- **Stack:** Expo SDK 57 (dev client, CNG — `ios/` ve `android/` gitignore'da) + Expo Router + Zustand + Supabase
+- **Dil:** i18next — `locales/tr.json`, `locales/en.json`; cihaz diline göre seçilir
+- **Kod dili:** Yorumlar ve commit mesajları Türkçe
+- **Bundle id:** `com.aruntas.subtification`, URL scheme: `subtification`
+- **Web:** `web/` — `subtification.aruntas.com` (Cloudflare, `wrangler.jsonc`): gizlilik, destek ve e-posta doğrulama/şifre sıfırlama dönüş sayfası (`auth/callback`)
 
 ---
 
-## 📁 Mevcut Klasör Yapısı
+## 📁 Klasör Yapısı
 
 ```
 app/
-├── _layout.tsx                        ✅ TAMAMLANDI — Auth guard + root layout
-├── (auth)/
-│   ├── _layout.tsx                    ✅ TAMAMLANDI
-│   ├── login.tsx                      ✅ TAMAMLANDI
-│   ├── register.tsx                   ✅ TAMAMLANDI
-│   └── forgot-password.tsx            ✅ TAMAMLANDI
+├── _layout.tsx                  Root: tema/bütçe/auth hydrate, splash, AppTabBar, KeyboardDoneBar
+├── (auth)/                      Modal olarak açılır (login, register, forgot-password)
 └── (app)/
-    ├── _layout.tsx                    ✅ TAMAMLANDI — Tab bar (5 sekme)
-    ├── index.tsx                      ✅ TAMAMLANDI — Dashboard
-    ├── subscriptions/
-    │   ├── index.tsx                  ✅ TAMAMLANDI — Liste + arama + filtre
-    │   ├── [id].tsx                   ❌ EKSİK — Abonelik detay ekranı
-    │   └── new.tsx                    ❌ EKSİK — Yeni abonelik ekle
-    ├── analytics.tsx                  ❌ EKSİK — Analiz & raporlar
-    └── settings.tsx                   ❌ EKSİK — Ayarlar
+    ├── _layout.tsx              Stack; userId değişince fetchSubscriptions()
+    ├── (home)/index.tsx         Dashboard (aylık özet, takvim şeridi, taksit özeti, yaklaşanlar)
+    ├── (home)/subscriptions-list.tsx  Dashboard'dan "tümü" listesi
+    ├── subscriptions.tsx        Liste sekmesi: arama, filtre, kaydırma aksiyonları, toplu seçim
+    ├── analytics.tsx            Analiz: dağılım, en pahalılar, döngüler, bütçe, tasarruf ipuçları
+    ├── new.tsx                  Tekli ekleme (popüler servis + plan, ya da ?custom=true ile özel)
+    ├── bulk-add.tsx             Toplu ekleme (servis seç → tutarları gözden geçir)
+    ├── settings.tsx             Profil, dil, kurlar, bütçe, tema, bildirim, şifre, hesap silme
+    ├── subscription/[id].tsx    Detay: duraklat/devam, sil, kalan taksit bilgisi
+    └── subscription/edit/[id].tsx  Düzenleme (ayrı sayfa)
 
-constants/
-├── colors.ts                          ✅ TAMAMLANDI — Tüm design token renkleri
-├── typography.ts                      ✅ TAMAMLANDI — Fonts, spacing, border radius
-└── categories.ts                      ✅ TAMAMLANDI — Kategoriler + popüler servisler
-
-lib/
-└── supabase.ts                        ✅ TAMAMLANDI — Supabase client (AsyncStorage session)
-
-stores/
-├── authStore.ts                       ✅ TAMAMLANDI — Zustand auth store
-└── subscriptionStore.ts               ✅ TAMAMLANDI — Zustand subscription store
-
-components/                            ❌ EKSİK — Henüz hiç component yazılmadı
-hooks/                                 ❌ EKSİK — Henüz hook yazılmadı
+components/   AppTabBar (FAB + alt menü), DateField, DurationPicker, SubscriptionIcon,
+              InfoLabel, KeyboardDoneBar, SubtificationSplash, home/* kartları
+constants/    colors (açık+koyu palet), typography, categories (19 kategori),
+              services (popüler servisler + planlar/fiyatlar), currencies, savingsTips
+hooks/        useAppTheme, useCurrency (useTotalMonthly, useCategoryTotals)
+lib/          supabase, subscriptionDuration, paymentSchedule, notifications, colorContrast
+stores/       authStore, subscriptionStore, currencyStore, budgetStore, themeStore
+supabase/     rebuild_backend_safe.sql, delete_account.sql, migrations/
 ```
+
+Tab bar: Ana sayfa, Liste, **+ FAB** (alt menü: popüler servis / toplu ekle / özel), Analiz.
+Ayarlar sekme değil; header'dan açılır.
 
 ---
 
-## ✅ Tamamlanan Dosyaların İçerikleri
+## 🧠 Temel Kurallar (bozmadan önce oku)
 
-### `constants/colors.ts`
+### Ödeme takvimi — `lib/subscriptionDuration.ts`, `lib/paymentSchedule.ts`
+- **Çapa** = `first_billing_date ?? next_billing_date`. Her ödeme çapadan hesaplanır
+  (`getPaymentOccurrence(sub, k)`), bir öncekinden değil: 31 Ocak → 28 Şub → 31 Mar.
+- **Sonraki ödemeyi her yerde `getNextPaymentDate()` ile oku**, `next_billing_date`
+  alanından değil; kayıtlı alan eskiyebilir.
+- Bugünkü ödeme henüz ödenmemiş sayılır (`getPaidCount`).
+- `isBilling(sub)` = aktif ve bitmemiş; toplamlar, yaklaşanlar ve bildirimler bunu kullanır.
+- **Süre (`duration_months`) yalnızca aylık döngüde** kullanılır (yeni, düzenleme ve
+  toplu ekleme ekranları bunu uygular). Taksit her zaman aylıktır ve süre zorunludur.
+- Düzenlemede tarih, döngü **ve süre** değişmediyse eski çapa korunur; biri değiştiyse
+  çapa formdaki tarih olur (önizleme ile kayıt tutarlı kalsın diye).
 
-Tasarım sistemindeki tüm renk token'ları TypeScript sabiti olarak tanımlı.
-Ana renkler: `primary: '#0b7285'`, `primaryContainer: '#0e7490'`, `primarySolid: '#0b7285'`, `secondaryContainer: '#4c7dff'`
+### Oturum ve veri kaynağı — `stores/subscriptionStore.ts`
+- **Misafir modu:** giriş yapmadan kullanılabilir; veriler AsyncStorage `guest_subscriptions`.
+  Giriş yapılınca yerel kayıtlar Supabase'e yüklenip yerelden silinir.
+- `getCurrentUser()` **`getSession()` kullanır, `getUser()` değil.** `getUser()` sunucuya
+  sorar; çevrimdışıyken null döner ve kullanıcı misafir sanılır → bulut kayıtları yerele
+  yazılıp sonra tekrar yüklenir (çift kayıt). Token dolmuşken çevrimdışı `getSession()`
+  da null döner; o durumda `getStoredSessionUser()` (lib/supabase.ts) kayıtlı oturumu okur.
+- **Çevrimdışı önbellek:** giriş yapmış kullanıcının listesi `cloud_subscriptions_cache_<userId>`
+  anahtarında tutulur; her başarılı çekiş ve bulut mutasyonundan sonra yazılır, çekiş
+  başarısızsa gösterilir, ilk açılışta ağ beklenmeden gösterilir. Çıkış ve hesap silmede
+  `clearCloudCache()` ile temizlenir. Çevrimdışı mutasyonlar kuyruğa alınmaz, hata verir.
+- `lib/supabase.ts` içindeki `storageKey`, supabase-js varsayılanıyla aynı formülle
+  hesaplanır (`sb-<host ilk parça>-auth-token`); değiştirirsen herkes çıkış yapar.
 
-### `constants/typography.ts`
+### Para birimi — `stores/currencyStore.ts`, `hooks/useCurrency.ts`
+- Her aboneliğin kendi `currency` sembolü var (₺ $ € £ ¥); **gösterim para birimi sabit ₺**.
+- Kurlar frankfurter.app'ten, 1 saat önbellek; çevrimdışıyken son alınan kurlar, hiç
+  yoksa `FALLBACK_RATES`.
+- Toplamları `useTotalMonthly()` / `useCategoryTotals()` veya `convert()` ile hesapla.
+  Store'daki `totalMonthly()` / `byCategory()` para birimi dönüştürmez.
 
-- `FontFamily` sabiti (Manrope + Inter varyantları)
-- `Typography` StyleSheet objesi (displayLg → labelSm)
-- `BorderRadius` sabiti (sm: 4, full: 9999)
-- `Spacing` sabiti (xs: 4 → huge: 40)
+### Bildirimler — `lib/notifications.ts`
+- Ayarlardan açılır (`push_alerts_enabled`). Her abonelik için sıradaki 3 ödeme,
+  ödemeden 1 gün önce 09:00'da (geçmişse aynı gün 09:00). iOS limiti yüzünden en yakın 60.
+- Store'daki her değişiklikten sonra `syncSubscriptionNotifications()` hepsini yeniden kurar.
 
-### `constants/categories.ts`
-
-- `Category` tip: `'entertainment' | 'finance' | 'productivity' | 'health' | 'education' | 'other'`
-- `CATEGORIES` array: id, label, color
-- `POPULAR_SERVICES` array: 15 popüler servis (Netflix, Spotify, vs.)
-- `BILLING_CYCLES`: `'monthly' | 'yearly' | 'weekly' | 'quarterly'`
-
-### `lib/supabase.ts`
-
-```ts
-// env değişkenleri: EXPO_PUBLIC_SUPABASE_URL ve EXPO_PUBLIC_SUPABASE_ANON_KEY
-createClient(url, key, {
-  auth: { storage: AsyncStorage, persistSession: true },
-});
-```
-
-### `stores/authStore.ts`
-
-Zustand store. Metodlar:
-
-- `initialize()` — `onAuthStateChange` listener kurar, root layout'ta bir kez çağrılır
-- `signInWithEmail(email, password)`
-- `signUpWithEmail(email, password)`
-- `signInWithGoogle()` — `redirectTo: 'subtification://auth/callback'`
-- `signOut()`
-- `resetPassword(email)`
-
-### `stores/subscriptionStore.ts`
-
-Zustand store. Metodlar:
-
-- `fetchSubscriptions()` — Supabase'den çeker
-- `addSubscription(sub)` — Supabase'e ekler, store'u günceller
-- `updateSubscription(id, updates)`
-- `deleteSubscription(id)`
-- `toggleActive(id)`
-
-Computed (fonksiyon olarak):
-
-- `totalMonthly()` — Aktif aboneliklerin aylık toplamı (cycle'a göre normalize eder)
-- `upcomingPayments()` — 30 gün içindeki ödemeler, tarihe göre sıralı
-- `byCategory()` — Kategoriye göre gruplu toplam + öğeler
-
-`Subscription` tipi:
-
-```ts
-{
-  id: string
-  user_id: string
-  name: string
-  amount: number
-  billing_cycle: 'monthly' | 'yearly' | 'weekly' | 'quarterly'
-  next_billing_date: string  // ISO date string
-  category: Category
-  emoji: string
-  color: string  // hex renk kodu
-  notes?: string
-  is_active: boolean
-  created_at: string
-  updated_at: string
-}
-```
-
-### `app/_layout.tsx`
-
-- `useAuthStore().initialize()` çağırır
-- Oturum yoksa → `/(auth)/login`
-- Oturum varsa → `/(app)`
-
-### `app/(app)/_layout.tsx`
-
-5 tab: Home (index), List (subscriptions/index), **+ FAB** (subscriptions/new), Analytics, Settings.
-FAB — ortadaki büyük mavi yuvarlak buton, `subscriptions/new`'e yönlendiriyor.
-`fetchSubscriptions()` app başladığında bir kez çağrılıyor.
-
-### `app/(auth)/login.tsx`
-
-- Google ile giriş butonu (üstte)
-- Apple ile giriş butonu (üstte)
-- Email + şifre formu
-- Şifremi unuttum linki → `forgot-password`
-- Kayıt ol linki → `register`
-- Tasarım: `surfaceContainerLowest` kart, `primary` gradient login butonu
-
-### `app/(auth)/register.tsx`
-
-Email + şifre + şifre tekrar formu. Supabase email confirmation uyarısı gösteriyor.
-
-### `app/(auth)/forgot-password.tsx`
-
-Email giriş → Supabase `resetPasswordForEmail` → başarı mesajı
-
-### `app/(app)/index.tsx` (Dashboard)
-
-- Header: avatar + brand adı + search/settings ikonları
-- **Hero card:** gradient arka plan (`primary` → `primaryContainer`), toplam aylık harcama (büyük rakam), "next due" badge, budget progress bar, "Add Subscription" butonu
-- **Distribution card:** donut görsel (CSS borderlı, native), kategori legend
-- **Upcoming Payments:** yatay scroll, her kart: emoji ikon + tarih badge + isim + tutar
-- **All Active:** dikey liste, her satır: emoji + isim + cycle + tutar
-- Empty state: abonelik yokken gösterilir
-- Pull-to-refresh desteği var
-
-### `app/(app)/subscriptions/index.tsx` (Liste)
-
-- Başlık + "+ Add" butonu
-- Search input
-- Status filter chips: All / Active / Paused
-- Category filter chips: All + her kategori
-- Özet satır: kaç abonelik + toplam tutar
-- Abonelik kartları: emoji ikon + isim + kategori/cycle + tutar + paused badge
-- Tap → `subscriptions/[id]`
-- Pull-to-refresh desteği var
+### Tema ve bütçe
+- `themeStore`: `system | light | dark`; `useAppTheme()` renkleri verir. Ekranlar
+  `createStyles(colors, darkMode)` + `useMemo` desenini kullanır.
+- `budgetStore`: aylık limit + açık/kapalı; root layout hydrate edene kadar ekran çizilmez.
 
 ---
 
-## ❌ Yapılması Gereken Ekranlar
+## 🗄️ Supabase
 
-### 1. `app/(app)/subscriptions/[id].tsx` — Abonelik Detay
-
-Tasarım dosyası: `stitch/abonelik_detay/code.html`
-
-İçermesi gerekenler:
-
-- Geri butonu
-- Büyük emoji + servis adı + aktif/pasif badge
-- Tutar + billing cycle
-- Sonraki ödeme tarihi (gün sayacı ile)
-- Kategori etiketi
-- Notlar alanı
-- "Pause/Resume" toggle butonu
-- "Edit" butonu (inline düzenleme veya ayrı modal)
-- "Delete" butonu (confirm dialog ile)
-- `useSubscriptionStore().updateSubscription`, `deleteSubscription`, `toggleActive` kullanılacak
-- Silme sonrası `router.back()`
-
-### 2. `app/(app)/subscriptions/new.tsx` — Yeni Abonelik Ekle
-
-Tasarım dosyası: `stitch/yeni_abonelik_ekle/code.html`
-
-İçermesi gerekenler:
-
-- Geri butonu
-- Popüler servisler grid'i (POPULAR_SERVICES'den — tap ile otomatik doldurur)
-- Emoji seçici (ya da metin input)
-- Servis adı input
-- Tutar input (sayısal klavye)
-- Billing cycle seçici (4 seçenek: monthly/yearly/weekly/quarterly)
-- Kategori seçici (CATEGORIES'den)
-- Renk seçici (hex veya preset)
-- Sonraki ödeme tarihi (DateTimePicker veya manuel input)
-- Notlar (opsiyonel textarea)
-- "Save" butonu → `addSubscription()` → `router.back()`
-- Loading state kayıt sırasında
-- Validasyon: isim ve tutar zorunlu
-
-### 3. `app/(app)/analytics.tsx` — Analiz & Raporlar
-
-Tasarım dosyası: `stitch/analiz_ve_raporlar/code.html`
-
-İçermesi gerekenler:
-
-- Toplam aylık / yıllık harcama
-- Kategori bazlı dağılım (bar chart veya pie chart — `victory-native` veya `react-native-chart-kit` önerilir)
-- En pahalı abonelik
-- Aylık trend (son 6 ay mock veya gerçek veri)
-- Yıllık projeksiyon
-- `useSubscriptionStore()` computed değerleri kullanılacak: `totalMonthly()`, `byCategory()`
-
-### 4. `app/(app)/settings.tsx` — Ayarlar
-
-Tasarım dosyası: `stitch/ayarlar_settings/code.html`
-
-İçermesi gerekenler:
-
-- Kullanıcı profil kartı (email, avatar)
-- Bildirim ayarları (kaç gün önce hatırlatma — expo-notifications)
-- Para birimi seçimi (şimdilik $ sabit olabilir)
-- Dark mode toggle (opsiyonel)
-- "Sign Out" butonu → `useAuthStore().signOut()`
-- Uygulama versiyonu (opsiyonel)
+- Şema: `supabase/rebuild_backend_safe.sql` (idempotent; tablo silmez) + `supabase/migrations/`.
+- `subscriptions` tablosu ek kolonlar: `currency`, `duration_months` (1–120), `is_installment`,
+  `first_billing_date`. `amount numeric(12,2)`. RLS: kullanıcı yalnızca kendi satırları.
+- Hesap silme: `supabase/delete_account.sql` → `delete_own_account()` RPC (security definer,
+  yalnızca `auth.uid()`); abonelikler cascade ile silinir.
+- Auth: yalnızca e-posta/şifre (Google/Apple yok). E-posta linkleri
+  `https://subtification.aruntas.com/auth/callback/` adresine döner.
+- Ortam değişkenleri `.env` içinde (gitignore'da):
+  `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 
 ---
 
-## 🗄️ Supabase SQL Şeması (Henüz oluşturulmadı)
-
-Supabase dashboard'unda çalıştırılacak SQL:
-
-```sql
--- Subscriptions tablosu
-create table subscriptions (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references auth.users(id) on delete cascade not null,
-  name text not null,
-  amount numeric(10, 2) not null,
-  billing_cycle text not null check (billing_cycle in ('monthly', 'yearly', 'weekly', 'quarterly')),
-  next_billing_date date not null,
-  category text not null check (category in ('entertainment', 'finance', 'productivity', 'health', 'education', 'other')),
-  emoji text not null default '📦',
-  color text not null default '#0b7285',
-  notes text,
-  is_active boolean not null default true,
-  created_at timestamptz default now() not null,
-  updated_at timestamptz default now() not null
-);
-
--- RLS: Her kullanıcı sadece kendi aboneliklerini görebilir
-alter table subscriptions enable row level security;
-
-create policy "Users can manage their own subscriptions"
-  on subscriptions
-  for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
--- updated_at otomatik güncelleme
-create or replace function update_updated_at()
-returns trigger as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$ language plpgsql;
-
-create trigger subscriptions_updated_at
-  before update on subscriptions
-  for each row execute function update_updated_at();
-```
-
----
-
-## 📦 Kurulacak Paketler
+## 🔧 Build ve Kontrol
 
 ```bash
-# Supabase
-npx expo install @supabase/supabase-js @react-native-async-storage/async-storage
-
-# Zustand
-npm install zustand
-
-# Navigation & safe area
-npx expo install expo-router react-native-safe-area-context react-native-screens
-
-# Google Auth (Supabase OAuth için WebBrowser)
-npx expo install expo-web-browser expo-auth-session
-
-# Bildirimler (Settings ekranında kullanılacak)
-npx expo install expo-notifications
-
-# Grafik (Analytics ekranı için — birini seç)
-npm install react-native-chart-kit
-# veya
-npm install victory-native
+npx tsc --noEmit        # temiz olmalı
+npx expo lint           # bilinen React Compiler hataları var (aşağıda)
+npx expo start          # dev client ile
+eas build --profile development-simulator --platform ios
 ```
 
----
-
-## 🔧 Ortam Değişkenleri
-
-Projenin root'unda `.env` dosyası oluştur:
-
-```env
-EXPO_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
+- Yerel `npx expo run:ios` için CocoaPods gerekir. Makinede sistem Ruby 2.6 var; CocoaPods
+  `gem install --user-install` ile `~/.gem/ruby/2.6.0/bin` altına kuruldu (PATH'e ekle,
+  `LANG=en_US.UTF-8`). Xcode 26.6 simülatör hedefi için iOS 26.5 platformu
+  (Xcode > Settings > Components) kurulu olmalı; yoksa build hedef bulamaz.
+- Otomatik test altyapısı yok. Takvim mantığı saf fonksiyonlar olduğu için Node ile
+  (`node --experimental-strip-types`) senaryo testi yapılabilir.
 
 ---
 
-## 🎨 Tasarım Sistemi Özeti
+## ⚠️ Bilinen Açık Konular
 
-**Uygulama adı:** The Ledger  
-**Konsept:** "The Editorial Ledger" — premium dergi estetiği
-
-**Ana Renkler:**
-
-- `primary`: `#0b7285` — modern teal-blue, brand ve okunabilir vurgu rengi
-- `primaryContainer`: `#0e7490` — canlı ama sakin gradient/kart eşlikçisi
-- `primarySolid`: `#0b7285` — beyaz yazılı CTA ve dolu seçim yüzeyi
-- `secondaryContainer`: `#4c7dff` — mavi destek vurgusu
-- `surface`: `#fafcfc` — ferah nötr sayfa arkaplanı
-- `surfaceContainerLowest`: `#ffffff` — kartlar
-- `surfaceContainerLow`: `#f2f8f8` — input arkaplanı
-- `onSurface`: `#191b22` — metin (siyah değil!)
-- `onSurfaceVariant`: `#3f4a4d` — ikincil metin
-
-**Temel Kurallar:**
-
-1. **Çizgi yok** — kartlar border yerine arkaplan renk farkıyla ayrılır
-2. **Gradient hero** — `linear-gradient(heroGradientStart → heroGradientEnd)` büyük kartlarda
-3. **Glassmorphism** — header'larda `rgba(250,252,252,0.6)` + `backdropFilter: blur(24px)`
-4. **Ambient shadow** — `shadowColor: onSurface, shadowOpacity: 0.06, shadowRadius: 32`
-5. **Saf siyah yok** — tüm metinler `onSurface (#191b22)` kullanır
-
-**Font Kullanımı:**
-
-- `Manrope` — başlıklar, büyük sayılar, CTA butonları
-- `Inter` — body, label, form elemanları
-
-**Border Radius:**
-
-- Büyük kartlar: `32px` (`BorderRadius.xxxl`)
-- Küçük kartlar / inputlar: `12-16px`
-- Chip / badge: `9999px` (`BorderRadius.full`)
+- Lint: `AppTabBar.tsx`, `settings.tsx`, `analytics.tsx` içinde React Compiler kuralları
+  (Reanimated shared value ataması, render'da ref okuma) — derleyici bu bileşenleri atlıyor.
+- `syncSubscriptionNotifications()` eşzamanlı çağrılırsa aynı bildirim iki kez kurulabilir.
+- Tutar girişinde üst sınır yok; `numeric(12,2)` sınırını aşan tutar Supabase'de hata verir.
+- `app/(app)/(home)/subscriptions-list.tsx` içinde kullanılmayan `handleDelete`.
+- Çevrimdışıyken token dolmuşsa ayarlar ekranı kullanıcıyı misafir gibi gösterebilir
+  (`authStore` yedek oturumu okumuyor); liste yine doğru.
+- `supabase/.temp/` git'e eklenmiş (CLI geçici dosyaları).
+- Manrope/Inter font dosyaları `assets/` altında yok ve `useFonts`/`expo-font` config ile
+  yüklenmiyor; uygulama şu an sistem fontuyla çiziliyor.
 
 ---
 
-## 🔗 Orijinal Tasarım Dosyaları
+## 🎨 Tasarım Sistemi
 
-ZIP içindeki HTML ekran mockup'ları:
+"The Editorial Ledger" — premium dergi estetiği.
 
-- `stitch/giri_yap_log_in/code.html` + `screen.png`
-- `stitch/dashboard_genel_bak/code.html` + `screen.png`
-- `stitch/abonelik_listesi/code.html` + `screen.png`
-- `stitch/abonelik_detay/code.html` + `screen.png`
-- `stitch/yeni_abonelik_ekle/code.html` + `screen.png`
-- `stitch/analiz_ve_raporlar/code.html` + `screen.png`
-- `stitch/ayarlar_settings/code.html` + `screen.png`
-- `stitch/lumina_ledger/DESIGN.md` — tam tasarım sistemi dökümantasyonu
-
----
-
-## 🚀 Devam İçin Öneri Sıra
-
-1. **Supabase SQL şemasını oluştur** (yukarıdaki SQL'i çalıştır)
-2. **`.env` dosyasını oluştur**
-3. **`subscriptions/new.tsx`** — Yeni abonelik ekle (önce bunu yap, veri girişi olmadan test edilemez)
-4. **`subscriptions/[id].tsx`** — Detay + düzenleme + silme
-5. **`analytics.tsx`** — Grafikler
-6. **`settings.tsx`** — Profil + sign out + bildirimler
-7. **Google OAuth** akışını `expo-web-browser` ile tamamla
-8. **`expo prebuild`** — iOS klasörünü oluştur ve Xcode'da test et
-
----
-
-## ⚠️ Dikkat Edilecekler
-
-- `Colors.tertiaryFixedDim` dashboard'da kullanılıyor ama `colors.ts`'e eklenmemiş olabilir — kontrol et, değeri `#3ce36a`
-- Google OAuth için Supabase dashboard'unda Google provider'ı aktif edilmeli ve `theledger://auth/callback` redirect URL'i eklenmalı
-- `expo-notifications` için `app.json`'a `permissions` eklenmeli
-- Expo Router'da dinamik route `[id].tsx` olarak oluşturulmalı, `subscriptions/new.tsx` bundan önce gelmeli yoksa "new" bir id olarak parse edilebilir — Expo Router bunu handle ediyor ama dikkatli ol
+- **Renkler (açık):** `primary #0b7285`, `primaryContainer #0e7490`, `surface #fafcfc`,
+  `surfaceContainerLowest #ffffff`, `onSurface #191b22`. Koyu palet `constants/colors.ts`'te.
+- **Çizgi yok:** kartlar border yerine arkaplan tonu farkıyla ayrılır.
+- **Saf siyah yok:** metin `onSurface`.
+- **Gradient hero**, header'larda **blur** (`expo-blur`), yumuşak ambient gölge.
+- **Fontlar:** Manrope (başlık, büyük sayılar, CTA) + Inter (gövde, form) —
+  `constants/typography.ts` bu adları kullanıyor ama font dosyaları henüz eklenmedi
+  (bkz. Bilinen Açık Konular).
+- **Radius:** büyük kart 32, küçük kart/input 12–16, chip `BorderRadius.full`.
