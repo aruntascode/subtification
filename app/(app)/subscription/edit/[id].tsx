@@ -65,6 +65,8 @@ const AVAILABLE_COLORS = [
   "#FFFFFF", // beyaz
 ];
 
+const CURRENCY_OPTIONS = ["₺", "$", "€", "£"];
+
 const sanitizeAmountInput = (value: string) => {
   const normalized = value.replace(",", ".");
   const [whole = "", ...decimalParts] = normalized.split(".");
@@ -118,6 +120,7 @@ export default function EditSubscriptionScreen() {
     subscription?.color ?? AVAILABLE_COLORS[0],
   );
   const [editNotes, setEditNotes] = useState(subscription?.notes ?? "");
+  const [editCurrency, setEditCurrency] = useState(subscription?.currency ?? "₺");
   const [editDuration, setEditDuration] = useState<number | null>(
     cycleParam === "yearly" ? null : (subscription?.duration_months ?? null),
   );
@@ -134,6 +137,11 @@ export default function EditSubscriptionScreen() {
       </View>
     );
   }
+
+  // Yeni eklemedeki seçenekler; listede olmayan bir para birimiyle kaydedilmişse o da kalır
+  const currencyOptions = CURRENCY_OPTIONS.includes(subscription.currency ?? "₺")
+    ? CURRENCY_OPTIONS
+    : [...CURRENCY_OPTIONS, subscription.currency ?? "₺"];
 
   // Aylık/yıllık; eski haftalık ya da 3 aylık kayıtta o döngü de seçenek olarak kalır
   const cycleOptions: BillingCycle[] = ["monthly", "yearly"].includes(subscription.billing_cycle)
@@ -187,6 +195,7 @@ export default function EditSubscriptionScreen() {
       await updateSubscription(subscription.id, {
         name: editName.trim(),
         amount: parseFloat(editAmount),
+        currency: editCurrency,
         category: editCategory,
         emoji: editEmoji,
         color: editColor,
@@ -315,6 +324,29 @@ export default function EditSubscriptionScreen() {
             </ScrollView>
           </View>
 
+          {/* Para birimi */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{t("new_sub.currency")}</Text>
+            <View style={styles.cycleRow}>
+              {currencyOptions.map((c) => (
+                <TouchableOpacity
+                  key={c}
+                  style={[styles.cycleBtn, editCurrency === c && styles.cycleBtnActive]}
+                  onPress={() => setEditCurrency(c)}
+                >
+                  <Text
+                    style={[
+                      styles.currencyBtnText,
+                      editCurrency === c && styles.cycleBtnTextActive,
+                    ]}
+                  >
+                    {c}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
           {/* Tutar ve ödeme tarihi */}
           <View style={styles.row}>
             <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -329,9 +361,7 @@ export default function EditSubscriptionScreen() {
                 {...amountInfo}
               />
               <View style={styles.amountContainer}>
-                <Text style={styles.currencySymbol}>
-                  {subscription.currency ?? "₺"}
-                </Text>
+                <Text style={styles.currencySymbol}>{editCurrency}</Text>
                 <TextInput
                   inputAccessoryViewID={KEYBOARD_DONE_ID}
                   style={[styles.input, styles.amountInput]}
@@ -560,6 +590,10 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
   cycleBtnText: {
     ...Typography.labelMd,
     fontWeight: "700",
+    color: colors.onSurfaceVariant,
+  },
+  currencyBtnText: {
+    ...Typography.headlineSm,
     color: colors.onSurfaceVariant,
   },
   cycleBtnTextActive: {
