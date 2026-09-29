@@ -56,11 +56,30 @@ export async function ensureNotificationPermission() {
   return requested.granted;
 }
 
-export async function syncSubscriptionNotifications(subscriptions: Subscription[]) {
+// Senkron ve iptal işlemleri sırayla çalışır. Aynı anda iki senkron olursa ikisi
+// de eski kimlikleri iptal edip yeni bildirim kurar; biri diğerinin kimliklerini
+// üzerine yazınca iptal edilemeyen çift hatırlatmalar kalıyordu.
+let notificationQueue: Promise<void> = Promise.resolve();
+
+function enqueue(task: () => Promise<void>): Promise<void> {
+  const run = notificationQueue.then(task);
+  notificationQueue = run.catch(() => {});
+  return run;
+}
+
+export function syncSubscriptionNotifications(subscriptions: Subscription[]) {
+  return enqueue(() => runSync(subscriptions));
+}
+
+export function cancelSubscriptionNotifications() {
+  return enqueue(runCancel);
+}
+
+async function runSync(subscriptions: Subscription[]) {
   try {
     const enabled = await getPushAlertsEnabled();
     if (!enabled) {
-      await cancelSubscriptionNotifications();
+      await runCancel();
       return;
     }
 
@@ -68,7 +87,7 @@ export async function syncSubscriptionNotifications(subscriptions: Subscription[
     if (!permissions.granted) return;
 
     await ensureAndroidChannel();
-    await cancelSubscriptionNotifications();
+    await runCancel();
 
     const scheduled: StoredNotification[] = [];
     // Uygulama uzun süre açılmasa da hatırlatmalar sürsün diye her abonelik için
@@ -123,7 +142,7 @@ export async function syncSubscriptionNotifications(subscriptions: Subscription[
   }
 }
 
-export async function cancelSubscriptionNotifications() {
+async function runCancel() {
   try {
     const stored = await getStoredNotifications();
 
