@@ -15,7 +15,7 @@ harcadığını, sıradaki ödemenin ne zaman olduğunu ve paranın nereye gitti
   ve tasarruf ipuçları.
 - **Hatırlatmalar:** ödemeden bir gün önce bildirim.
 - **Misafir modu:** hesap açmadan kullan; giriş yapınca verilerin buluta taşınır.
-- **Çevrimdışı:** son alınan liste internet yokken de görünür.
+- **Çevrimdışı:** internet yokken de ekleme, düzenleme ve silme yapılabilir; bağlantı gelince hesaba aktarılır.
 - Açık/koyu/sistem teması, Türkçe ve İngilizce arayüz, uygulama içinden hesap silme.
 
 ## Teknoloji

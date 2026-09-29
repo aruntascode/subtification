@@ -3,7 +3,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
-import { StyleSheet, View } from "react-native";
+import { AppState, StyleSheet, View } from "react-native";
 
 export default function AppLayout() {
   const fetchSubscriptions = useSubscriptionStore((s) => s.fetchSubscriptions);
@@ -17,6 +17,15 @@ export default function AppLayout() {
       console.warn("Abonelikler yüklenemedi.", error);
     });
   }, [fetchSubscriptions, userId, hasSession]);
+
+  // Uygulama öne gelince çevrimdışı yapılan değişiklikleri göndermeyi dene
+  const syncPendingChanges = useSubscriptionStore((s) => s.syncPendingChanges);
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void syncPendingChanges();
+    });
+    return () => subscription.remove();
+  }, [syncPendingChanges]);
 
   // Açılış splash'i kök layout'ta; abonelikler yüklenene kadar ekranı o örter
   return (

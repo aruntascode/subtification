@@ -36,7 +36,9 @@ export default function SubscriptionDetailScreen() {
     toggleActive,
   } = useSubscriptionStore();
 
-  const subscription = subscriptions.find((s) => s.id === id);
+  // Çevrimdışı eklenen kayıt sunucuya gidince kimliği değişir; sayfa açıkken de bulunsun
+  const resolvedId = useSubscriptionStore((state) => state.idAliases[id] ?? id);
+  const subscription = subscriptions.find((s) => s.id === resolvedId);
   const { fmtWithOriginal } = useCurrency();
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();

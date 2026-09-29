@@ -412,5 +412,10 @@
     "auth_register": "Create account",
     "auth_login": "Sign in",
     "auth_guest": "Continue as guest"
+  },
+  "sync_notice": {
+    "title": "Changes waiting to sync",
+    "body_one": "{{count}} change will sync to your account when you're back online.",
+    "body_other": "{{count}} changes will sync to your account when you're back online."
   }
 }

@@ -412,5 +412,9 @@
     "auth_register": "Hesap oluştur",
     "auth_login": "Giriş yap",
     "auth_guest": "Misafir olarak devam et"
+  },
+  "sync_notice": {
+    "title": "Değişiklikler aktarılmayı bekliyor",
+    "body": "{{count}} değişiklik internet bağlantısı gelince hesabına aktarılacak."
   }
 }

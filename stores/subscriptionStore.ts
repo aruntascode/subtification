@@ -5,6 +5,15 @@ import {
   getNextPaymentDate,
   isBilling,
 } from "@/lib/subscriptionDuration";
+import {
+  isLocalId,
+  isRetryableStatus,
+  type NewSubscription,
+  type PendingOp,
+  readPendingOps,
+  remapOps,
+  writePendingOps,
+} from "@/lib/pendingOps";
 import { getStoredSessionUser, supabase } from "@/lib/supabase";
 import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -37,22 +46,27 @@ interface SubscriptionState {
   subscriptions: Subscription[];
   loading: boolean;
   initialized: boolean;
+  /** Giriş yapmış kullanıcının sunucuya henüz gitmemiş değişiklik sayısı */
+  pendingCount: number;
+  /**
+   * Çevrimdışı eklenen kaydın geçici kimliği → sunucudaki gerçek kimliği.
+   * O kaydın detay/düzenleme sayfası açıkken kimlik değişirse sayfa kaydı bulabilsin.
+   */
+  idAliases: Record<string, string>;
   fetchSubscriptions: () => Promise<void>;
-  addSubscription: (
-    sub: Omit<Subscription, "id" | "user_id" | "created_at" | "updated_at">,
-  ) => Promise<void>;
-  /** Birden fazla aboneliği tek istekte ekler (toplu ekleme ekranı) */
-  addSubscriptions: (
-    subs: Omit<Subscription, "id" | "user_id" | "created_at" | "updated_at">[],
-  ) => Promise<void>;
+  /** Bekleyen değişiklikleri sunucuya göndermeyi dener (çevrimdışıysa sonra tekrar) */
+  syncPendingChanges: () => Promise<void>;
+  addSubscription: (sub: NewSubscription) => Promise<void>;
+  /** Birden fazla aboneliği tek seferde ekler (toplu ekleme ekranı) */
+  addSubscriptions: (subs: NewSubscription[]) => Promise<void>;
   updateSubscription: (
     id: string,
     updates: Partial<Subscription>,
   ) => Promise<void>;
   deleteSubscription: (id: string) => Promise<void>;
-  /** Toplu seçim: birden fazla aboneliği tek istekte duraklatır / devam ettirir */
+  /** Toplu seçim: birden fazla aboneliği duraklatır / devam ettirir */
   setActiveMany: (ids: string[], isActive: boolean) => Promise<void>;
-  /** Toplu seçim: birden fazla aboneliği tek istekte siler */
+  /** Toplu seçim: birden fazla aboneliği siler */
   deleteMany: (ids: string[]) => Promise<void>;
   toggleActive: (id: string) => Promise<void>;
   totalMonthly: () => number;
@@ -185,289 +199,313 @@ const uploadLocalSubscriptions = async (userId: string) => {
   await AsyncStorage.removeItem(LOCAL_SUBSCRIPTIONS_KEY);
 };
 
-export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
-  subscriptions: [],
-  loading: false,
-  initialized: false,
-  fetchSubscriptions: async () => {
-    set({ loading: true });
-    try {
-      // İlk açılışta önbellek ağ beklenmeden gösterilir: token dolmuşken
-      // çevrimdışı oturum yenileme ~30 sn tekrar dener, splash o kadar kalmasın.
-      // Liste aşağıda sunucudan (ya da yine önbellekten) güncellenir.
-      if (!get().initialized) {
-        const storedUser = await getStoredSessionUser();
-        const cached = storedUser ? await readCloudCache(storedUser.id) : null;
-        if (cached) {
-          set({ subscriptions: sortByNextBillingDate(cached), initialized: true });
-        }
-      }
+// ---------- çevrimdışı değişiklik kuyruğu (yalnızca giriş yapmış kullanıcı) ----------
 
-      const user = await getCurrentUser();
+// Bellekteki kuyruk tek doğruluk kaynağı; her değişiklikte diske de yazılır
+let queue: PendingOp[] = [];
+let queueUserId: string | null = null;
+let flushPromise: Promise<void> | null = null;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+const RETRY_DELAY_MS = 30_000;
 
-      if (!user) {
-        const subscriptions = sortByNextBillingDate(
-          await readLocalSubscriptions(),
-        );
-        set({ subscriptions });
-        await syncSubscriptionNotifications(subscriptions);
-        return;
-      }
+const loadQueue = async (userId: string) => {
+  if (queueUserId === userId) return;
+  queue = await readPendingOps(userId);
+  queueUserId = userId;
+  useSubscriptionStore.setState({ pendingCount: queue.length });
+};
 
-      let data: Subscription[] | null;
-      try {
-        await uploadLocalSubscriptions(user.id);
+const saveQueue = async (userId: string) => {
+  useSubscriptionStore.setState({ pendingCount: queue.length });
+  await writePendingOps(userId, queue);
+};
 
-        const result = await supabase
-          .from("subscriptions")
-          .select("*")
-          .order("next_billing_date", { ascending: true });
-        if (result.error) throw result.error;
-        data = result.data;
-      } catch (error) {
-        // Çevrimdışı ya da sunucu hatası: son alınan liste varsa onu göster
-        const cached = await readCloudCache(user.id);
-        if (!cached) throw error;
-        const subscriptions = sortByNextBillingDate(cached);
-        set({ subscriptions });
-        await syncSubscriptionNotifications(subscriptions);
-        return;
-      }
+const enqueue = async (userId: string, ops: PendingOp[]) => {
+  await loadQueue(userId);
+  queue = [...queue, ...ops];
+  await saveQueue(userId);
+};
 
-      const subscriptions = sortByNextBillingDate(data ?? []);
-      set({ subscriptions });
-      await writeCloudCache(user.id, subscriptions);
-      await syncSubscriptionNotifications(subscriptions);
-    } finally {
-      set({ loading: false, initialized: true });
-    }
-  },
+const scheduleRetry = () => {
+  if (retryTimer) return;
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    void useSubscriptionStore.getState().syncPendingChanges();
+  }, RETRY_DELAY_MS);
+};
 
-  addSubscription: async (sub) => {
-    set({ loading: true });
-    try {
-      const user = await getCurrentUser();
+type SendResult =
+  | { status: "done"; row?: Subscription }
+  | { status: "retry" }
+  | { status: "rejected"; message: string };
 
-      if (!user) {
-        const nextSubscription: Subscription = {
-          ...sub,
-          id: createLocalId(),
-          created_at: new Date().toISOString(),
-        };
-        let nextSubscriptions: Subscription[] = [];
-        set((state) => {
-          nextSubscriptions = sortByNextBillingDate([
-            ...state.subscriptions,
-            nextSubscription,
-          ]);
-          return { subscriptions: nextSubscriptions };
-        });
-        await writeLocalSubscriptions(nextSubscriptions);
-        await syncSubscriptionNotifications(nextSubscriptions);
-        return;
-      }
-
-      const { data, error } = await supabase
+/** Tek bir işlemi sunucuya gönderir; ağ hatasını kalıcı hatadan ayırır */
+const sendOp = async (userId: string, op: PendingOp): Promise<SendResult> => {
+  try {
+    if (op.kind === "insert") {
+      const { data, error, status } = await supabase
         .from("subscriptions")
-        .insert({ ...sub, user_id: user.id })
+        .insert({ ...op.payload, user_id: userId })
         .select()
         .single();
-      if (error) throw error;
-      let nextSubscriptions: Subscription[] = [];
-      set((state) => {
-        nextSubscriptions = sortByNextBillingDate([...state.subscriptions, data]);
-        return { subscriptions: nextSubscriptions };
-      });
-      await writeCloudCache(user.id, nextSubscriptions);
-      await syncSubscriptionNotifications(nextSubscriptions);
-    } finally {
-      set({ loading: false });
+      if (!error) return { status: "done", row: data };
+      return isRetryableStatus(status)
+        ? { status: "retry" }
+        : { status: "rejected", message: error.message };
     }
-  },
 
-  addSubscriptions: async (subs) => {
-    if (subs.length === 0) return;
-    set({ loading: true });
-    try {
-      const user = await getCurrentUser();
+    // Hâlâ geçici olan kimlik: eklenmesi reddedilmiş kayıt; sunucuda karşılığı yok
+    const ids = op.ids.filter((id) => !isLocalId(id));
+    if (ids.length === 0) return { status: "done" };
 
-      if (!user) {
-        const createdAt = new Date().toISOString();
-        const created: Subscription[] = subs.map((sub) => ({
-          ...sub,
-          id: createLocalId(),
-          created_at: createdAt,
+    const request =
+      op.kind === "update"
+        ? supabase.from("subscriptions").update(op.updates).in("id", ids)
+        : supabase.from("subscriptions").delete().in("id", ids);
+    const { error, status } = await request;
+    if (!error) return { status: "done" };
+    return isRetryableStatus(status)
+      ? { status: "retry" }
+      : { status: "rejected", message: error.message };
+  } catch {
+    // fetch'in kendisi hata fırlattıysa ağ sorunudur
+    return { status: "retry" };
+  }
+};
+
+/** Kuyruğu baştan sona sırayla gönderir; ağ hatasında durur ve sonra tekrar dener */
+const runFlush = async () => {
+  const user = await getCurrentUser();
+  if (!user) return;
+  await loadQueue(user.id);
+
+  while (queue.length > 0) {
+    const op = queue[0];
+    const result = await sendOp(user.id, op);
+
+    if (result.status === "retry") {
+      scheduleRetry();
+      return;
+    }
+
+    queue = queue.slice(1);
+
+    if (op.kind === "insert" && result.status === "done" && result.row) {
+      const realId = result.row.id;
+      const createdAt = result.row.created_at;
+      queue = remapOps(queue, op.id, realId);
+      useSubscriptionStore.setState((state) => ({
+        subscriptions: state.subscriptions.map((s) =>
+          s.id === op.id ? { ...s, id: realId, created_at: createdAt ?? s.created_at } : s,
+        ),
+        idAliases: { ...state.idAliases, [op.id]: realId },
+      }));
+    } else if (result.status === "rejected") {
+      console.warn("Değişiklik sunucuda reddedildi, atlanıyor.", op.kind, result.message);
+      // Eklenemeyen kayıt listede kalmasın; diğer reddedilenleri sonraki çekiş düzeltir
+      if (op.kind === "insert") {
+        useSubscriptionStore.setState((state) => ({
+          subscriptions: state.subscriptions.filter((s) => s.id !== op.id),
         }));
-        let nextSubscriptions: Subscription[] = [];
-        set((state) => {
-          nextSubscriptions = sortByNextBillingDate([
-            ...state.subscriptions,
-            ...created,
-          ]);
-          return { subscriptions: nextSubscriptions };
-        });
-        await writeLocalSubscriptions(nextSubscriptions);
-        await syncSubscriptionNotifications(nextSubscriptions);
-        return;
       }
-
-      const { data, error } = await supabase
-        .from("subscriptions")
-        .insert(subs.map((sub) => ({ ...sub, user_id: user.id })))
-        .select();
-      if (error) throw error;
-      let nextSubscriptions: Subscription[] = [];
-      set((state) => {
-        nextSubscriptions = sortByNextBillingDate([
-          ...state.subscriptions,
-          ...(data ?? []),
-        ]);
-        return { subscriptions: nextSubscriptions };
-      });
-      await writeCloudCache(user.id, nextSubscriptions);
-      await syncSubscriptionNotifications(nextSubscriptions);
-    } finally {
-      set({ loading: false });
     }
-  },
 
-  updateSubscription: async (id, updates) => {
-    set({ loading: true });
-    try {
-      const user = await getCurrentUser();
+    await saveQueue(user.id);
+    await writeCloudCache(user.id, useSubscriptionStore.getState().subscriptions);
+  }
 
-      if (!user) {
-        let nextSubscriptions: Subscription[] = [];
-        set((state) => {
-          nextSubscriptions = sortByNextBillingDate(
-            state.subscriptions.map((s) =>
-              s.id === id ? { ...s, ...updates } : s,
-            ),
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
+  await syncSubscriptionNotifications(useSubscriptionStore.getState().subscriptions);
+};
+
+const flushPendingOps = () => {
+  if (!flushPromise) {
+    flushPromise = runFlush()
+      .catch((error) => console.warn("Bekleyen değişiklikler gönderilemedi.", error))
+      .finally(() => {
+        flushPromise = null;
+      });
+  }
+  return flushPromise;
+};
+
+export const useSubscriptionStore = create<SubscriptionState>((set, get) => {
+  /**
+   * Değişikliği hemen cihazda uygular. Giriş yapmış kullanıcıda işlemleri
+   * kuyruğa ekler ve göndermeyi arkada başlatır: ekran ağı beklemez, çevrimdışıyken
+   * de çalışır. Misafirde yalnızca cihaza yazar.
+   */
+  const commit = async (
+    next: (current: Subscription[]) => Subscription[],
+    ops: PendingOp[],
+  ) => {
+    // Sunucuya sormadan: token dolmuşken çevrimdışı getSession() ~30 sn yenilemeye çalışır
+    const user = await getStoredSessionUser();
+    let nextSubscriptions: Subscription[] = [];
+    set((state) => {
+      nextSubscriptions = sortByNextBillingDate(next(state.subscriptions));
+      return { subscriptions: nextSubscriptions };
+    });
+
+    if (!user) {
+      await writeLocalSubscriptions(nextSubscriptions);
+    } else {
+      await writeCloudCache(user.id, nextSubscriptions);
+      await enqueue(user.id, ops);
+      void flushPendingOps();
+    }
+    await syncSubscriptionNotifications(nextSubscriptions);
+  };
+
+  const newRow = (sub: NewSubscription, createdAt: string): Subscription => ({
+    ...sub,
+    id: createLocalId(),
+    created_at: createdAt,
+  });
+
+  return {
+    subscriptions: [],
+    loading: false,
+    initialized: false,
+    pendingCount: 0,
+    idAliases: {},
+
+    fetchSubscriptions: async () => {
+      set({ loading: true });
+      try {
+        // İlk açılışta önbellek ağ beklenmeden gösterilir: token dolmuşken
+        // çevrimdışı oturum yenileme ~30 sn tekrar dener, splash o kadar kalmasın.
+        // Liste aşağıda sunucudan (ya da yine önbellekten) güncellenir.
+        if (!get().initialized) {
+          const storedUser = await getStoredSessionUser();
+          const cached = storedUser ? await readCloudCache(storedUser.id) : null;
+          if (cached) {
+            set({ subscriptions: sortByNextBillingDate(cached), initialized: true });
+          }
+        }
+
+        const user = await getCurrentUser();
+
+        if (!user) {
+          queue = [];
+          queueUserId = null;
+          const subscriptions = sortByNextBillingDate(
+            await readLocalSubscriptions(),
           );
-          return { subscriptions: nextSubscriptions };
-        });
-        await writeLocalSubscriptions(nextSubscriptions);
-        await syncSubscriptionNotifications(nextSubscriptions);
-        return;
+          set({ subscriptions, pendingCount: 0 });
+          await syncSubscriptionNotifications(subscriptions);
+          return;
+        }
+
+        // Önce bekleyen değişiklikleri gönder; sunucudaki liste onları içersin
+        await flushPendingOps();
+
+        const showCache = async () => {
+          const cached = await readCloudCache(user.id);
+          if (cached) set({ subscriptions: sortByNextBillingDate(cached) });
+        };
+
+        // Hâlâ bekleyen var: çevrimdışı. Cihazdaki (değişiklikler uygulanmış) liste geçerli
+        if (queue.length > 0) {
+          await showCache();
+          return;
+        }
+
+        let data: Subscription[] | null;
+        try {
+          await uploadLocalSubscriptions(user.id);
+
+          const result = await supabase
+            .from("subscriptions")
+            .select("*")
+            .order("next_billing_date", { ascending: true });
+          if (result.error) throw result.error;
+          data = result.data;
+        } catch (error) {
+          // Çevrimdışı ya da sunucu hatası: son alınan liste varsa onu göster
+          const cached = await readCloudCache(user.id);
+          if (!cached) throw error;
+          await showCache();
+          return;
+        }
+
+        // Çekiş sürerken yeni değişiklik yapıldıysa sunucu listesi onu içermez;
+        // üzerine yazma, önce gönder
+        if (queue.length > 0) {
+          void flushPendingOps();
+          return;
+        }
+
+        const subscriptions = sortByNextBillingDate(data ?? []);
+        set({ subscriptions });
+        await writeCloudCache(user.id, subscriptions);
+        await syncSubscriptionNotifications(subscriptions);
+      } finally {
+        set({ loading: false, initialized: true });
       }
+    },
 
-      const { data, error } = await supabase
-        .from("subscriptions")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      let nextSubscriptions: Subscription[] = [];
-      set((state) => {
-        nextSubscriptions = sortByNextBillingDate(
-          state.subscriptions.map((s) => (s.id === id ? data : s)),
-        );
-        return { subscriptions: nextSubscriptions };
-      });
-      await writeCloudCache(user.id, nextSubscriptions);
-      await syncSubscriptionNotifications(nextSubscriptions);
-    } finally {
-      set({ loading: false });
-    }
-  },
+    syncPendingChanges: () => flushPendingOps(),
 
-  deleteSubscription: async (id) => {
-    set({ loading: true });
-    try {
-      const user = await getCurrentUser();
+    addSubscription: async (sub) => {
+      const row = newRow(sub, new Date().toISOString());
+      await commit(
+        (current) => [...current, row],
+        [{ kind: "insert", id: row.id, payload: sub }],
+      );
+    },
 
-      if (!user) {
-        let nextSubscriptions: Subscription[] = [];
-        set((state) => {
-          nextSubscriptions = state.subscriptions.filter((s) => s.id !== id);
-          return { subscriptions: nextSubscriptions };
-        });
-        await writeLocalSubscriptions(nextSubscriptions);
-        await syncSubscriptionNotifications(nextSubscriptions);
-        return;
-      }
+    addSubscriptions: async (subs) => {
+      if (subs.length === 0) return;
+      const createdAt = new Date().toISOString();
+      const rows = subs.map((sub) => newRow(sub, createdAt));
+      await commit(
+        (current) => [...current, ...rows],
+        rows.map((row, i) => ({ kind: "insert", id: row.id, payload: subs[i] })),
+      );
+    },
 
-      const { error } = await supabase
-        .from("subscriptions")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-      let nextSubscriptions: Subscription[] = [];
-      set((state) => {
-        nextSubscriptions = state.subscriptions.filter((s) => s.id !== id);
-        return { subscriptions: nextSubscriptions };
-      });
-      await writeCloudCache(user.id, nextSubscriptions);
-      await syncSubscriptionNotifications(nextSubscriptions);
-    } finally {
-      set({ loading: false });
-    }
-  },
+    updateSubscription: async (id, updates) => {
+      await commit(
+        (current) => current.map((s) => (s.id === id ? { ...s, ...updates } : s)),
+        [{ kind: "update", ids: [id], updates }],
+      );
+    },
 
-  setActiveMany: async (ids, isActive) => {
-    if (ids.length === 0) return;
-    set({ loading: true });
-    try {
-      const user = await getCurrentUser();
+    deleteSubscription: async (id) => {
+      await commit(
+        (current) => current.filter((s) => s.id !== id),
+        [{ kind: "delete", ids: [id] }],
+      );
+    },
+
+    setActiveMany: async (ids, isActive) => {
+      if (ids.length === 0) return;
       const idSet = new Set(ids);
+      await commit(
+        (current) =>
+          current.map((s) => (idSet.has(s.id) ? { ...s, is_active: isActive } : s)),
+        [{ kind: "update", ids, updates: { is_active: isActive } }],
+      );
+    },
 
-      if (user) {
-        const { error } = await supabase
-          .from("subscriptions")
-          .update({ is_active: isActive })
-          .in("id", ids);
-        if (error) throw error;
-      }
-
-      let nextSubscriptions: Subscription[] = [];
-      set((state) => {
-        nextSubscriptions = state.subscriptions.map((s) =>
-          idSet.has(s.id) ? { ...s, is_active: isActive } : s,
-        );
-        return { subscriptions: nextSubscriptions };
-      });
-      if (user) await writeCloudCache(user.id, nextSubscriptions);
-      else await writeLocalSubscriptions(nextSubscriptions);
-      await syncSubscriptionNotifications(nextSubscriptions);
-    } finally {
-      set({ loading: false });
-    }
-  },
-
-  deleteMany: async (ids) => {
-    if (ids.length === 0) return;
-    set({ loading: true });
-    try {
-      const user = await getCurrentUser();
+    deleteMany: async (ids) => {
+      if (ids.length === 0) return;
       const idSet = new Set(ids);
+      await commit(
+        (current) => current.filter((s) => !idSet.has(s.id)),
+        [{ kind: "delete", ids }],
+      );
+    },
 
-      if (user) {
-        const { error } = await supabase
-          .from("subscriptions")
-          .delete()
-          .in("id", ids);
-        if (error) throw error;
-      }
-
-      let nextSubscriptions: Subscription[] = [];
-      set((state) => {
-        nextSubscriptions = state.subscriptions.filter((s) => !idSet.has(s.id));
-        return { subscriptions: nextSubscriptions };
-      });
-      if (user) await writeCloudCache(user.id, nextSubscriptions);
-      else await writeLocalSubscriptions(nextSubscriptions);
-      await syncSubscriptionNotifications(nextSubscriptions);
-    } finally {
-      set({ loading: false });
-    }
-  },
-
-  toggleActive: async (id) => {
-    const sub = get().subscriptions.find((s) => s.id === id);
-    if (!sub) return;
-    await get().updateSubscription(id, { is_active: !sub.is_active });
-  },
+    toggleActive: async (id) => {
+      const sub = get().subscriptions.find((s) => s.id === id);
+      if (!sub) return;
+      await get().updateSubscription(id, { is_active: !sub.is_active });
+    },
 
   totalMonthly: () => {
     return get()
@@ -500,4 +538,5 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
       .map(([category, { total, items }]) => ({ category, total, items }))
       .sort((a, b) => b.total - a.total);
   },
-}));
+  };
+});

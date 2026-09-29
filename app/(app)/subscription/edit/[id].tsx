@@ -78,7 +78,9 @@ export default function EditSubscriptionScreen() {
   const router = useRouter();
   const { subscriptions, updateSubscription, loading } = useSubscriptionStore();
 
-  const subscription = subscriptions.find((s) => s.id === id);
+  // Çevrimdışı eklenen kayıt sunucuya gidince kimliği değişir; sayfa açıkken de bulunsun
+  const resolvedId = useSubscriptionStore((state) => state.idAliases[id] ?? id);
+  const subscription = subscriptions.find((s) => s.id === resolvedId);
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, darkMode, blurTint } = useAppTheme();

@@ -42,6 +42,7 @@ export default function DashboardScreen() {
   const { subscriptions, loading, fetchSubscriptions, upcomingPayments } =
     useSubscriptionStore();
   const user = useAuthStore((state) => state.user);
+  const pendingCount = useSubscriptionStore((state) => state.pendingCount);
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { fmtDisplay, fmtWithOriginal } = useCurrency();
@@ -265,6 +266,29 @@ export default function DashboardScreen() {
                   {t("guest_notice.sign_in_cta")}
                 </Text>
               </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Çevrimdışı yapılan değişiklikler bağlantı gelince hesaba aktarılır */}
+          {user && pendingCount > 0 && (
+            <View style={styles.guestNotice}>
+              <View style={styles.guestNoticeTop}>
+                <View style={styles.guestNoticeIcon}>
+                  <Ionicons
+                    name="cloud-offline-outline"
+                    size={18}
+                    color={colors.primary}
+                  />
+                </View>
+                <View style={styles.guestNoticeTextBlock}>
+                  <Text style={styles.guestNoticeTitle}>
+                    {t("sync_notice.title")}
+                  </Text>
+                  <Text style={styles.guestNoticeBody}>
+                    {t("sync_notice.body", { count: pendingCount })}
+                  </Text>
+                </View>
+              </View>
             </View>
           )}
 

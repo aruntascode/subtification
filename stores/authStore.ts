@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { clearAllPendingOps } from '@/lib/pendingOps';
 import { getStoredSessionUser, supabase } from '@/lib/supabase';
 import { clearCloudCache } from '@/stores/subscriptionStore';
 import { Session, User } from '@supabase/supabase-js';
@@ -93,6 +94,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { error } = await supabase.rpc('delete_own_account');
       if (error) throw error;
       await clearCloudCache();
+      await clearAllPendingOps();
       await supabase.auth.signOut();
     } finally {
       set({ loading: false });
