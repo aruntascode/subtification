@@ -15,6 +15,8 @@
   "dashboard": {
     "monthly_spending": "Aylık Harcama",
     "next_payment": "{{name}} • {{days}} gün",
+    "next_payment_today": "{{name}} • bugün",
+    "next_payment_tomorrow": "{{name}} • yarın",
     "add_button": "Abonelik Ekle",
     "upcoming": "Yaklaşan Ödemeler",
     "recent_subs": "Son Eklenenler",

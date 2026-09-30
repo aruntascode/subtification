@@ -333,7 +333,7 @@ export default function SubscriptionsListScreen() {
         {filtered.map((sub) => {
           const nextPayment = getNextPaymentDate(sub);
           const nextBillDate = nextPayment
-            ? nextPayment.toLocaleDateString(undefined, {
+            ? nextPayment.toLocaleDateString(i18n.language, {
                 day: "numeric",
                 month: "short",
                 year: "numeric",

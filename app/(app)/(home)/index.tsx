@@ -19,7 +19,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import * as Localization from "expo-localization";
 import { useRouter } from "expo-router";
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
@@ -112,17 +111,12 @@ export default function DashboardScreen() {
   const getUpcomingBadgeLabel = () => {
     if (upcoming.length === 0) return "";
     const days = getDaysUntil(upcoming[0]);
-    const locale = (() => {
-      try {
-        return Localization.getLocales()[0]?.languageTag ?? "en";
-      } catch {
-        return "en";
-      }
-    })();
+    if (days === 0) return t("dashboard.next_payment_today", { name: upcoming[0].name });
+    if (days === 1) return t("dashboard.next_payment_tomorrow", { name: upcoming[0].name });
     const dateLabel =
       days <= 7
         ? t("dashboard.next_payment", { name: upcoming[0].name, days })
-        : (getNextPaymentDate(upcoming[0]) ?? new Date()).toLocaleDateString(locale, {
+        : (getNextPaymentDate(upcoming[0]) ?? new Date()).toLocaleDateString(i18n.language, {
             day: "numeric",
             month: "short",
           });

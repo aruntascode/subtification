@@ -15,6 +15,8 @@
   "dashboard": {
     "monthly_spending": "Monthly Spending",
     "next_payment": "{{name}} • {{days}} days",
+    "next_payment_today": "{{name}} • today",
+    "next_payment_tomorrow": "{{name}} • tomorrow",
     "add_button": "Add Subscription",
     "upcoming": "Upcoming Payments",
     "distribution": "Category Distribution",
