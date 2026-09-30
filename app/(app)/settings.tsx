@@ -29,7 +29,9 @@ import Reanimated, {
 } from "react-native-reanimated";
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -827,113 +829,120 @@ export default function SettingsScreen() {
             ]}
           />
           <Pressable style={StyleSheet.absoluteFill} onPress={closeChangePasswordModal} />
-          <GestureDetector gesture={passwordPanGesture}>
-            <Reanimated.View
-              style={[
-                styles.modalSheet,
-                { backgroundColor: colors.surface },
-                { paddingBottom: Math.max(insets.bottom + 30, 48) },
-                passwordSheetAnimatedStyle,
-              ]}
-            >
-              <View
-                pointerEvents="none"
+          {/* Klavye açılınca panel yukarı kalksın; alanlar klavyenin altında kalmasın */}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            pointerEvents="box-none"
+            style={styles.passwordKeyboardAvoider}
+          >
+            <GestureDetector gesture={passwordPanGesture}>
+              <Reanimated.View
                 style={[
-                  styles.passwordSheetBottomFill,
+                  styles.modalSheet,
                   { backgroundColor: colors.surface },
+                  { paddingBottom: Math.max(insets.bottom + 30, 48) },
+                  passwordSheetAnimatedStyle,
                 ]}
-              />
-              <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-                <View style={styles.modalHandleArea}>
-                  <View style={styles.modalHandle} />
-                </View>
-                <Text style={[styles.modalTitle, { color: colors.onSurface }]}>
-                  {t("settings.change_password")}
-                </Text>
-                <Text style={[styles.modalSubtitle, { color: colors.onSurfaceVariant }]}>
-                  {t("settings.change_password_subtitle")}
-                </Text>
-
-              {/* Current Password */}
-              <View style={[styles.passwordField, { backgroundColor: colors.surfaceContainerHigh }]}>
-                <Ionicons name="lock-closed-outline" size={18} color={colors.outline} />
-                <TextInput
-                  style={[styles.passwordInput, { color: colors.onSurface }]}
-                  placeholder={t("settings.change_password_current")}
-                  placeholderTextColor={colors.outline}
-                  secureTextEntry={!showCurrent}
-                  value={currentPassword}
-                  onChangeText={setCurrentPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity onPress={() => setShowCurrent((v) => !v)}>
-                  <Ionicons
-                    name={showCurrent ? "eye-off-outline" : "eye-outline"}
-                    size={18}
-                    color={colors.outline}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {/* New Password */}
-              <View style={[styles.passwordField, { backgroundColor: colors.surfaceContainerHigh }]}>
-                <Ionicons name="key-outline" size={18} color={colors.outline} />
-                <TextInput
-                  style={[styles.passwordInput, { color: colors.onSurface }]}
-                  placeholder={t("settings.change_password_new")}
-                  placeholderTextColor={colors.outline}
-                  secureTextEntry={!showNew}
-                  value={newPassword}
-                  onChangeText={setNewPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity onPress={() => setShowNew((v) => !v)}>
-                  <Ionicons
-                    name={showNew ? "eye-off-outline" : "eye-outline"}
-                    size={18}
-                    color={colors.outline}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {/* Confirm New Password */}
-              <View style={[styles.passwordField, { backgroundColor: colors.surfaceContainerHigh }]}>
-                <Ionicons name="key-outline" size={18} color={colors.outline} />
-                <TextInput
-                  style={[styles.passwordInput, { color: colors.onSurface }]}
-                  placeholder={t("settings.change_password_confirm")}
-                  placeholderTextColor={colors.outline}
-                  secureTextEntry={!showConfirm}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity onPress={() => setShowConfirm((v) => !v)}>
-                  <Ionicons
-                    name={showConfirm ? "eye-off-outline" : "eye-outline"}
-                    size={18}
-                    color={colors.outline}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                style={[
-                  styles.passwordSaveBtn,
-                  { backgroundColor: colors.primarySolid },
-                  passwordLoading && { opacity: 0.6 },
-                ]}
-                onPress={handleChangePassword}
-                disabled={passwordLoading}
-                activeOpacity={0.85}
               >
-                <Text style={styles.passwordSaveBtnText}>
-                  {passwordLoading ? t("common.loading") : t("common.save")}
-                </Text>
-              </TouchableOpacity>
-              </TouchableOpacity>
-            </Reanimated.View>
-          </GestureDetector>
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.passwordSheetBottomFill,
+                    { backgroundColor: colors.surface },
+                  ]}
+                />
+                <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+                  <View style={styles.modalHandleArea}>
+                    <View style={styles.modalHandle} />
+                  </View>
+                  <Text style={[styles.modalTitle, { color: colors.onSurface }]}>
+                    {t("settings.change_password")}
+                  </Text>
+                  <Text style={[styles.modalSubtitle, { color: colors.onSurfaceVariant }]}>
+                    {t("settings.change_password_subtitle")}
+                  </Text>
+
+                {/* Current Password */}
+                <View style={[styles.passwordField, { backgroundColor: colors.surfaceContainerHigh }]}>
+                  <Ionicons name="lock-closed-outline" size={18} color={colors.outline} />
+                  <TextInput
+                    style={[styles.passwordInput, { color: colors.onSurface }]}
+                    placeholder={t("settings.change_password_current")}
+                    placeholderTextColor={colors.outline}
+                    secureTextEntry={!showCurrent}
+                    value={currentPassword}
+                    onChangeText={setCurrentPassword}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity onPress={() => setShowCurrent((v) => !v)}>
+                    <Ionicons
+                      name={showCurrent ? "eye-off-outline" : "eye-outline"}
+                      size={18}
+                      color={colors.outline}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {/* New Password */}
+                <View style={[styles.passwordField, { backgroundColor: colors.surfaceContainerHigh }]}>
+                  <Ionicons name="key-outline" size={18} color={colors.outline} />
+                  <TextInput
+                    style={[styles.passwordInput, { color: colors.onSurface }]}
+                    placeholder={t("settings.change_password_new")}
+                    placeholderTextColor={colors.outline}
+                    secureTextEntry={!showNew}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity onPress={() => setShowNew((v) => !v)}>
+                    <Ionicons
+                      name={showNew ? "eye-off-outline" : "eye-outline"}
+                      size={18}
+                      color={colors.outline}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Confirm New Password */}
+                <View style={[styles.passwordField, { backgroundColor: colors.surfaceContainerHigh }]}>
+                  <Ionicons name="key-outline" size={18} color={colors.outline} />
+                  <TextInput
+                    style={[styles.passwordInput, { color: colors.onSurface }]}
+                    placeholder={t("settings.change_password_confirm")}
+                    placeholderTextColor={colors.outline}
+                    secureTextEntry={!showConfirm}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity onPress={() => setShowConfirm((v) => !v)}>
+                    <Ionicons
+                      name={showConfirm ? "eye-off-outline" : "eye-outline"}
+                      size={18}
+                      color={colors.outline}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.passwordSaveBtn,
+                    { backgroundColor: colors.primarySolid },
+                    passwordLoading && { opacity: 0.6 },
+                  ]}
+                  onPress={handleChangePassword}
+                  disabled={passwordLoading}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.passwordSaveBtnText}>
+                    {passwordLoading ? t("common.loading") : t("common.save")}
+                  </Text>
+                </TouchableOpacity>
+                </TouchableOpacity>
+              </Reanimated.View>
+            </GestureDetector>
+          </KeyboardAvoidingView>
         </GestureHandlerRootView>
       </Modal>
 
@@ -1312,6 +1321,10 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     paddingTop: Spacing.lg,
     paddingHorizontal: Spacing.xxl,
     paddingBottom: 48,
+  },
+  passwordKeyboardAvoider: {
+    flex: 1,
+    justifyContent: "flex-end",
   },
   passwordSheetBottomFill: {
     position: "absolute",
