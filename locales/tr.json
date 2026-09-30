@@ -83,7 +83,7 @@
   "analytics": {
     "title": "Analizler",
     "monthly_spending": "Aylık Harcama",
-    "yearly_projection": "Yıllık Projeksiyon",
+    "yearly_projection": "Yıllık Harcama",
     "active_subs_count": "{{count}} aktif abonelik",
     "per_day": "/gün",
     "per_month_short": "/ay",

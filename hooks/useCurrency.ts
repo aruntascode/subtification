@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useCurrencyStore } from '@/stores/currencyStore';
 import { useSubscriptionStore } from '@/stores/subscriptionStore';
 import { BillingCycle } from '@/constants/categories';
+import { formatAmountNumber } from '@/lib/amountInput';
 import { isBilling } from '@/lib/subscriptionDuration';
 
 // subscriptionStore içindeki normalizeToMonthly'yi burada da kullanıyoruz
@@ -45,11 +46,7 @@ export function useCurrency() {
    * useTotalMonthly() gibi hesaplanmış değerler için kullan.
    */
   const fmtDisplay = (amount: number): string => {
-    const isJPY = displayCurrency === '¥';
-    const num = isJPY
-      ? Math.round(amount).toLocaleString('tr-TR')
-      : amount.toFixed(2);
-    return `${displayCurrency}${num}`;
+    return `${displayCurrency}${formatAmountNumber(amount, displayCurrency === '¥')}`;
   };
 
   /**
@@ -65,11 +62,7 @@ export function useCurrency() {
     if (from === displayCurrency) return fmt(amount, from);
 
     // Orijinal tutarı formatla (JPY için tam sayı, diğerleri 2 ondalık)
-    const isFromJPY = from === '¥';
-    const originalNum = isFromJPY
-      ? Math.round(amount).toLocaleString('tr-TR')
-      : amount.toFixed(2);
-    const originalStr = `${from}${originalNum}`;
+    const originalStr = `${from}${formatAmountNumber(amount, from === '¥')}`;
 
     // Gösterim para birimine çevir
     const convertedStr = format(amount, from);

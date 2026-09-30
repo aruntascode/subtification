@@ -83,7 +83,7 @@
   "analytics": {
     "title": "Analytics",
     "monthly_spending": "Monthly Spending",
-    "yearly_projection": "Yearly Projection",
+    "yearly_projection": "Yearly Spending",
     "active_subs_count": "{{count}} active subscriptions",
     "per_day": "/day",
     "per_month_short": "/mo",

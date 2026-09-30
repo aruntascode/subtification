@@ -38,7 +38,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
-import { sanitizeAmountInput } from "@/lib/amountInput";
+import { formatAmountNumber, sanitizeAmountInput } from "@/lib/amountInput";
 
 type Draft = {
   planKey: string;
@@ -175,7 +175,7 @@ export default function BulkAddScreen() {
     const yearlyHint =
       draft.cycle === "yearly" && parsedAmount > 0
         ? t("new_sub.yearly_monthly_equivalent", {
-            amount: `${draft.currency}${(parsedAmount / 12).toFixed(2)}`,
+            amount: `${draft.currency}${formatAmountNumber((parsedAmount / 12))}`,
           })
         : null;
     return [scheduleHint, yearlyHint].filter(Boolean).join("\n");

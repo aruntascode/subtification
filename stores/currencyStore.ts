@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { SYMBOL_TO_ISO } from '@/constants/currencies';
+import { formatAmountNumber } from '@/lib/amountInput';
 
 // ---------- sabitler ----------
 const RATES_CACHE_KEY = 'subtification_rates_cache';
@@ -139,11 +140,6 @@ export const useCurrencyStore = create<CurrencyState>((set, get) => ({
     const converted = convert(amount, fromSymbol, target);
 
     // JPY gibi küçük ondalıklı para birimlerinde tam sayı göster
-    const isNoDecimal = target === '¥';
-    const num = isNoDecimal
-      ? Math.round(converted).toLocaleString('tr-TR')
-      : converted.toFixed(2);
-
-    return `${target}${num}`;
+    return `${target}${formatAmountNumber(converted, target === '¥')}`;
   },
 }));

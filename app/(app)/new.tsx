@@ -40,7 +40,7 @@ import {
 } from "@/lib/subscriptionDuration";
 import { getIconColorOn, isLightColor } from "@/lib/colorContrast";
 import { KEYBOARD_DONE_ID } from "@/components/KeyboardDoneBar";
-import { sanitizeAmountInput } from "@/lib/amountInput";
+import { formatAmountNumber, sanitizeAmountInput } from "@/lib/amountInput";
 
 const AVAILABLE_ICONS = [
   "apps",
@@ -236,7 +236,7 @@ export default function NewSubscriptionScreen() {
     const parsedAmount = parseFloat(amount);
     if (isInstallment && parsedAmount > 0) {
       return t("duration.installment_summary", {
-        total: `${currency}${(parsedAmount * durationMonths).toFixed(2)}`,
+        total: `${currency}${formatAmountNumber((parsedAmount * durationMonths))}`,
         date: lastLabel,
       });
     }
@@ -274,7 +274,7 @@ export default function NewSubscriptionScreen() {
   const yearlyHint =
     !isInstallment && billingCycle === "yearly" && parsedAmount > 0
       ? t("new_sub.yearly_monthly_equivalent", {
-          amount: `${currency}${(parsedAmount / 12).toFixed(2)}`,
+          amount: `${currency}${formatAmountNumber((parsedAmount / 12))}`,
         })
       : null;
 

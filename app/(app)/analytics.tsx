@@ -394,14 +394,18 @@ export default function AnalyticsScreen() {
         <View style={styles.overviewRow}>
           <View style={[styles.overviewCard, { backgroundColor: colors.primarySolid }]}>
             <Text style={styles.overviewLabel}>{t("analytics.monthly_spending")}</Text>
-            <Text style={styles.overviewAmount}>{fmtDisplay(monthly)}</Text>
+            <Text style={styles.overviewAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+              {fmtDisplay(monthly)}
+            </Text>
             <Text style={styles.overviewSub}>
               {t("analytics.active_subs_count", { count: activeSubs.length })}
             </Text>
           </View>
           <View style={[styles.overviewCard, { backgroundColor: colors.primarySolidContainer }]}>
             <Text style={styles.overviewLabel}>{t("analytics.yearly_projection")}</Text>
-            <Text style={styles.overviewAmount}>{fmtDisplay(yearly)}</Text>
+            <Text style={styles.overviewAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+              {fmtDisplay(yearly)}
+            </Text>
             <Text style={styles.overviewSub}>
               {fmtDisplay(daily)}{t("analytics.per_day")}
             </Text>
