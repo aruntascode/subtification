@@ -3,74 +3,271 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Subtification — Abonelik Takibi</title>
-<meta name="description" content="Aboneliklerini tek yerden takip et. Aylık harcamanı gör, ödeme tarihlerini kaçırma.">
+<title>Subtification — Abonelik ve Taksit Takibi</title>
+<meta name="description" content="Aboneliklerini ve taksitlerini tek yerden takip et. Aylık harcamanı gör, bütçe koy, ödeme gününden önce hatırlatma al.">
 <meta name="theme-color" content="#0b7285">
+<meta property="og:title" content="Subtification — Abonelik ve Taksit Takibi">
+<meta property="og:description" content="Aboneliklerin ve taksitlerin tek bir yerde. Ay sonunda ne ödeyeceğini bil.">
+<meta property="og:url" content="https://subtification.aruntas.com/">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/home.css">
+<script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
 
 <header class="site-header">
-  <div class="wrap">
-    <a class="brand" href="/"><span class="brand-mark">S</span> Subtification</a>
+  <div class="wrap-wide" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:68px">
+    <a class="brand" href="/"><img class="brand-icon" src="/icon-192.png" alt=""> Subtification</a>
     <nav class="nav">
-      <a href="/support">Destek</a>
-      <a href="/privacy">Gizlilik</a>
+      <a class="hide-sm" href="#ozellikler"><span class="tr">Özellikler</span><span class="en">Features</span></a>
+      <a href="/support" data-keep-lang><span class="tr">Destek</span><span class="en">Support</span></a>
+      <a href="/privacy" data-keep-lang><span class="tr">Gizlilik</span><span class="en">Privacy</span></a>
+      <button class="lang-btn" id="langBtn" type="button"><span class="tr">EN</span><span class="en">TR</span></button>
     </nav>
   </div>
 </header>
 
-<main class="wrap">
-  <section class="hero">
-    <span class="eyebrow">Abonelik Takibi</span>
-    <h1>Aboneliklerin<br>tek bir yerde.</h1>
-    <p>Netflix, Spotify, spor salonu, bulut depolama… Hepsi ne kadar tutuyor, bir sonraki ödeme ne zaman? Subtification hepsini tek ekranda toplar ve ödeme günü gelmeden haber verir.</p>
+<main>
+
+  <!-- ═══ Hero ═══ -->
+  <section class="wrap-wide landing-hero">
+    <div>
+      <span class="kicker"><span class="tr">iPhone için abonelik ve taksit takibi</span><span class="en">Subscription &amp; installment tracker for iPhone</span></span>
+      <h1>
+        <span class="tr">Aboneliklerin ve taksitlerin, <em>tek bir yerde.</em></span>
+        <span class="en">Your subscriptions and installments, <em>in one place.</em></span>
+      </h1>
+      <p class="lead">
+        <span class="tr">Netflix, Spotify, spor salonu, telefon taksiti… Hepsi ayda ne tutuyor, sıradaki ödeme ne zaman? Subtification hepsini tek ekranda toplar ve ödeme gününden önce haber verir.</span>
+        <span class="en">Netflix, Spotify, the gym, your phone installments… What do they add up to each month, and when is the next payment due? Subtification brings them together on one screen and reminds you before payment day.</span>
+      </p>
+      <div class="cta-row">
+        <span class="store-soon">
+          <small class="tr">ÇOK YAKINDA</small><small class="en">COMING SOON</small>
+          <b>App Store</b>
+        </span>
+        <a class="btn-ghost" href="#ozellikler"><span class="tr">Neler yapabilir? ↓</span><span class="en">See what it does ↓</span></a>
+      </div>
+      <ul class="chips">
+        <li><span class="tr">Hesap açmadan kullan</span><span class="en">No account needed</span></li>
+        <li><span class="tr">Çevrimdışı çalışır</span><span class="en">Works offline</span></li>
+        <li><span class="tr">Türkçe ve İngilizce</span><span class="en">Turkish &amp; English</span></li>
+      </ul>
+    </div>
+
+    <div class="hero-visual">
+      <div class="phone">
+        <img src="/screens/home.webp" width="780" height="1688" alt="Subtification ana sayfası: aylık harcama, ödenen ve kalan tutar, ödeme takvimi" fetchpriority="high">
+      </div>
+      <div class="float-note" aria-hidden="true">
+        <img src="/icon-192.png" alt="">
+        <div>
+          <b class="tr">Ödeme yaklaşıyor</b><b class="en">Payment coming up</b>
+          <span class="tr">Netflix ödemen yaklaşıyor.</span><span class="en">Netflix payment is coming up.</span>
+        </div>
+        <time class="tr">şimdi</time><time class="en">now</time>
+      </div>
+    </div>
   </section>
 
-  <ul class="features">
-    <li>
-      <strong>Gerçek toplam</strong>
-      <span>Yıllık, üç aylık, haftalık — hepsi aylık karşılığına çevrilir. Ay sonunda ne ödeyeceğini net görürsün.</span>
-    </li>
-    <li>
-      <strong>Zamanında hatırlatma</strong>
-      <span>Ödeme tarihi yaklaşan abonelikler için cihazında bildirim. Unuttuğun için ödediğin ay biter.</span>
-    </li>
-    <li>
-      <strong>Kategori analizi</strong>
-      <span>Paran nereye gidiyor? Eğlence mi, üretkenlik mi, sağlık mı — dağılımı gör, bütçe limiti koy.</span>
-    </li>
-    <li>
-      <strong>Çoklu para birimi</strong>
-      <span>Dolar, euro, sterlin cinsinden abonelikler güncel kurla tek para biriminde toplanır.</span>
-    </li>
-    <li>
-      <strong>Hesapsız başla</strong>
-      <span>İstersen kayıt olmadan kullan. Verilerin sadece cihazında kalır; sonradan giriş yaparsan hesabına taşınır.</span>
-    </li>
-    <li>
-      <strong>Türkçe ve İngilizce</strong>
-      <span>Uygulama dilini cihazından alır, dilediğin zaman ayarlardan değiştirirsin.</span>
-    </li>
-  </ul>
+  <!-- ═══ Zikzak özellikler ═══ -->
+  <section class="wrap-wide section" id="ozellikler">
 
-  <div class="card">
-    <h2>Sorun mu var?</h2>
-    <p>Bir hata bulduysan, bir özellik istiyorsan veya hesabınla ilgili bir konu varsa destek sayfasından bize ulaşabilirsin. Genelde birkaç iş günü içinde dönüş yapıyoruz.</p>
-    <a class="btn" href="/support">Destek sayfası</a>
+    <div class="feature reveal">
+      <div class="feature-copy">
+        <span class="label"><span class="tr">Analiz ve bütçe</span><span class="en">Insights &amp; budget</span></span>
+        <h2><span class="tr">Paran nereye gidiyor, bir bakışta gör.</span><span class="en">See where your money goes at a glance.</span></h2>
+        <p><span class="tr">Yıllık, üç aylık, haftalık fark etmez; her abonelik aylık karşılığına çevrilir. Aylık ve yıllık toplamını, abonelik ya da kategori bazında dağılımı gör.</span><span class="en">Yearly, quarterly or weekly — every subscription is converted to its monthly equivalent. See your monthly and yearly totals and the breakdown by subscription or category.</span></p>
+        <ul class="points">
+          <li><span class="tr">Aylık bütçe limiti koy, ne kadar kaldığını takip et</span><span class="en">Set a monthly budget and track what's left</span></li>
+          <li><span class="tr">En pahalı abonelikler sıralı</span><span class="en">Your most expensive subscriptions, ranked</span></li>
+          <li><span class="tr">Yıllık plana geçince ne kadar tasarruf edeceğini gösteren ipuçları</span><span class="en">Tips that show how much you'd save on a yearly plan</span></li>
+        </ul>
+      </div>
+      <div class="feature-shot">
+        <div class="phone"><img src="/screens/analytics.webp" width="780" height="1688" loading="lazy" alt="Analizler ekranı: aylık ve yıllık harcama, bütçe limiti, dağılım grafiği"></div>
+      </div>
+    </div>
+
+    <div class="feature reverse reveal">
+      <div class="feature-copy">
+        <span class="label"><span class="tr">Taksit takibi</span><span class="en">Instalments</span></span>
+        <h2><span class="tr">Taksitlerin de burada. Kaç tane kaldığını hep bil.</span><span class="en">Instalments too — always know how many are left.</span></h2>
+        <p><span class="tr">Telefon, bilgisayar ya da tatil taksitlerini süresiyle birlikte ekle. Kaç taksit ödendi, kaç ay kaldı, en yakın hangisi bitiyor; hepsi ana sayfada.</span><span class="en">Add phone, laptop or holiday installments with their duration. How many are paid, how many months are left, which one ends next — all on the home screen.</span></p>
+        <ul class="points">
+          <li><span class="tr">Süreli abonelikler de desteklenir (ör. 6 aylık kampanya)</span><span class="en">Fixed-term subscriptions are supported too (e.g. a 6-month offer)</span></li>
+          <li><span class="tr">Süre dolunca otomatik olarak toplamdan düşer</span><span class="en">Automatically drops out of your totals when it ends</span></li>
+        </ul>
+      </div>
+      <div class="feature-shot">
+        <div class="phone"><img src="/screens/installments.webp" width="780" height="1688" loading="lazy" alt="Ana sayfada taksitler kartı: 2/6 taksit ödendi"></div>
+      </div>
+    </div>
+
+    <div class="feature reveal">
+      <div class="feature-copy">
+        <span class="label"><span class="tr">Hatırlatmalar</span><span class="en">Reminders</span></span>
+        <h2><span class="tr">Ödeme gününü kaçırma.</span><span class="en">Never miss a payment day.</span></h2>
+        <p><span class="tr">Her ödemeden bir gün önce sabah 09:00'da bildirim gelir. Hatırlatmalar cihazında kurulur; internet olmasa da çalışır.</span><span class="en">You get a notification at 9:00 am the day before each payment. Reminders are scheduled on your device, so they work even without internet.</span></p>
+        <ul class="points">
+          <li><span class="tr">Uygulamayı uzun süre açmasan da sıradaki ödemeler için hatırlatmalar hazırdır</span><span class="en">Reminders for upcoming payments are ready even if you don't open the app for a while</span></li>
+          <li><span class="tr">Tek dokunuşla aç ya da kapat</span><span class="en">Turn them on or off with a single tap</span></li>
+        </ul>
+      </div>
+      <div class="feature-shot">
+        <div class="phone"><img src="/screens/notifications.webp" width="780" height="1688" loading="lazy" alt="Kilit ekranında Subtification ödeme hatırlatmaları"></div>
+      </div>
+    </div>
+
+    <div class="feature reverse reveal">
+      <div class="feature-copy">
+        <span class="label"><span class="tr">Takvim</span><span class="en">Calendar</span></span>
+        <h2><span class="tr">Ay sonunda ne ödeyeceğini şimdiden bil.</span><span class="en">Know what you'll pay before the month ends.</span></h2>
+        <p><span class="tr">Bu ay ne kadarı ödendi, ne kadarı kaldı? Ödeme takviminde her günün ödemelerini, yaklaşanlar listesinde kaç gün kaldığını gör.</span><span class="en">How much of this month is already paid, and how much is left? See each day's payments on the calendar and how many days remain in the upcoming list.</span></p>
+        <ul class="points">
+          <li><span class="tr">31 Ocak'ta başlayan abonelik şubatta 28'inde görünür, martta yine 31'inde</span><span class="en">A subscription starting on 31 January shows on the 28th in February and back on the 31st in March</span></li>
+          <li><span class="tr">Dolar, euro, sterlin cinsinden abonelikler güncel kurla TL'ye çevrilir</span><span class="en">Dollar, euro and pound subscriptions are converted to lira at current rates</span></li>
+        </ul>
+      </div>
+      <div class="feature-shot">
+        <div class="phone"><img src="/screens/upcoming.webp" width="780" height="1688" loading="lazy" alt="En pahalı abonelikler ve yaklaşan ödemeler listesi"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Özellik ızgarası ═══ -->
+  <section class="wrap-wide section">
+    <div class="section-head reveal">
+      <span class="label"><span class="tr">Ve dahası</span><span class="en">And more</span></span>
+      <h2><span class="tr">Küçük ama işe yarayan ayrıntılar</span><span class="en">Small details that make a difference</span></h2>
+    </div>
+    <div class="grid">
+      <div class="tile reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <h3><span class="tr">Popüler servisler hazır</span><span class="en">Popular services built in</span></h3>
+        <p><span class="tr">Netflix, Spotify, Disney+, iCloud+, ChatGPT ve daha fazlası güncel Türkiye fiyatlarıyla. Planı seç, ekle.</span><span class="en">Netflix, Spotify, Disney+, iCloud+, ChatGPT and more with current Turkish prices. Pick a plan and add it.</span></p>
+      </div>
+      <div class="tile reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg></div>
+        <h3><span class="tr">Toplu ekleme</span><span class="en">Bulk add</span></h3>
+        <p><span class="tr">Kullandığın servisleri tek seferde seç, tutarları gözden geçir, hepsini birden ekle.</span><span class="en">Select all the services you use at once, review the amounts and add them in one go.</span></p>
+      </div>
+      <div class="tile reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.8 9a3 3 0 0 0-2.8-1.5c-1.7 0-3 .9-3 2.2 0 3 6 1.6 6 4.6 0 1.3-1.3 2.2-3 2.2A3.1 3.1 0 0 1 9 15M12 6v1.5M12 16.5V18"/></svg></div>
+        <h3><span class="tr">Çoklu para birimi</span><span class="en">Multiple currencies</span></h3>
+        <p><span class="tr">₺, $, €, £ ve ¥ ile ekle; toplamlar güncel kurla tek para biriminde hesaplanır.</span><span class="en">Add in ₺, $, €, £ or ¥; totals are calculated in one currency at current rates.</span></p>
+      </div>
+      <div class="tile reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></div>
+        <h3><span class="tr">Hesapsız başla</span><span class="en">Start without an account</span></h3>
+        <p><span class="tr">İstersen kayıt olmadan kullan, veriler cihazında kalır. Sonradan giriş yaparsan hesabına taşınır.</span><span class="en">Use it without signing up; your data stays on your device. Sign in later and it moves to your account.</span></p>
+      </div>
+      <div class="tile reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><path d="M12 19.5h.01"/><path d="m3 3 18 18"/></svg></div>
+        <h3><span class="tr">Çevrimdışı da çalışır</span><span class="en">Works offline</span></h3>
+        <p><span class="tr">İnternet yokken de ekle, düzenle, sil. Bağlantı gelince değişiklikler kendiliğinden hesabına aktarılır.</span><span class="en">Add, edit and delete without a connection. Changes sync to your account automatically once you're back online.</span></p>
+      </div>
+      <div class="tile reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></div>
+        <h3><span class="tr">Açık ve koyu tema</span><span class="en">Light and dark themes</span></h3>
+        <p><span class="tr">Telefonun görünümüne uyar ya da istediğin temayı kendin seç.</span><span class="en">Follows your phone's appearance, or pick the theme you like.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Ekran galerisi ═══ -->
+  <section class="wrap-wide section">
+    <div class="section-head reveal">
+      <span class="label"><span class="tr">Ekranlar</span><span class="en">Screens</span></span>
+      <h2><span class="tr">Sade, hızlı, derli toplu</span><span class="en">Clean, fast and tidy</span></h2>
+    </div>
+    <div class="gallery">
+      <figure><div class="phone"><img src="/screens/home.webp" width="780" height="1688" loading="lazy" alt=""></div><figcaption><span class="tr">Ana sayfa</span><span class="en">Home</span></figcaption></figure>
+      <figure><div class="phone"><img src="/screens/list.webp" width="780" height="1688" loading="lazy" alt=""></div><figcaption><span class="tr">Abonelikler</span><span class="en">Subscriptions</span></figcaption></figure>
+      <figure><div class="phone"><img src="/screens/detail.webp" width="780" height="1688" loading="lazy" alt=""></div><figcaption><span class="tr">Abonelik detayı</span><span class="en">Subscription details</span></figcaption></figure>
+      <figure><div class="phone"><img src="/screens/analytics.webp" width="780" height="1688" loading="lazy" alt=""></div><figcaption><span class="tr">Analizler</span><span class="en">Analytics</span></figcaption></figure>
+      <figure><div class="phone"><img src="/screens/upcoming.webp" width="780" height="1688" loading="lazy" alt=""></div><figcaption><span class="tr">Yaklaşan ödemeler</span><span class="en">Upcoming payments</span></figcaption></figure>
+      <figure><div class="phone"><img src="/screens/notifications.webp" width="780" height="1688" loading="lazy" alt=""></div><figcaption><span class="tr">Hatırlatmalar</span><span class="en">Reminders</span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ═══ Kapanış ═══ -->
+  <section class="wrap-wide">
+    <div class="cta-band reveal">
+      <h2><span class="tr">Aboneliklerini kontrol altına al.</span><span class="en">Take control of your subscriptions.</span></h2>
+      <p><span class="tr">Subtification çok yakında App Store'da. Sorun, öneri ya da merak ettiğin bir şey varsa yaz: <a href="mailto:support@aruntas.com">support@aruntas.com</a></span><span class="en">Subtification is coming to the App Store soon. Questions or suggestions? Write to us: <a href="mailto:support@aruntas.com">support@aruntas.com</a></span></p>
+      <span class="store-soon">
+        <small class="tr">ÇOK YAKINDA</small><small class="en">COMING SOON</small>
+        <b>App Store</b>
+      </span>
+    </div>
+  </section>
+
+  <div class="wrap-wide">
+    <footer>
+      <span>© 2026 Subtification</span>
+      <span>
+        <a href="/privacy" data-keep-lang><span class="tr">Gizlilik Politikası</span><span class="en">Privacy Policy</span></a> ·
+        <a href="/support" data-keep-lang><span class="tr">Destek</span><span class="en">Support</span></a>
+      </span>
+    </footer>
   </div>
-
-  <footer>
-    <span>© 2026 Subtification</span>
-    <span>
-      <a href="/privacy">Gizlilik Politikası</a> ·
-      <a href="/support">Destek</a>
-    </span>
-  </footer>
 </main>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var params = new URLSearchParams(location.search);
+
+    function pickLang() {
+      var fromUrl = params.get('lang');
+      if (fromUrl === 'tr' || fromUrl === 'en') return fromUrl;
+      try {
+        var saved = localStorage.getItem('lang');
+        if (saved === 'tr' || saved === 'en') return saved;
+      } catch (e) {}
+      return (navigator.language || 'tr').toLowerCase().indexOf('tr') === 0 ? 'tr' : 'en';
+    }
+
+    function apply(lang) {
+      root.lang = lang;
+      // Destek/gizlilik sayfaları ?lang=en ile İngilizce açılır
+      document.querySelectorAll('[data-keep-lang]').forEach(function (a) {
+        var base = a.getAttribute('href').split('?')[0];
+        a.setAttribute('href', lang === 'en' ? base + '?lang=en' : base);
+      });
+    }
+
+    apply(pickLang());
+
+    document.getElementById('langBtn').addEventListener('click', function () {
+      var next = root.lang === 'tr' ? 'en' : 'tr';
+      try { localStorage.setItem('lang', next); } catch (e) {}
+      apply(next);
+    });
+
+    // Kaydırınca beliren bölümler
+    var items = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      items.forEach(function (el) { el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -10% 0px' });
+    items.forEach(function (el) { io.observe(el); });
+  })();
+</script>
 
 </body>
 </html>

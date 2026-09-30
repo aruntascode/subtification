@@ -12,3 +12,9 @@
 
 /.well-known/apple-app-site-association
   Content-Type: application/json
+
+/home.css
+  Cache-Control: public, max-age=3600
+
+/screens/*
+  Cache-Control: public, max-age=86400

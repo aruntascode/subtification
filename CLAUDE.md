@@ -11,7 +11,10 @@ dikkat edilmesi gereken kuralları özetler; yeni bir oturum buradan devam edebi
 - **Dil:** i18next — `locales/tr.json`, `locales/en.json`; cihaz diline göre seçilir
 - **Kod dili:** Yorumlar ve commit mesajları Türkçe
 - **Bundle id:** `com.aruntas.subtification`, URL scheme: `subtification`
-- **Web:** `web/` — `subtification.aruntas.com` (Cloudflare, `wrangler.jsonc`): gizlilik, destek ve e-posta doğrulama/şifre sıfırlama dönüş sayfası (`auth/callback`)
+- **Web:** `web/` — `subtification.aruntas.com` (Cloudflare, `wrangler.jsonc`): tanıtım sayfası
+  (`index.html` + `home.css`, ekran görüntüleri `screens/*.webp`), gizlilik, destek ve e-posta
+  doğrulama/şifre sıfırlama dönüş sayfası (`auth/callback`). TR/EN metinler `<span class="tr|en">`;
+  destek adresi `support@aruntas.com`. Yayın: `cd web && npx wrangler deploy`
 
 ---
 
