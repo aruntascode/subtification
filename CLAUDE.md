@@ -108,8 +108,11 @@ Ayarlar sekme değil; header'dan açılır.
   Store'daki `totalMonthly()` / `byCategory()` para birimi dönüştürmez.
 
 ### Bildirimler — `lib/notifications.ts`
-- Ayarlardan açılır (`push_alerts_enabled`). Her abonelik için sıradaki 3 ödeme,
-  ödemeden 1 gün önce 09:00'da (geçmişse aynı gün 09:00). iOS limiti yüzünden en yakın 60.
+- Ayarlardan açılır (`push_alerts_enabled`). Her abonelik için sıradaki 3 ödeme.
+  Zamanı kullanıcı seçer (`getReminderPrefs`: `reminder_days_before` 0/1/2/3/7,
+  `reminder_time` "HH:MM"; varsayılan 1 gün önce 09:00). Seçilen an geçmişse ödeme günü
+  aynı saatte. Tercih değişince `syncSubscriptionNotifications()` çağrılır. iOS limiti
+  yüzünden en yakın 60.
 - Store'daki her değişiklikten sonra `syncSubscriptionNotifications()` hepsini yeniden kurar.
   Senkron ve iptal bir kuyrukta sırayla çalışır (eşzamanlı çağrı çift bildirim bırakıyordu);
   modül içinden `runSync`/`runCancel`'ı doğrudan çağır, kuyruğa tekrar sokma (kilitlenir).

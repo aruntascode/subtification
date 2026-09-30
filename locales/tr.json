@@ -192,6 +192,14 @@
     "budget_info": "Limitinizi aştığınızda anasayfada uyarı gösterilir.",
     "notifications_section": "BİLDİRİMLER",
     "push_alerts": "Anlık Bildirimler",
+    "reminder_day": "Hatırlatma günü",
+    "reminder_time": "Hatırlatma saati",
+    "choose_reminder_day": "Ödemeden ne kadar önce?",
+    "choose_reminder_time": "Saat kaçta?",
+    "reminder_same_day": "Ödeme günü",
+    "reminder_days_before_one": "{{count}} gün önce",
+    "reminder_days_before_other": "{{count}} gün önce",
+    "reminder_week_before": "1 hafta önce",
     "notifications_permission_title": "Bildirim izni gerekli",
     "notifications_permission_message": "Ödeme hatırlatmaları için cihaz ayarlarından bildirim izni vermen gerekiyor.",
     "security_section": "GÜVENLİK",
@@ -283,7 +291,7 @@
     "forgot_title": "Şifremi Unuttum",
     "forgot_subtitle": "E-posta adresinize sıfırlama bağlantısı göndereceğiz.",
     "send_reset": "Sıfırlama Bağlantısı Gönder",
-    "reset_sent": "Sıfırlama bağlantısı gönderildi. E-postanı kontrol et.",
+    "reset_sent": "Sıfırlama bağlantısı gönderildi. E-postanı kontrol et; birkaç dakika içinde gelmezse İstenmeyen (Spam) klasörüne de bak.",
     "back_to_login": "Girişe Dön",
     "email_placeholder": "ornek@eposta.com",
     "password_placeholder": "Şifreni gir",
@@ -296,7 +304,7 @@
     "login_failed": "Giriş yapılamadı",
     "register_failed": "Kayıt olunamadı",
     "check_email_title": "E-postanı kontrol et",
-    "check_email_message": "Sana bir doğrulama bağlantısı gönderdik. Giriş yapmadan önce e-posta adresini doğrula."
+    "check_email_message": "Sana bir doğrulama bağlantısı gönderdik. Giriş yapmadan önce e-posta adresini doğrula.\n\nE-posta birkaç dakika içinde gelmezse İstenmeyen (Spam) klasörüne de bak."
   },
   "categories": {
     "entertainment": "Eğlence",

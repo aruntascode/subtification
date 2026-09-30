@@ -3,10 +3,16 @@ import { BorderRadius, Spacing, InputTypography, Typography } from "@/constants/
 import { useAppTheme } from "@/hooks/useAppTheme";
 import {
   cancelSubscriptionNotifications,
+  DEFAULT_REMINDER_PREFS,
   ensureNotificationPermission,
   getPushAlertsEnabled,
+  getReminderPrefs,
+  REMINDER_DAY_OPTIONS,
+  REMINDER_TIME_OPTIONS,
   setPushAlertsEnabled,
+  setReminderPrefs,
   syncSubscriptionNotifications,
+  type ReminderPrefs,
 } from "@/lib/notifications";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/stores/authStore";
@@ -61,6 +67,15 @@ type PickerOption = {
 
 const WEBSITE_URL = "https://subtification.aruntas.com";
 
+type PreferenceKind = "language" | "theme" | "reminder_day" | "reminder_time";
+
+const PREFERENCE_SHEET: Record<PreferenceKind, { title: string; sectionLabel: string }> = {
+  language: { title: "settings.language", sectionLabel: "settings.choose_language" },
+  theme: { title: "settings.appearance", sectionLabel: "settings.choose_theme" },
+  reminder_day: { title: "settings.reminder_day", sectionLabel: "settings.choose_reminder_day" },
+  reminder_time: { title: "settings.reminder_time", sectionLabel: "settings.choose_reminder_time" },
+};
+
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -69,6 +84,7 @@ export default function SettingsScreen() {
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
 
   const [pushAlerts, setPushAlerts] = useState(false);
+  const [reminderPrefs, setReminderPrefsState] = useState<ReminderPrefs>(DEFAULT_REMINDER_PREFS);
   const [changePasswordVisible, setChangePasswordVisible] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -80,8 +96,8 @@ export default function SettingsScreen() {
 
   // YENİ: Dil Modalı için State
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
-  // Dil ve görünüm aynı alttan açılan pencereyi paylaşır
-  const [preferenceKind, setPreferenceKind] = useState<"language" | "theme">("language");
+  // Dil, görünüm ve hatırlatma zamanı aynı alttan açılan pencereyi paylaşır
+  const [preferenceKind, setPreferenceKind] = useState<PreferenceKind>("language");
 
   const { darkMode, mode: themeMode, setMode: setThemeMode } = useThemeStore();
   const { colors, blurTint } = useAppTheme();
@@ -121,6 +137,7 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     getPushAlertsEnabled().then(setPushAlerts);
+    getReminderPrefs().then(setReminderPrefsState);
   }, [user]);
 
   const finishLanguageDismiss = useCallback(() => {
@@ -131,7 +148,7 @@ export default function SettingsScreen() {
     setChangePasswordVisible(false);
   }, []);
 
-  const openLanguageModal = (kind: "language" | "theme" = "language") => {
+  const openLanguageModal = (kind: PreferenceKind = "language") => {
     setPreferenceKind(kind);
     languageSheetY.set(CURRENCY_SHEET_CLOSED_Y);
     languageGestureStartY.set(0);
@@ -375,6 +392,42 @@ export default function SettingsScreen() {
       onPress: () => handleSelectTheme(option),
     }),
   );
+
+  const reminderDayLabel = (days: number) =>
+    days === 0
+      ? t("settings.reminder_same_day")
+      : days === 7
+        ? t("settings.reminder_week_before")
+        : t("settings.reminder_days_before", { count: days });
+
+  // Tercih değişince tüm hatırlatmalar yeni zamana göre yeniden kurulur
+  const handleSelectReminder = async (next: ReminderPrefs) => {
+    setReminderPrefsState(next);
+    closeLanguageModal();
+    await setReminderPrefs(next);
+    await syncSubscriptionNotifications(subscriptions);
+  };
+
+  const reminderDayOptions: PickerOption[] = REMINDER_DAY_OPTIONS.map((days) => ({
+    key: String(days),
+    glyph: days === 0 ? "" : String(days),
+    icon: days === 0 ? "today" : undefined,
+    title: reminderDayLabel(days),
+    selected: reminderPrefs.daysBefore === days,
+    onPress: () => handleSelectReminder({ ...reminderPrefs, daysBefore: days }),
+  }));
+
+  const reminderTimeOptions: PickerOption[] = REMINDER_TIME_OPTIONS.map((time) => {
+    const hour = Number(time.slice(0, 2));
+    return {
+      key: time,
+      glyph: "",
+      icon: hour < 12 ? "wb-twilight" : hour < 18 ? "light-mode" : "nights-stay",
+      title: time,
+      selected: reminderPrefs.time === time,
+      onPress: () => handleSelectReminder({ ...reminderPrefs, time }),
+    };
+  });
 
   const handlePushAlertsChange = async (enabled: boolean) => {
     try {
@@ -663,6 +716,48 @@ export default function SettingsScreen() {
                 />
               }
             />
+            {pushAlerts && (
+              <>
+                <View style={[styles.divider, { backgroundColor: colors.outlineVariant + "33" }]} />
+                <TouchableOpacity onPress={() => openLanguageModal("reminder_day")} activeOpacity={0.7}>
+                  <SettingsRow
+                    styles={styles}
+                    colors={colors}
+                    icon="calendar-outline"
+                    iconBg={colors.primaryContainer + "1A"}
+                    iconColor={colors.primary}
+                    label={t("settings.reminder_day")}
+                    trailing={
+                      <View style={styles.trailingRow}>
+                        <Text style={[styles.trailingText, { color: colors.onSurfaceVariant }]}>
+                          {reminderDayLabel(reminderPrefs.daysBefore)}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={16} color={colors.outline} />
+                      </View>
+                    }
+                  />
+                </TouchableOpacity>
+                <View style={[styles.divider, { backgroundColor: colors.outlineVariant + "33" }]} />
+                <TouchableOpacity onPress={() => openLanguageModal("reminder_time")} activeOpacity={0.7}>
+                  <SettingsRow
+                    styles={styles}
+                    colors={colors}
+                    icon="time-outline"
+                    iconBg={colors.primaryContainer + "1A"}
+                    iconColor={colors.primary}
+                    label={t("settings.reminder_time")}
+                    trailing={
+                      <View style={styles.trailingRow}>
+                        <Text style={[styles.trailingText, { color: colors.onSurfaceVariant }]}>
+                          {reminderPrefs.time}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={16} color={colors.outline} />
+                      </View>
+                    }
+                  />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
 
@@ -795,17 +890,16 @@ export default function SettingsScreen() {
               <PreferencePickerContent
                 styles={styles}
                 sheetColors={currencySheetColors}
-                title={
-                  preferenceKind === "theme"
-                    ? t("settings.appearance")
-                    : t("settings.language")
+                title={t(PREFERENCE_SHEET[preferenceKind].title)}
+                sectionLabel={t(PREFERENCE_SHEET[preferenceKind].sectionLabel)}
+                options={
+                  {
+                    language: languageOptions,
+                    theme: themeOptions,
+                    reminder_day: reminderDayOptions,
+                    reminder_time: reminderTimeOptions,
+                  }[preferenceKind]
                 }
-                sectionLabel={
-                  preferenceKind === "theme"
-                    ? t("settings.choose_theme")
-                    : t("settings.choose_language")
-                }
-                options={preferenceKind === "theme" ? themeOptions : languageOptions}
               />
             </Reanimated.View>
           </GestureDetector>
@@ -1321,6 +1415,11 @@ const createStyles = (colors: AppColors, darkMode: boolean) => StyleSheet.create
     paddingTop: Spacing.lg,
     paddingHorizontal: Spacing.xxl,
     paddingBottom: 48,
+  },
+  trailingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   passwordKeyboardAvoider: {
     flex: 1,

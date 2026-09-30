@@ -192,6 +192,14 @@
     "budget_info": "You'll see a warning on the home screen when you exceed your limit.",
     "notifications_section": "NOTIFICATIONS",
     "push_alerts": "Push Alerts",
+    "reminder_day": "Reminder day",
+    "reminder_time": "Reminder time",
+    "choose_reminder_day": "How long before the payment?",
+    "choose_reminder_time": "At what time?",
+    "reminder_same_day": "On the payment day",
+    "reminder_days_before_one": "{{count}} day before",
+    "reminder_days_before_other": "{{count}} days before",
+    "reminder_week_before": "1 week before",
     "notifications_permission_title": "Notification permission needed",
     "notifications_permission_message": "Enable notifications in device settings to receive payment reminders.",
     "security_section": "SECURITY",
@@ -283,7 +291,7 @@
     "forgot_title": "Forgot Password",
     "forgot_subtitle": "We'll send a reset link to your email address.",
     "send_reset": "Send Reset Link",
-    "reset_sent": "Reset link sent. Check your email.",
+    "reset_sent": "Reset link sent. Check your email; if it doesn't arrive within a few minutes, look in your Spam or Junk folder too.",
     "back_to_login": "Back to Login",
     "email_placeholder": "your@email.com",
     "password_placeholder": "Enter your password",
@@ -296,7 +304,7 @@
     "login_failed": "Login failed",
     "register_failed": "Registration failed",
     "check_email_title": "Check your email",
-    "check_email_message": "We sent you a confirmation link. Please verify your email before signing in."
+    "check_email_message": "We sent you a confirmation link. Please verify your email before signing in.\n\nIf it doesn't arrive within a few minutes, check your Spam or Junk folder too."
   },
   "categories": {
     "entertainment": "Entertainment",

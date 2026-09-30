@@ -12,10 +12,33 @@ import {
 } from "@/lib/subscriptionDuration";
 
 const NOTIFICATION_PREF_KEY = "push_alerts_enabled";
+const REMINDER_DAYS_BEFORE_KEY = "reminder_days_before";
+const REMINDER_TIME_KEY = "reminder_time";
 const SCHEDULED_NOTIFICATION_IDS_KEY = "scheduled_subscription_notification_ids";
 const ANDROID_CHANNEL_ID = "subscription-reminders";
-const REMINDER_HOUR = 9;
 const REMINDERS_PER_SUBSCRIPTION = 3;
+
+/** Ayarlardaki seçenekler: ödemeden kaç gün önce ve saat kaçta hatırlatılsın */
+export const REMINDER_DAY_OPTIONS = [0, 1, 2, 3, 7] as const;
+export const REMINDER_TIME_OPTIONS = [
+  "07:00",
+  "08:00",
+  "09:00",
+  "10:00",
+  "12:00",
+  "18:00",
+  "20:00",
+  "21:00",
+] as const;
+
+export type ReminderPrefs = {
+  /** 0 = ödeme günü */
+  daysBefore: number;
+  /** "HH:MM" */
+  time: string;
+};
+
+export const DEFAULT_REMINDER_PREFS: ReminderPrefs = { daysBefore: 1, time: "09:00" };
 
 type StoredNotification = {
   subscriptionId: string;
@@ -39,6 +62,28 @@ export async function getPushAlertsEnabled() {
 
 export async function setPushAlertsEnabled(enabled: boolean) {
   await AsyncStorage.setItem(NOTIFICATION_PREF_KEY, String(enabled));
+}
+
+export async function getReminderPrefs(): Promise<ReminderPrefs> {
+  const [days, time] = await Promise.all([
+    AsyncStorage.getItem(REMINDER_DAYS_BEFORE_KEY),
+    AsyncStorage.getItem(REMINDER_TIME_KEY),
+  ]);
+  const daysBefore = Number(days);
+  return {
+    daysBefore: days !== null && (REMINDER_DAY_OPTIONS as readonly number[]).includes(daysBefore)
+      ? daysBefore
+      : DEFAULT_REMINDER_PREFS.daysBefore,
+    time: time && /^\d{2}:\d{2}$/.test(time) ? time : DEFAULT_REMINDER_PREFS.time,
+  };
+}
+
+/** Tercihi kaydeder; bildirimleri yeniden kurmak çağıranın işi (syncSubscriptionNotifications) */
+export async function setReminderPrefs(prefs: ReminderPrefs) {
+  await Promise.all([
+    AsyncStorage.setItem(REMINDER_DAYS_BEFORE_KEY, String(prefs.daysBefore)),
+    AsyncStorage.setItem(REMINDER_TIME_KEY, prefs.time),
+  ]);
 }
 
 export async function ensureNotificationPermission() {
@@ -89,6 +134,8 @@ async function runSync(subscriptions: Subscription[]) {
     await ensureAndroidChannel();
     await runCancel();
 
+    const prefs = await getReminderPrefs();
+
     const scheduled: StoredNotification[] = [];
     // Uygulama uzun süre açılmasa da hatırlatmalar sürsün diye her abonelik için
     // sıradaki birkaç ödemeyi planla. iOS en fazla 64 bekleyen bildirime izin verir;
@@ -99,7 +146,7 @@ async function runSync(subscriptions: Subscription[]) {
         getUpcomingPaymentDates(subscription, REMINDERS_PER_SUBSCRIPTION).map(
           (paymentDate) => ({
             subscription,
-            reminderDate: getReminderDate(toDateOnly(paymentDate)),
+            reminderDate: getReminderDate(toDateOnly(paymentDate), prefs),
           }),
         ),
       )
@@ -201,16 +248,19 @@ function getUpcomingPaymentDates(subscription: Subscription, count: number): Dat
   return dates;
 }
 
-function getReminderDate(nextBillingDate: string) {
+function getReminderDate(nextBillingDate: string, prefs: ReminderPrefs) {
   const billingDate = parseLocalDate(nextBillingDate);
   if (!billingDate) return null;
 
-  const reminder = new Date(billingDate);
-  reminder.setDate(reminder.getDate() - 1);
-  reminder.setHours(REMINDER_HOUR, 0, 0, 0);
+  const [hour, minute] = prefs.time.split(":").map(Number);
 
+  const reminder = new Date(billingDate);
+  reminder.setDate(reminder.getDate() - prefs.daysBefore);
+  reminder.setHours(hour, minute, 0, 0);
+
+  // Seçilen gün geçtiyse (ör. ödemeye 1 gün kala eklenen abonelik) ödeme günü hatırlat
   const sameDayReminder = new Date(billingDate);
-  sameDayReminder.setHours(REMINDER_HOUR, 0, 0, 0);
+  sameDayReminder.setHours(hour, minute, 0, 0);
 
   const now = new Date();
   if (reminder > now) return reminder;
